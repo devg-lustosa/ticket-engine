@@ -27,12 +27,13 @@ async function main() {
   // 2. Cria Evento
   const event = await prisma.event.create({
     data: {
-      title: 'Festa White-Label 2026',
-      description: 'O maior evento do Ticket Engine.',
+      title: 'Projeto X',
+      description: 'A maior experiência eletrônica do ano. Prepare-se para uma noite inesquecível.',
       date: addDays(new Date(), 30),
-      venue: 'Estádio Nacional',
+      venue: 'Club Vibe',
       status: 'PUBLISHED',
-      slug: 'festa-white-label-2026',
+      slug: 'projeto-x',
+      coverImage: '/capa.png',
       organizerId: organizer.id,
     },
   })
