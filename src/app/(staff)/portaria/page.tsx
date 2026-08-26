@@ -114,10 +114,7 @@ export default function PortariaPage() {
       (error) => {
         // Ignorar erros de leitura de frame (muito comuns enquanto não foca)
       }
-    ).catch((err: any) => {
-      setCameraError(err?.message || String(err));
-      setScannerActive(false);
-    });
+    );
 
     scannerRef.current = scanner;
   };
