@@ -1,0 +1,173 @@
+// ─── Prisma Schema — Ticket Engine ───────────────────────────────
+// ORM: Prisma  |  DB: PostgreSQL via Supabase
+// ─────────────────────────────────────────────────────────────────
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  // Supabase connection pooling (Transaction mode via pgBouncer)
+  directUrl = env("DIRECT_URL")
+}
+
+// ─── Enums ────────────────────────────────────────────────────────
+
+enum Role {
+  BUYER
+  ORGANIZER
+  STAFF
+}
+
+enum EventStatus {
+  DRAFT
+  PUBLISHED
+  SOLD_OUT
+  FINISHED
+  CANCELLED
+}
+
+enum TicketStatus {
+  PENDING   // pagamento ainda não confirmado
+  ACTIVE    // ingresso válido / pagamento confirmado
+  USED      // check-in realizado
+  CANCELLED // cancelado ou estornado
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+}
+
+enum PaymentMethod {
+  PIX
+  CREDIT_CARD
+  FREE
+}
+
+// ─── Models ───────────────────────────────────────────────────────
+
+/// Usuário da plataforma (Comprador, Organizador ou Staff)
+model User {
+  id        String   @id @default(uuid())
+  /// Deve corresponder ao auth.users.id do Supabase
+  authId    String   @unique @map("auth_id")
+  email     String   @unique
+  name      String
+  cpf       String?  @unique
+  phone     String?
+  role      Role     @default(BUYER)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  organizedEvents Event[]   @relation("OrganizerEvents")
+  tickets         Ticket[]
+
+  @@map("users")
+}
+
+/// Evento criado por um Organizador
+model Event {
+  id          String      @id @default(uuid())
+  slug        String      @unique
+  title       String
+  description String?     @db.Text
+  venue       String
+  address     String?
+  city        String?
+  state       String?
+  date        DateTime
+  doorsOpen   DateTime?   @map("doors_open")
+  coverImage  String?     @map("cover_image")
+  status      EventStatus @default(DRAFT)
+  organizerId String      @map("organizer_id")
+  createdAt   DateTime    @default(now()) @map("created_at")
+  updatedAt   DateTime    @updatedAt @map("updated_at")
+
+  // Relations
+  organizer User    @relation("OrganizerEvents", fields: [organizerId], references: [id])
+  batches   Batch[]
+
+  @@index([slug])
+  @@index([organizerId])
+  @@map("events")
+}
+
+/// Lote de ingressos de um Evento (ex: 1º Lote, 2º Lote, VIP)
+model Batch {
+  id          String    @id @default(uuid())
+  eventId     String    @map("event_id")
+  name        String
+  description String?
+  price       Decimal   @db.Decimal(10, 2)
+  totalQty    Int       @map("total_qty")
+  soldQty     Int       @default(0) @map("sold_qty")
+  startAt     DateTime? @map("start_at")
+  endAt       DateTime? @map("end_at")
+  sortOrder   Int       @default(0) @map("sort_order")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  event   Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  tickets Ticket[]
+
+  @@index([eventId])
+  @@map("batches")
+}
+
+/// Ingresso individual emitido para um Comprador
+model Ticket {
+  id        String       @id @default(uuid())
+  batchId   String       @map("batch_id")
+  userId    String       @map("user_id")
+  status    TicketStatus @default(PENDING)
+  /// SHA-256 hash: ticket_id + event_id + user_id + SECRET_HASH
+  qrHash    String       @unique @map("qr_hash")
+  usedAt    DateTime?    @map("used_at")
+  checkedBy String?      @map("checked_by") // staff userId
+  createdAt DateTime     @default(now()) @map("created_at")
+  updatedAt DateTime     @updatedAt @map("updated_at")
+
+  // Relations
+  batch   Batch    @relation(fields: [batchId], references: [id])
+  user    User     @relation(fields: [userId], references: [id])
+  payment Payment?
+
+  @@index([userId])
+  @@index([batchId])
+  @@index([qrHash])
+  @@map("tickets")
+}
+
+/// Registro de pagamento via Asaas
+model Payment {
+  id          String        @id @default(uuid())
+  ticketId    String        @unique @map("ticket_id")
+  /// ID da cobrança gerada pelo Asaas
+  gatewayId   String?       @unique @map("gateway_id")
+  gateway     String        @default("asaas")
+  method      PaymentMethod @default(PIX)
+  status      PaymentStatus @default(PENDING)
+  /// Valor em reais
+  amount      Decimal       @db.Decimal(10, 2)
+  /// Código Pix Copia e Cola
+  pixCode     String?       @db.Text @map("pix_code")
+  /// URL do QR Code Pix gerado pelo Asaas
+  pixQrUrl    String?       @map("pix_qr_url")
+  paidAt      DateTime?     @map("paid_at")
+  expiresAt   DateTime?     @map("expires_at")
+  createdAt   DateTime      @default(now()) @map("created_at")
+  updatedAt   DateTime      @updatedAt @map("updated_at")
+
+  // Relations
+  ticket Ticket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+
+  @@index([gatewayId])
+  @@map("payments")
+}
