@@ -73,10 +73,16 @@ export default async function HomePage() {
                   className="group flex flex-col overflow-hidden rounded-2xl border bg-[var(--card)] shadow-sm transition hover:shadow-md border-[var(--card-border)]"
                 >
                   <div className="aspect-video bg-[var(--muted)] p-6 flex flex-col justify-end relative overflow-hidden">
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent z-10" />
-                    {/* Placeholder for event cover */}
+                    {event.coverImage ? (
+                      <img 
+                        src={event.coverImage} 
+                        alt={event.title}
+                        className="absolute inset-0 h-full w-full object-cover z-0"
+                      />
+                    ) : null}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent z-10" />
                     <div className="relative z-20 text-white">
-                      <h3 className="text-xl font-bold">{event.title}</h3>
+                      <h3 className="text-xl font-bold drop-shadow-md">{event.title}</h3>
                     </div>
                   </div>
 
