@@ -130,11 +130,13 @@ export async function POST(request: NextRequest) {
         venue: batch.event.venue,
       },
     });
-  } catch (error) {
-    console.error("[checkout/route] Error:", error);
+  } catch (error: any) {
+    const asaasError = error.response?.data?.errors?.[0]?.description;
+    console.error("[checkout/route] Error:", asaasError || error.message || error);
+    
     return NextResponse.json(
-      { error: "Erro interno ao processar pagamento." },
-      { status: 500 }
+      { error: asaasError || "Erro interno ao processar pagamento." },
+      { status: error.response?.status === 400 ? 400 : 500 }
     );
   }
 }
