@@ -2,7 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import { SalesChart } from "@/components/dashboard/sales-chart";
-import { DollarSign, Ticket, CheckSquare, TrendingUp } from "lucide-react";
+import { DollarSign, Ticket, CheckSquare, TrendingUp, Wallet, Percent } from "lucide-react";
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -28,6 +28,9 @@ export default async function DashboardPage() {
     (acc, p) => acc + Number(p.amount),
     0
   );
+
+  const platformFee = totalRevenue * 0.05; // 5% fee
+  const netRevenue = totalRevenue - platformFee;
 
   // 2. Total Ingressos Vendidos (ACTIVE + USED)
   const ticketsSold = await prisma.ticket.count({
@@ -76,7 +79,18 @@ export default async function DashboardPage() {
         </header>
 
         {/* Cards de Métricas */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          {/* Ingressos Vendidos */}
+          <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 shadow-sm">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-gray-400 font-medium">Ingressos Vendidos</h3>
+              <div className="w-10 h-10 bg-accent/10 rounded-full flex items-center justify-center text-accent">
+                <Ticket size={20} />
+              </div>
+            </div>
+            <p className="text-3xl font-bold">{ticketsSold}</p>
+          </div>
+
           {/* Faturamento Bruto */}
           <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 shadow-sm">
             <div className="flex items-center justify-between mb-4">
@@ -93,22 +107,43 @@ export default async function DashboardPage() {
             </p>
           </div>
 
-          {/* Ingressos Vendidos */}
+          {/* Taxa da Plataforma */}
           <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 shadow-sm">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-gray-400 font-medium">Ingressos Vendidos</h3>
-              <div className="w-10 h-10 bg-accent/10 rounded-full flex items-center justify-center text-accent">
-                <Ticket size={20} />
+              <h3 className="text-gray-400 font-medium">Taxa do Site (5%)</h3>
+              <div className="w-10 h-10 bg-red-500/10 rounded-full flex items-center justify-center text-red-400">
+                <Percent size={20} />
               </div>
             </div>
-            <p className="text-3xl font-bold">{ticketsSold}</p>
+            <p className="text-3xl font-bold text-red-400">
+              {new Intl.NumberFormat("pt-BR", {
+                style: "currency",
+                currency: "BRL",
+              }).format(platformFee)}
+            </p>
+          </div>
+
+          {/* Faturamento Líquido */}
+          <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 shadow-sm">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-gray-400 font-medium">Sua Receita</h3>
+              <div className="w-10 h-10 bg-success/10 rounded-full flex items-center justify-center text-success">
+                <Wallet size={20} />
+              </div>
+            </div>
+            <p className="text-3xl font-bold text-success">
+              {new Intl.NumberFormat("pt-BR", {
+                style: "currency",
+                currency: "BRL",
+              }).format(netRevenue)}
+            </p>
           </div>
 
           {/* Check-ins Realizados */}
-          <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 shadow-sm">
+          <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 shadow-sm sm:col-span-2 lg:col-span-4">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-gray-400 font-medium">Check-ins (Portaria)</h3>
-              <div className="w-10 h-10 bg-success/10 rounded-full flex items-center justify-center text-success">
+              <div className="w-10 h-10 bg-blue-500/10 rounded-full flex items-center justify-center text-blue-400">
                 <CheckSquare size={20} />
               </div>
             </div>
@@ -120,7 +155,7 @@ export default async function DashboardPage() {
             </p>
             <div className="mt-3 w-full bg-gray-800 rounded-full h-2">
               <div
-                className="bg-success h-2 rounded-full"
+                className="bg-blue-500 h-2 rounded-full transition-all"
                 style={{
                   width: ticketsSold > 0 ? `${(checkins / ticketsSold) * 100}%` : "0%",
                 }}
