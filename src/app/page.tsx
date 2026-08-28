@@ -44,7 +44,7 @@ export default async function HomePage() {
         </div>
         
         {/* Top Navbar */}
-        <div className="relative z-20 mx-auto flex max-w-5xl items-center justify-between px-4 py-6 mb-4 sm:mb-8">
+        <div className="relative z-50 mx-auto flex max-w-5xl items-center justify-between px-4 py-6 mb-4 sm:mb-8">
           <Link href="/" className="flex items-center gap-2 font-bold hover:opacity-90 transition-opacity">
             <div className="bg-gradient-to-br from-[var(--brand-500)] to-purple-600 p-2 rounded-xl shadow-lg shadow-[var(--brand-500)]/20">
               <Ticket className="h-5 w-5 text-white" />
