@@ -9,6 +9,8 @@ interface TicketCardProps {
     id: string;
     qrHash: string;
     status: "PENDING" | "ACTIVE" | "USED" | "CANCELLED";
+    participantName: string;
+    participantCpf: string | null;
     batch: {
       name: string;
       event: {
@@ -16,10 +18,6 @@ interface TicketCardProps {
         venue: string;
         date: Date;
       };
-    };
-    user: {
-      name: string;
-      cpf: string | null;
     };
   };
 }
@@ -29,7 +27,7 @@ export function TicketCard({ ticket }: TicketCardProps) {
   const eventTime = format(new Date(ticket.batch.event.date), "HH:mm");
 
   return (
-    <div className="relative overflow-hidden rounded-2xl bg-white shadow-lg border border-[var(--border)] max-w-sm mx-auto">
+    <div className="relative overflow-hidden rounded-2xl bg-white shadow-lg border border-[var(--border)] max-w-sm mx-auto text-slate-900">
       {/* Círculos laterais para simular recorte de ingresso */}
       <div className="absolute top-[280px] -left-4 h-8 w-8 rounded-full bg-[var(--background)] border-r border-[var(--border)]" />
       <div className="absolute top-[280px] -right-4 h-8 w-8 rounded-full bg-[var(--background)] border-l border-[var(--border)]" />
@@ -46,23 +44,23 @@ export function TicketCard({ ticket }: TicketCardProps) {
           <div className="flex items-start gap-3">
             <Calendar className="mt-0.5 h-5 w-5 text-[var(--brand-500)] shrink-0" />
             <div>
-              <p className="text-sm font-medium text-[var(--foreground)]">{eventDate}</p>
-              <p className="text-xs text-[var(--muted-fg)]">Abertura: {eventTime}</p>
+              <p className="text-sm font-medium text-slate-900">{eventDate}</p>
+              <p className="text-xs text-slate-500">Abertura: {eventTime}</p>
             </div>
           </div>
           
           <div className="flex items-start gap-3">
             <MapPin className="mt-0.5 h-5 w-5 text-[var(--brand-500)] shrink-0" />
             <div>
-              <p className="text-sm font-medium text-[var(--foreground)]">{ticket.batch.event.venue}</p>
+              <p className="text-sm font-medium text-slate-900">{ticket.batch.event.venue}</p>
             </div>
           </div>
 
-          <div className="mt-4 rounded-lg bg-[var(--muted)] p-3">
-            <p className="text-xs text-[var(--muted-fg)] uppercase">Titular do Ingresso</p>
-            <p className="font-semibold text-[var(--foreground)]">{ticket.user.name}</p>
-            {ticket.user.cpf && (
-              <p className="text-sm text-[var(--muted-fg)]">CPF: {ticket.user.cpf}</p>
+          <div className="mt-4 rounded-lg bg-slate-100 p-3">
+            <p className="text-xs text-slate-500 uppercase">Titular do Ingresso</p>
+            <p className="font-semibold text-slate-900 truncate">{ticket.participantName}</p>
+            {ticket.participantCpf && (
+              <p className="text-sm text-slate-500">CPF: {ticket.participantCpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4")}</p>
             )}
           </div>
         </div>
@@ -88,29 +86,29 @@ export function TicketCard({ ticket }: TicketCardProps) {
                 }}
               />
             </div>
-            <p className="text-[10px] text-[var(--muted-fg)] font-mono text-center break-all w-full mt-2">
+            <p className="text-[10px] text-slate-400 font-mono text-center break-all w-full mt-2 px-2">
               {ticket.qrHash}
             </p>
-            <p className="mt-2 text-xs text-center text-[var(--foreground)]/60 max-w-[200px]">
+            <p className="mt-2 text-xs text-center text-slate-500 max-w-[200px]">
               Apresente este código na portaria para entrar no evento.
             </p>
           </>
         ) : ticket.status === "USED" ? (
           <div className="flex flex-col items-center text-center py-6">
             <CheckCircle2 className="h-16 w-16 text-[var(--success)] mb-2" />
-            <h4 className="text-lg font-bold text-[var(--foreground)]">Ingresso Utilizado</h4>
-            <p className="text-sm text-[var(--muted-fg)]">Este ingresso já fez check-in.</p>
+            <h4 className="text-lg font-bold text-slate-900">Ingresso Utilizado</h4>
+            <p className="text-sm text-slate-500">Este ingresso já fez check-in.</p>
           </div>
         ) : (
           <div className="flex flex-col items-center text-center py-6 opacity-60">
-            <TicketIcon className="h-12 w-12 text-[var(--muted-fg)] mb-2" />
-            <p className="text-sm font-medium text-[var(--foreground)]">Ingresso Indisponível</p>
-            <p className="text-xs text-[var(--muted-fg)]">Status: {ticket.status}</p>
+            <TicketIcon className="h-12 w-12 text-slate-400 mb-2" />
+            <p className="text-sm font-medium text-slate-900">Ingresso Indisponível</p>
+            <p className="text-xs text-slate-500">Status: {ticket.status}</p>
           </div>
         )}
       </div>
 
-      <div className="bg-[var(--muted)] text-center py-2 text-[10px] text-[var(--muted-fg)] uppercase tracking-widest font-semibold border-t border-[var(--border)]">
+      <div className="bg-slate-100 text-center py-2 text-[10px] text-slate-400 uppercase tracking-widest font-semibold border-t border-[var(--border)]">
         {siteConfig.name}
       </div>
     </div>
