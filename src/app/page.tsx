@@ -6,6 +6,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { createClient } from "@/lib/supabase/server";
 import { UserNav } from "@/components/user-nav";
+import { Footer } from "@/components/footer";
 
 export default async function HomePage() {
   // Busca os eventos publicados
@@ -27,9 +28,9 @@ export default async function HomePage() {
   }
 
   return (
-    <main className="min-h-dvh bg-[var(--background)]">
+    <main className="min-h-dvh bg-[var(--background)] flex flex-col">
       {/* Header / Hero */}
-      <header className="relative overflow-hidden bg-[var(--brand-600)] pb-16 text-white sm:pb-24">
+      <header className="relative overflow-hidden bg-[var(--brand-600)] pb-16 text-white sm:pb-24 shrink-0">
         <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]" />
         
         {/* Top Navbar */}
@@ -53,7 +54,7 @@ export default async function HomePage() {
       </header>
 
       {/* Main Content */}
-      <div className="mx-auto max-w-5xl px-4 py-12">
+      <div className="mx-auto max-w-5xl px-4 py-12 flex-1 w-full">
         <h2 className="mb-8 text-2xl font-bold text-[var(--foreground)]">
           Eventos em Destaque
         </h2>
@@ -117,6 +118,8 @@ export default async function HomePage() {
           </div>
         )}
       </div>
+
+      <Footer />
     </main>
   );
 }
