@@ -51,11 +51,20 @@ export default async function MeusIngressosPage() {
           </div>
         ) : (
           <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
-            {tickets.map((ticket) => (
-              <div key={ticket.id} className="animate-fade-in">
-                <TicketCard ticket={ticket as any} />
-              </div>
-            ))}
+            {tickets.map((ticket) => {
+              const serializableTicket = {
+                ...ticket,
+                batch: {
+                  ...ticket.batch,
+                  price: ticket.batch.price.toNumber(),
+                }
+              };
+              return (
+                <div key={ticket.id} className="animate-fade-in">
+                  <TicketCard ticket={serializableTicket as any} />
+                </div>
+              );
+            })}
           </div>
         )}
       </div>
