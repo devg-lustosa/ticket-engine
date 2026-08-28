@@ -184,44 +184,72 @@ export default async function EventDetailsPage({ params }: EventPageProps) {
               </div>
               <div className="px-6 py-5 space-y-4">
                 {/* Card brands */}
-                <div className="flex flex-wrap gap-2">
-                  {[
-                    { label: "VISA",  bg: "#1a1f71", text: "#fff", style: "italic font-black" },
-                    { label: "MC",    bg: "#eb001b", text: "#fff", style: "font-black", extra: "after:" },
-                    { label: "ELO",   bg: "#00a4e0", text: "#fff", style: "font-black" },
-                    { label: "AMEX",  bg: "#2e77bc", text: "#fff", style: "font-bold" },
-                  ].map((card) => (
-                    <span
-                      key={card.label}
-                      className="inline-flex items-center justify-center px-3 py-1.5 rounded-md text-xs font-bold tracking-wider"
-                      style={{ backgroundColor: card.bg, color: card.text }}
-                    >
-                      {card.label}
-                    </span>
-                  ))}
+                <div className="flex flex-wrap items-center gap-2">
+                  {/* Visa */}
+                  <div className="flex h-8 w-12 items-center justify-center rounded bg-[#1434CB]">
+                    <svg viewBox="0 0 32 10" className="h-3.5 w-auto fill-white" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M12.235 0L8.71 9.823H5.215L3.435 1.554C3.254.73 3.088.46 2.392.128L.044 0h.105c1.78.36 3.407.973 4.542 1.834l1.918 7.989h3.6L15.932 0h-3.697zm6.75 9.823h3.328V0h-3.328v9.823zm8.93-9.59c-1.464-.383-3.116-.547-4.47-.547-3.957 0-6.738 2.052-6.764 5.01-.027 2.188 1.986 3.415 3.513 4.148 1.564.75 2.086 1.233 2.086 1.9 0 1.018-1.242 1.484-2.392 1.484-1.59 0-2.455-.246-3.76-.827l-.53-.25-1.524 9.489h1.365z"/>
+                      <path d="M29.835 0c-.628 0-1.157.362-1.4.927l-5.305 12.656h3.498s.575-1.637.705-1.99c.38.002 3.844.002 4.28 0 .1.465.65 1.99.65 1.99h3.072L32.222 0h-2.387zm-.356 2.923l1.015 4.876h-2.186l1.17-4.876z"/>
+                      <path d="M23.11 3.567c-.208-1.025-1.096-2.584-2.83-3.24L18.47 9.82h3.5l1.14-3.003h.001z"/>
+                    </svg>
+                  </div>
+                  
+                  {/* Mastercard */}
+                  <div className="flex h-8 w-12 items-center justify-center rounded bg-[#1C1C1F]">
+                    <svg viewBox="0 0 36 24" className="h-5 w-auto" xmlns="http://www.w3.org/2000/svg">
+                      <circle cx="12" cy="12" r="7.5" fill="#EB001B" />
+                      <circle cx="24" cy="12" r="7.5" fill="#F79E1B" />
+                      <path d="M18 17.85A7.476 7.476 0 0 0 21.5 12 7.476 7.476 0 0 0 18 6.15a7.476 7.476 0 0 0-3.5 5.85 7.476 7.476 0 0 0 3.5 5.85z" fill="#FF5F00" />
+                    </svg>
+                  </div>
+
+                  {/* Elo */}
+                  <div className="flex h-8 w-12 items-center justify-center rounded bg-black">
+                    <svg viewBox="0 0 40 40" className="h-6 w-auto" xmlns="http://www.w3.org/2000/svg">
+                      <circle cx="20" cy="20" r="16" fill="#00A4E0" />
+                      <path d="M12 18h8v2h-8zM12 22h8v2h-8zM24 16a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm0 2a1 1 0 1 1 0-2 1 1 0 0 1 0 2zM24 22a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm0 2a1 1 0 1 1 0-2 1 1 0 0 1 0 2z" fill="#FFF" />
+                      <text x="50%" y="54%" dominantBaseline="middle" textAnchor="middle" fill="#FFF" fontSize="14" fontWeight="bold" fontStyle="italic" letterSpacing="-1">elo</text>
+                    </svg>
+                  </div>
+
+                  {/* Amex */}
+                  <div className="flex h-8 w-12 items-center justify-center rounded bg-[#006FCF]">
+                    <span className="text-[10px] font-bold text-white tracking-widest">AMEX</span>
+                  </div>
+
                   {/* Pix */}
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold bg-[#32bcad]/10 text-[#32bcad] border border-[#32bcad]/30">
-                    <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 fill-current" xmlns="http://www.w3.org/2000/svg">
+                  <div className="flex h-8 items-center gap-1.5 px-2.5 rounded bg-[#32bcad]/10 border border-[#32bcad]/30">
+                    <svg viewBox="0 0 24 24" className="w-4 h-4 fill-[#32bcad]" xmlns="http://www.w3.org/2000/svg">
                       <path d="M5.615 14.625a3.98 3.98 0 0 0 2.83 1.17h.08l2.695 2.695a1.98 1.98 0 0 0 2.8 0l2.715-2.715a3.98 3.98 0 0 0 2.83-1.17l.955.955a.5.5 0 0 0 .707-.707l-.955-.955A3.98 3.98 0 0 0 20 11.07V10.9a3.98 3.98 0 0 0-1.17-2.83l-.955-.955a.5.5 0 0 0-.707.707l.955.955A2.98 2.98 0 0 1 19 10.9v.17a2.98 2.98 0 0 1-.875 2.125l-2.715 2.715a.98.98 0 0 1-1.386 0L11.33 13.22a.5.5 0 0 0-.707.707l2.694 2.694-2.715 2.715a.98.98 0 0 1-1.386 0L6.52 16.64a3.98 3.98 0 0 0 0-5.657L5.565 10.03A2.98 2.98 0 0 1 5 8.095a2.98 2.98 0 0 1 .875-2.12L8.59 3.26a.98.98 0 0 1 1.386 0l2.694 2.694a.5.5 0 0 0 .707-.707L10.68 2.551a1.98 1.98 0 0 0-2.8 0L5.165 5.267A3.98 3.98 0 0 0 4 8.095c0 1.063.415 2.073 1.17 2.83l.955.955a2.98 2.98 0 0 1 0 4.243l-.51-.51v.012z"/>
                     </svg>
-                    Pix
-                  </span>
-                </div>
-                {/* Parcelamento */}
-                <div className="flex items-center gap-2 text-sm text-emerald-600 font-medium">
-                  <svg viewBox="0 0 24 24" className="w-4 h-4 fill-current" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/>
-                  </svg>
-                  Parcele sua compra em até <strong>12x</strong>
-                </div>
-                {/* Segurança */}
-                <div className="flex gap-3 bg-[var(--muted)] rounded-xl p-4 text-xs text-[var(--muted-fg)]">
-                  <ShieldCheck size={32} className="text-emerald-500 shrink-0" />
-                  <div>
-                    <p className="font-semibold text-[var(--foreground)] mb-0.5">Pagamento 100% seguro</p>
-                    <p>Transações processadas pela <strong>Asaas</strong>, plataforma de pagamentos certificada pelo Banco Central do Brasil (BACEN). Seus dados são criptografados e jamais compartilhados.</p>
+                    <span className="text-xs font-bold text-[#32bcad]">Pix</span>
                   </div>
                 </div>
+
+                {/* Parcelamento e Segurança */}
+                <div className="flex flex-col gap-3 pt-2">
+                  <div className="flex items-center gap-2 text-sm text-[var(--success)] font-medium">
+                    <svg viewBox="0 0 24 24" className="w-4 h-4 fill-current" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/>
+                    </svg>
+                    Parcele sua compra em até <strong>12x</strong>
+                  </div>
+                  
+                  <div className="flex items-start gap-3 bg-[var(--background)] border border-[var(--border)] rounded-xl p-4 mt-2">
+                    <div className="mt-0.5">
+                      <svg viewBox="0 0 24 24" className="w-5 h-5 text-[var(--success)] fill-current" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 19.93V2.93l7 3.11v4.96c0 4.52-2.98 8.69-7 9.93zM16.59 8.59L12 13.17 9.41 10.59 8 12l4 4 6-6z"/>
+                      </svg>
+                    </div>
+                    <div>
+                      <p className="font-bold text-[var(--foreground)] text-sm mb-1">Pagamento 100% seguro</p>
+                      <p className="text-xs text-[var(--muted-fg)] leading-relaxed">
+                        Transações processadas pela <strong>Asaas</strong>, plataforma de pagamentos certificada pelo Banco Central do Brasil (BACEN). Seus dados são criptografados e jamais compartilhados.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
               </div>
             </section>
           </div>
