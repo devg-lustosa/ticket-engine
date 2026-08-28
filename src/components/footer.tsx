@@ -23,22 +23,22 @@ export function Footer() {
             <h4 className="text-white font-semibold tracking-wide uppercase text-sm">Guias de Ajuda</h4>
             <ul className="space-y-2 text-sm">
               <li>
-                <Link href="#" className="hover:text-[var(--brand-400)] transition-colors flex items-center gap-1">
+                <Link href="/ajuda#como-comprar" className="hover:text-[var(--brand-400)] transition-colors flex items-center gap-1">
                   Como Comprar Ingressos
                 </Link>
               </li>
               <li>
-                <Link href="#" className="hover:text-[var(--brand-400)] transition-colors flex items-center gap-1">
+                <Link href="/ajuda#politicas" className="hover:text-[var(--brand-400)] transition-colors flex items-center gap-1">
                   Política de Cancelamento e Reembolso
                 </Link>
               </li>
               <li>
-                <Link href="#" className="hover:text-[var(--brand-400)] transition-colors flex items-center gap-1">
+                <Link href="/ajuda" className="hover:text-[var(--brand-400)] transition-colors flex items-center gap-1">
                   Dúvidas Frequentes (FAQ)
                 </Link>
               </li>
               <li>
-                <Link href="#" className="hover:text-[var(--brand-400)] transition-colors flex items-center gap-1">
+                <Link href="/ajuda#formas-de-pagamento" className="hover:text-[var(--brand-400)] transition-colors flex items-center gap-1">
                   Segurança na Compra <ExternalLink size={14} className="opacity-50" />
                 </Link>
               </li>
