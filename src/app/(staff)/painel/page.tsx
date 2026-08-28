@@ -100,9 +100,21 @@ export default async function StaffDashboardPage() {
       {/* Conteúdo */}
       <div className="max-w-6xl mx-auto px-4 py-8">
         
+        {/* Navegação Secundária */}
+        {dbUser.role === "ORGANIZER" && (
+          <div className="flex items-center gap-6 border-b border-gray-800 mb-8 pb-4">
+            <Link href="/painel" className="text-brand font-medium border-b-2 border-brand pb-4 -mb-[17px]">
+              Seus Eventos
+            </Link>
+            <Link href="/painel/equipe" className="text-gray-400 hover:text-gray-200 font-medium pb-4 -mb-[17px] transition-colors">
+              Gestão de Equipe
+            </Link>
+          </div>
+        )}
 
-
-        <h2 className="text-lg font-semibold mb-4">Seus Eventos</h2>
+        {!dbUser.role || dbUser.role !== "ORGANIZER" && (
+          <h2 className="text-lg font-semibold mb-4">Seus Eventos</h2>
+        )}
         
         {events.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-24 text-center">
