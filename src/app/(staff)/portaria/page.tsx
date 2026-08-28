@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Html5QrcodeScanner, Html5QrcodeScanType } from "html5-qrcode";
-import { CheckCircle2, XCircle, AlertTriangle, Scan, Camera } from "lucide-react";
+import { CheckCircle2, XCircle, AlertTriangle, Scan, Camera, ArrowLeft } from "lucide-react";
 
 type ScanResult =
   | { type: "idle" }
@@ -12,6 +13,7 @@ type ScanResult =
   | { type: "warning"; message: string; usedAt?: string; buyer?: string };
 
 export default function PortariaPage() {
+  const router = useRouter();
   const [result, setResult] = useState<ScanResult>({ type: "idle" });
   const [scannerActive, setScannerActive] = useState(false);
   const [manualHash, setManualHash] = useState("");
@@ -165,8 +167,17 @@ export default function PortariaPage() {
   }, []);
 
   return (
-    <main className="min-h-screen bg-gray-950 text-white flex flex-col items-center justify-center p-4">
-      <div className="w-full max-w-md bg-gray-900 border border-gray-800 rounded-2xl p-6 shadow-2xl flex flex-col items-center">
+    <main className="min-h-screen bg-gray-950 text-white flex flex-col items-center justify-center p-4 relative">
+      {/* Botão Voltar */}
+      <button 
+        onClick={() => router.back()}
+        className="absolute top-6 left-6 text-gray-400 hover:text-white flex items-center gap-2 font-medium transition-colors bg-gray-900/50 px-4 py-2 rounded-full border border-gray-800 backdrop-blur-sm z-10"
+      >
+        <ArrowLeft size={18} />
+        Voltar
+      </button>
+
+      <div className="w-full max-w-md bg-gray-900 border border-gray-800 rounded-2xl p-6 shadow-2xl flex flex-col items-center mt-12">
         
         <div className="mb-6 text-center">
           <h1 className="text-2xl font-bold mb-1 text-white">Validador</h1>
