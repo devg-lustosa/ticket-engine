@@ -20,6 +20,7 @@ import {
   CheckSquare,
   Wallet,
   Percent,
+  Tag,
 } from "lucide-react";
 import { PublishButton } from "./_components/publish-button";
 import { DeleteButton } from "./_components/delete-button";
@@ -223,6 +224,13 @@ export default async function StaffDashboardPage() {
 
                       {dbUser.role === "ORGANIZER" && (
                         <>
+                          <Link
+                            href={`/painel/eventos/${event.id}/cupons`}
+                            className="p-2 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition-colors"
+                            title="Gerenciar cupons"
+                          >
+                            <Tag size={16} />
+                          </Link>
                           <Link
                             href={`/painel/eventos/${event.id}/editar`}
                             className="p-2 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition-colors"

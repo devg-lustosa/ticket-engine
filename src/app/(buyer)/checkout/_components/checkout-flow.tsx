@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { CreditCard, QrCode, User, ShieldCheck, Loader2, ArrowRight } from "lucide-react";
+import { CreditCard, QrCode, User, ShieldCheck, Loader2, ArrowRight, Tag, X } from "lucide-react";
 import Image from "next/image";
 
 interface CheckoutBatch {
@@ -34,6 +34,12 @@ export function CheckoutFlow({ batches, totalValue, buyer }: CheckoutFlowProps) 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pixData, setPixData] = useState<{ code: string; qrBase64: string } | null>(null);
+
+  // Coupon state
+  const [couponCode, setCouponCode] = useState("");
+  const [appliedCoupon, setAppliedCoupon] = useState<{ code: string; discountType: string; discountValue: number } | null>(null);
+  const [couponLoading, setCouponLoading] = useState(false);
+  const [couponError, setCouponError] = useState("");
 
   // Initialize participants array based on quantities
   const [participants, setParticipants] = useState<Participant[]>(() => {
@@ -85,6 +91,41 @@ export function CheckoutFlow({ batches, totalValue, buyer }: CheckoutFlowProps) 
     return holderName && number.length >= 15 && expiryMonth && expiryYear && ccv.length >= 3;
   }
 
+  // Calculate final value with coupon
+  let finalValue = totalValue;
+  if (appliedCoupon) {
+    if (appliedCoupon.discountType === "PERCENTAGE") {
+      finalValue = totalValue - (totalValue * (appliedCoupon.discountValue / 100));
+    } else {
+      finalValue = totalValue - appliedCoupon.discountValue;
+    }
+    if (finalValue < 0) finalValue = 0;
+  }
+
+  async function handleApplyCoupon() {
+    if (!couponCode.trim()) return;
+    setCouponLoading(true);
+    setCouponError("");
+    setAppliedCoupon(null);
+
+    try {
+      const res = await fetch("/api/checkout/validate-coupon", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: couponCode, eventId: batches[0]?.event?.id || "" })
+      });
+      const data = await res.json();
+      
+      if (!res.ok) throw new Error(data.error || "Cupom inválido");
+      
+      setAppliedCoupon(data.coupon);
+    } catch (err: any) {
+      setCouponError(err.message);
+    } finally {
+      setCouponLoading(false);
+    }
+  }
+
   async function handleSubmit() {
     setError(null);
     setLoading(true);
@@ -103,7 +144,8 @@ export function CheckoutFlow({ batches, totalValue, buyer }: CheckoutFlowProps) 
           creditCardInfo: paymentMethod === "CREDIT_CARD" ? {
             ...cardInfo,
             installmentCount: parseInt(cardInfo.installmentCount, 10)
-          } : undefined
+          } : undefined,
+          couponCode: appliedCoupon?.code
         })
       });
 
@@ -287,7 +329,7 @@ export function CheckoutFlow({ batches, totalValue, buyer }: CheckoutFlowProps) 
                       onChange={(e) => setCardInfo({...cardInfo, installmentCount: e.target.value})}
                     >
                       {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(num => {
-                        const val = totalValue / num;
+                        const val = finalValue / num;
                         return (
                           <option key={num} value={num.toString()}>
                             {num}x de R$ {val.toFixed(2).replace(".", ",")} {num === 1 ? "sem juros" : ""}
@@ -395,9 +437,59 @@ export function CheckoutFlow({ batches, totalValue, buyer }: CheckoutFlowProps) 
             ))}
           </div>
           
-          <div className="border-t border-[var(--border)] pt-4 flex justify-between items-center">
-            <span className="text-[var(--muted-fg)] font-medium">Total a pagar</span>
-            <span className="text-2xl font-black text-[var(--brand-500)]">R$ {totalValue.toFixed(2).replace(".", ",")}</span>
+          {/* Cupom de Desconto */}
+          <div className="border-t border-[var(--border)] pt-4 mb-4">
+            {!appliedCoupon ? (
+              <div>
+                <label className="block text-xs font-medium text-[var(--muted-fg)] mb-2">Cupom de Desconto</label>
+                <div className="flex gap-2">
+                  <input 
+                    className="flex-1 bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-[var(--brand-500)] uppercase"
+                    placeholder="Código"
+                    value={couponCode}
+                    onChange={(e) => setCouponCode(e.target.value)}
+                  />
+                  <button 
+                    onClick={handleApplyCoupon}
+                    disabled={couponLoading || !couponCode.trim()}
+                    className="bg-gray-800 hover:bg-gray-700 text-white px-3 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 flex items-center justify-center min-w-[80px]"
+                  >
+                    {couponLoading ? <Loader2 size={16} className="animate-spin" /> : "Aplicar"}
+                  </button>
+                </div>
+                {couponError && <p className="text-red-400 text-xs mt-2">{couponError}</p>}
+              </div>
+            ) : (
+              <div className="flex items-center justify-between bg-[var(--brand-500)]/10 border border-[var(--brand-500)]/30 p-3 rounded-lg">
+                <div className="flex items-center gap-2 text-[var(--brand-500)]">
+                  <Tag size={16} />
+                  <span className="font-bold font-mono text-sm">{appliedCoupon.code}</span>
+                </div>
+                <button 
+                  onClick={() => { setAppliedCoupon(null); setCouponCode(""); }}
+                  className="text-gray-400 hover:text-white"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+            )}
+          </div>
+
+          <div className="border-t border-[var(--border)] pt-4 flex flex-col gap-1">
+            <div className="flex justify-between items-center text-[var(--muted-fg)]">
+              <span>Subtotal</span>
+              <span>R$ {totalValue.toFixed(2).replace(".", ",")}</span>
+            </div>
+            {appliedCoupon && (
+              <div className="flex justify-between items-center text-[var(--brand-500)] font-medium">
+                <span>Desconto ({appliedCoupon.code})</span>
+                <span>- R$ {(totalValue - finalValue).toFixed(2).replace(".", ",")}</span>
+              </div>
+            )}
+            <div className="flex justify-between items-center mt-2 pt-2 border-t border-[var(--border)]">
+              <span className="text-[var(--muted-fg)] font-medium">Total a pagar</span>
+              <span className="text-2xl font-black text-[var(--brand-500)]">R$ {finalValue.toFixed(2).replace(".", ",")}</span>
+            </div>
           </div>
         </div>
       </div>

@@ -21,10 +21,11 @@ export async function POST(request: NextRequest) {
 
     // ── 2. Validação do payload ──────────────────────────────────
     const body = await request.json();
-    const { tickets, paymentMethod, creditCardInfo } = body as { 
+    const { tickets, paymentMethod, creditCardInfo, couponCode } = body as { 
       tickets: { batchId: string, participantName: string, participantCpf: string }[],
       paymentMethod: "PIX" | "CREDIT_CARD",
-      creditCardInfo?: { holderName: string, number: string, expiryMonth: string, expiryYear: string, ccv: string, installmentCount: number }
+      creditCardInfo?: { holderName: string, number: string, expiryMonth: string, expiryYear: string, ccv: string, installmentCount: number },
+      couponCode?: string
     };
 
     if (!tickets || tickets.length === 0) {
@@ -64,6 +65,34 @@ export async function POST(request: NextRequest) {
       }
       
       totalAmount += (Number(batch.price) * requestedQty);
+    }
+
+    // ── 3.5 Valida o Cupom (se houver) ───────────────────────────
+    let validCoupon = null;
+    if (couponCode) {
+      const cleanCode = couponCode.toUpperCase().trim().replace(/\s+/g, '');
+      validCoupon = await prisma.coupon.findUnique({
+        where: { eventId_code: { eventId: batches[0].eventId, code: cleanCode } }
+      });
+
+      if (validCoupon) {
+        if (!validCoupon.active || 
+           (validCoupon.validUntil && new Date(validCoupon.validUntil) < now) ||
+           (validCoupon.maxUses && validCoupon.usedCount >= validCoupon.maxUses)) {
+          return NextResponse.json({ error: "Cupom inválido, expirado ou esgotado." }, { status: 400 });
+        }
+
+        // Aplica o desconto
+        if (validCoupon.discountType === "PERCENTAGE") {
+          const discount = totalAmount * (Number(validCoupon.discountValue) / 100);
+          totalAmount = totalAmount - discount;
+        } else {
+          totalAmount = totalAmount - Number(validCoupon.discountValue);
+        }
+
+        // Não pode ser negativo, mínimo R$ 0.00
+        if (totalAmount < 0) totalAmount = 0;
+      }
     }
 
     // ── 4. Busca ou cria o usuário na base local ─────────────────
@@ -160,6 +189,7 @@ export async function POST(request: NextRequest) {
           pixCode: pixQr?.payload,
           pixQrUrl: pixQr?.encodedImage,
           expiresAt: pixQr?.expirationDate ? new Date(pixQr.expirationDate) : null,
+          couponId: validCoupon ? validCoupon.id : null,
         },
       });
 

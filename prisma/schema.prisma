@@ -21,6 +21,11 @@ enum Role {
   STAFF
 }
 
+enum DiscountType {
+  PERCENTAGE
+  FIXED
+}
+
 enum EventStatus {
   DRAFT
   PUBLISHED
@@ -90,8 +95,9 @@ model Event {
   updatedAt   DateTime    @updatedAt @map("updated_at")
 
   // Relations
-  organizer User    @relation("OrganizerEvents", fields: [organizerId], references: [id])
+  organizer User     @relation("OrganizerEvents", fields: [organizerId], references: [id])
   batches   Batch[]
+  coupons   Coupon[]
 
   @@index([slug])
   @@index([organizerId])
@@ -168,10 +174,37 @@ model Payment {
   expiresAt   DateTime?     @map("expires_at")
   createdAt   DateTime      @default(now()) @map("created_at")
   updatedAt   DateTime      @updatedAt @map("updated_at")
+  
+  couponId    String?       @map("coupon_id")
 
   // Relations
   tickets     Ticket[]
+  coupon      Coupon?       @relation(fields: [couponId], references: [id])
 
   @@index([gatewayId])
+  @@index([couponId])
   @@map("payments")
+}
+
+/// Cupom de Desconto
+model Coupon {
+  id           String       @id @default(uuid())
+  code         String       
+  eventId      String       @map("event_id")
+  discountType DiscountType @default(PERCENTAGE) @map("discount_type")
+  discountValue Decimal     @db.Decimal(10, 2) @map("discount_value")
+  maxUses      Int?         @map("max_uses")
+  usedCount    Int          @default(0) @map("used_count")
+  validUntil   DateTime?    @map("valid_until")
+  active       Boolean      @default(true)
+  createdAt    DateTime     @default(now()) @map("created_at")
+  updatedAt    DateTime     @updatedAt @map("updated_at")
+
+  // Relations
+  event        Event        @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  payments     Payment[]
+
+  @@unique([eventId, code])
+  @@index([eventId])
+  @@map("coupons")
 }

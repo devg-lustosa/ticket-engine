@@ -66,6 +66,14 @@ export async function POST(request: NextRequest) {
           },
         });
       }
+
+      // Incrementa o uso do cupom se existir
+      if (existingPayment.couponId) {
+        await tx.coupon.update({
+          where: { id: existingPayment.couponId },
+          data: { usedCount: { increment: 1 } },
+        });
+      }
     });
 
     console.log(`[webhook/asaas] ✅ ${existingPayment.tickets.length} Ingressos ativados com sucesso (Pagamento: ${existingPayment.id}).`);
