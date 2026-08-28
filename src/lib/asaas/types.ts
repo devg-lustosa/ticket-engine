@@ -47,6 +47,36 @@ export interface AsaasPixQrCode {
   expirationDate: string;
 }
 
+export interface AsaasCreditCardInfo {
+  holderName: string;
+  number: string;
+  expiryMonth: string;
+  expiryYear: string;
+  ccv: string;
+}
+
+export interface AsaasCreditCardChargeInput {
+  customer: string;
+  billingType: "CREDIT_CARD";
+  value: number;
+  dueDate: string;
+  description?: string;
+  externalReference?: string;
+  installmentCount?: number;
+  installmentValue?: number;
+  creditCard: AsaasCreditCardInfo;
+  creditCardHolderInfo: {
+    name: string;
+    email: string;
+    cpfCnpj: string;
+    postalCode: string;
+    addressNumber: string;
+    addressComplement: string | null;
+    phone: string;
+    mobilePhone: string;
+  };
+}
+
 export type AsaasPaymentStatus =
   | "PENDING"
   | "RECEIVED"

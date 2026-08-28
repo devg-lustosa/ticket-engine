@@ -126,6 +126,9 @@ model Ticket {
   id        String       @id @default(uuid())
   batchId   String       @map("batch_id")
   userId    String       @map("user_id")
+  paymentId String?      @map("payment_id")
+  participantName String @map("participant_name")
+  participantCpf  String @map("participant_cpf")
   status    TicketStatus @default(PENDING)
   /// SHA-256 hash: ticket_id + event_id + user_id + SECRET_HASH
   qrHash    String       @unique @map("qr_hash")
@@ -137,10 +140,11 @@ model Ticket {
   // Relations
   batch   Batch    @relation(fields: [batchId], references: [id])
   user    User     @relation(fields: [userId], references: [id])
-  payment Payment?
+  payment Payment? @relation(fields: [paymentId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([batchId])
+  @@index([paymentId])
   @@index([qrHash])
   @@map("tickets")
 }
@@ -148,7 +152,6 @@ model Ticket {
 /// Registro de pagamento via Asaas
 model Payment {
   id          String        @id @default(uuid())
-  ticketId    String        @unique @map("ticket_id")
   /// ID da cobrança gerada pelo Asaas
   gatewayId   String?       @unique @map("gateway_id")
   gateway     String        @default("asaas")
@@ -166,7 +169,7 @@ model Payment {
   updatedAt   DateTime      @updatedAt @map("updated_at")
 
   // Relations
-  ticket Ticket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  tickets     Ticket[]
 
   @@index([gatewayId])
   @@map("payments")

@@ -5,6 +5,7 @@ import type {
   AsaasPixCharge,
   AsaasPixChargeInput,
   AsaasPixQrCode,
+  AsaasCreditCardChargeInput,
 } from "./types";
 
 const ASAAS_BASE_URL =
@@ -81,5 +82,15 @@ export async function getPixQrCode(chargeId: string): Promise<AsaasPixQrCode> {
  */
 export async function getCharge(chargeId: string): Promise<AsaasPixCharge> {
   const { data } = await asaas.get<AsaasPixCharge>(`/payments/${chargeId}`);
+  return data;
+}
+
+/**
+ * Cria uma cobrança com Cartão de Crédito no Asaas.
+ */
+export async function createCreditCardCharge(
+  input: AsaasCreditCardChargeInput
+): Promise<AsaasPixCharge> {
+  const { data } = await asaas.post<AsaasPixCharge>("/payments", input);
   return data;
 }

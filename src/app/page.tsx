@@ -22,7 +22,7 @@ export default async function HomePage() {
   if (authUser) {
     dbUser = await prisma.user.findUnique({
       where: { authId: authUser.id },
-      select: { name: true, email: true }
+      select: { name: true, email: true, role: true }
     });
   }
 
@@ -38,7 +38,7 @@ export default async function HomePage() {
             <Ticket className="h-6 w-6" />
             <span className="hidden sm:inline-block">{siteConfig.name}</span>
           </Link>
-          <UserNav user={dbUser} />
+          <UserNav user={dbUser} role={dbUser?.role} />
         </div>
 
         <div className="relative mx-auto max-w-5xl px-4 text-center animate-fade-in mt-4">

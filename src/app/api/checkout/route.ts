@@ -5,6 +5,7 @@ import {
   createOrFindCustomer,
   createPixCharge,
   getPixQrCode,
+  createCreditCardCharge
 } from "@/lib/asaas/client";
 import { addDays, format } from "date-fns";
 
@@ -20,32 +21,49 @@ export async function POST(request: NextRequest) {
 
     // ── 2. Validação do payload ──────────────────────────────────
     const body = await request.json();
-    const { batchId } = body as { batchId?: string };
+    const { tickets, paymentMethod, creditCardInfo } = body as { 
+      tickets: { batchId: string, participantName: string, participantCpf: string }[],
+      paymentMethod: "PIX" | "CREDIT_CARD",
+      creditCardInfo?: { holderName: string, number: string, expiryMonth: string, expiryYear: string, ccv: string, installmentCount: number }
+    };
 
-    if (!batchId) {
-      return NextResponse.json({ error: "batchId obrigatório." }, { status: 400 });
+    if (!tickets || tickets.length === 0) {
+      return NextResponse.json({ error: "Nenhum ingresso selecionado." }, { status: 400 });
     }
 
-    // ── 3. Busca e valida o lote (com lock otimista de estoque) ──
-    const batch = await prisma.batch.findUnique({
-      where: { id: batchId },
+    if (paymentMethod === "CREDIT_CARD" && !creditCardInfo) {
+      return NextResponse.json({ error: "Informações do cartão são obrigatórias." }, { status: 400 });
+    }
+
+    // ── 3. Busca e valida os lotes (estoque otimista) ───────────
+    const batchIds = [...new Set(tickets.map(t => t.batchId))];
+    const batches = await prisma.batch.findMany({
+      where: { id: { in: batchIds } },
       include: { event: true },
     });
 
-    if (!batch) {
-      return NextResponse.json({ error: "Lote não encontrado." }, { status: 404 });
+    if (batches.length !== batchIds.length) {
+      return NextResponse.json({ error: "Um ou mais lotes não encontrados." }, { status: 404 });
     }
 
-    if (batch.soldQty >= batch.totalQty) {
-      return NextResponse.json({ error: "Lote esgotado." }, { status: 409 });
-    }
-
+    let totalAmount = 0;
     const now = new Date();
-    if (batch.startAt && now < batch.startAt) {
-      return NextResponse.json({ error: "Vendas ainda não iniciaram." }, { status: 409 });
-    }
-    if (batch.endAt && now > batch.endAt) {
-      return NextResponse.json({ error: "Vendas encerradas." }, { status: 409 });
+    
+    // Check limits for each batch
+    for (const batch of batches) {
+      const requestedQty = tickets.filter(t => t.batchId === batch.id).length;
+      
+      if (batch.soldQty + requestedQty > batch.totalQty) {
+        return NextResponse.json({ error: `Lote ${batch.name} esgotado ou sem quantidade suficiente.` }, { status: 409 });
+      }
+      if (batch.startAt && now < batch.startAt) {
+        return NextResponse.json({ error: "Vendas ainda não iniciaram." }, { status: 409 });
+      }
+      if (batch.endAt && now > batch.endAt) {
+        return NextResponse.json({ error: "Vendas encerradas." }, { status: 409 });
+      }
+      
+      totalAmount += (Number(batch.price) * requestedQty);
     }
 
     // ── 4. Busca ou cria o usuário na base local ─────────────────
@@ -63,6 +81,14 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    // Atualiza o CPF se o usuário ainda não tinha
+    if (!dbUser.cpf && tickets[0]?.participantCpf) {
+      dbUser = await prisma.user.update({
+        where: { id: dbUser.id },
+        data: { cpf: tickets[0].participantCpf }
+      });
+    }
+
     // ── 5. Cria/busca Customer no Asaas ─────────────────────────
     const asaasCustomer = await createOrFindCustomer({
       name: dbUser.name,
@@ -71,65 +97,107 @@ export async function POST(request: NextRequest) {
       externalReference: dbUser.id,
     });
 
-    // ── 6. Cria a cobrança Pix no Asaas ─────────────────────────
+    // ── 6. Cria a cobrança no Asaas ─────────────────────────────
     const dueDate = format(addDays(now, 1), "yyyy-MM-dd");
-    const charge = await createPixCharge({
-      customer: asaasCustomer.id,
-      billingType: "PIX",
-      value: Number(batch.price),
-      dueDate,
-      description: `Ingresso: ${batch.event.title} — ${batch.name}`,
-      externalReference: `batch:${batchId}:user:${dbUser.id}`,
-    });
-
-    // ── 7. Busca o QR Code Pix ───────────────────────────────────
-    const qrCode = await getPixQrCode(charge.id);
-
-    // ── 8. Cria o Ticket (PENDING) e o Payment de forma atômica ──
-    const [ticket] = await prisma.$transaction([
-      prisma.ticket.create({
-        data: {
-          batchId,
-          userId: dbUser.id,
-          status: "PENDING",
-          // qrHash será gerado pelo webhook após confirmação do pagamento
-          qrHash: `pending-${charge.id}`,
+    let charge;
+    
+    if (paymentMethod === "CREDIT_CARD" && creditCardInfo) {
+      charge = await createCreditCardCharge({
+        customer: asaasCustomer.id,
+        billingType: "CREDIT_CARD",
+        value: totalAmount,
+        dueDate,
+        description: `Compra de Ingressos - ${batches[0].event.title} e outros`,
+        externalReference: `user:${dbUser.id}:${Date.now()}`,
+        installmentCount: creditCardInfo.installmentCount,
+        installmentValue: totalAmount / creditCardInfo.installmentCount,
+        creditCard: {
+          holderName: creditCardInfo.holderName,
+          number: creditCardInfo.number,
+          expiryMonth: creditCardInfo.expiryMonth,
+          expiryYear: creditCardInfo.expiryYear,
+          ccv: creditCardInfo.ccv
         },
-      }),
-      // Incrementa soldQty atomicamente para evitar overselling
-      prisma.batch.update({
-        where: { id: batchId },
-        data: { soldQty: { increment: 1 } },
-      }),
-    ]);
+        creditCardHolderInfo: {
+          name: dbUser.name,
+          email: dbUser.email,
+          cpfCnpj: dbUser.cpf || "00000000000",
+          postalCode: "01001-000",
+          addressNumber: "1",
+          addressComplement: null,
+          phone: dbUser.phone || "11999999999",
+          mobilePhone: dbUser.phone || "11999999999",
+        }
+      });
+    } else {
+      charge = await createPixCharge({
+        customer: asaasCustomer.id,
+        billingType: "PIX",
+        value: totalAmount,
+        dueDate,
+        description: `Compra de Ingressos - ${batches[0].event.title} e outros`,
+        externalReference: `user:${dbUser.id}:${Date.now()}`,
+      });
+    }
 
-    await prisma.payment.create({
-      data: {
-        ticketId: ticket.id,
-        gatewayId: charge.id,
-        gateway: "asaas",
-        method: "PIX",
-        status: "PENDING",
-        amount: batch.price,
-        pixCode: qrCode.payload,
-        pixQrUrl: qrCode.encodedImage,
-        expiresAt: new Date(qrCode.expirationDate),
-      },
+    // ── 7. Busca o QR Code Pix (se for Pix) ─────────────────────
+    let pixQr = null;
+    if (paymentMethod === "PIX") {
+      pixQr = await getPixQrCode(charge.id);
+      console.log("[checkout/route] Pix QR response:", pixQr);
+    }
+
+    // ── 8. Cria os Ingressos e o Pagamento ───────────────────────
+    await prisma.$transaction(async (tx) => {
+      // Create payment
+      const payment = await tx.payment.create({
+        data: {
+          gatewayId: charge.id,
+          gateway: "asaas",
+          method: paymentMethod,
+          status: charge.status === "CONFIRMED" || charge.status === "RECEIVED" ? "PAID" : "PENDING",
+          amount: totalAmount,
+          pixCode: pixQr?.payload,
+          pixQrUrl: pixQr?.encodedImage,
+          expiresAt: pixQr?.expirationDate ? new Date(pixQr.expirationDate) : null,
+        },
+      });
+
+      // Create tickets
+      for (const t of tickets) {
+        await tx.ticket.create({
+          data: {
+            batchId: t.batchId,
+            userId: dbUser.id,
+            paymentId: payment.id,
+            participantName: t.participantName,
+            participantCpf: t.participantCpf,
+            status: payment.status === "PAID" ? "ACTIVE" : "PENDING",
+            qrHash: `pending-${payment.id}-${Math.random().toString(36).substring(7)}`, // Temporário até pagamento
+          },
+        });
+      }
+
+      // Increment batch sold quantities
+      for (const batch of batches) {
+        const requestedQty = tickets.filter(t => t.batchId === batch.id).length;
+        await tx.batch.update({
+          where: { id: batch.id },
+          data: { soldQty: { increment: requestedQty } },
+        });
+      }
     });
 
-    // ── 9. Retorna dados para o frontend ─────────────────────────
-    return NextResponse.json({
-      ticketId: ticket.id,
-      pixCode: qrCode.payload,
-      pixQrBase64: qrCode.encodedImage,
-      expiresAt: qrCode.expirationDate,
-      amount: Number(batch.price),
-      event: {
-        title: batch.event.title,
-        date: batch.event.date,
-        venue: batch.event.venue,
-      },
+    console.log("[checkout/route] Final response:", { success: true, paymentMethod, pixCode: !!pixQr?.payload });
+
+    // ── 9. Retorna sucesso para o frontend ───────────────────────
+    return NextResponse.json({ 
+      success: true, 
+      paymentMethod,
+      pixCode: pixQr?.payload,
+      pixQrBase64: pixQr?.encodedImage
     });
+    
   } catch (error: any) {
     const asaasError = error.response?.data?.errors?.[0]?.description;
     console.error("[checkout/route] Error:", asaasError || error.message || error);

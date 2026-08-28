@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
     // ── 3. Idempotência — verifica se já foi processado ───────────
     const existingPayment = await prisma.payment.findUnique({
       where: { gatewayId: payment.id },
-      include: { ticket: { include: { batch: { include: { event: true } } } } },
+      include: { tickets: { include: { batch: true } } },
     });
 
     if (!existingPayment) {
@@ -42,30 +42,33 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ received: true });
     }
 
-    // ── 4. Gera o qrHash seguro do ingresso ───────────────────────
-    const ticket = existingPayment.ticket;
-    const eventId = ticket.batch.eventId;
-    const qrHash = generateTicketHash(ticket.id, eventId, ticket.userId);
-
-    // ── 5. Atualiza Payment e Ticket atomicamente ─────────────────
-    await prisma.$transaction([
-      prisma.payment.update({
+    // ── 4. Atualiza Payment e Ticket atomicamente ─────────────────
+    await prisma.$transaction(async (tx) => {
+      // Atualiza pagamento
+      await tx.payment.update({
         where: { id: existingPayment.id },
         data: {
           status: "PAID",
           paidAt: payment.paymentDate ? new Date(payment.paymentDate) : new Date(),
         },
-      }),
-      prisma.ticket.update({
-        where: { id: ticket.id },
-        data: {
-          status: "ACTIVE",
-          qrHash,
-        },
-      }),
-    ]);
+      });
 
-    console.log(`[webhook/asaas] ✅ Ingresso ${ticket.id} ativado com sucesso.`);
+      // Atualiza tickets e gera QR Hashes
+      for (const ticket of existingPayment.tickets) {
+        const eventId = ticket.batch.eventId;
+        const qrHash = generateTicketHash(ticket.id, eventId, ticket.userId);
+
+        await tx.ticket.update({
+          where: { id: ticket.id },
+          data: {
+            status: "ACTIVE",
+            qrHash,
+          },
+        });
+      }
+    });
+
+    console.log(`[webhook/asaas] ✅ ${existingPayment.tickets.length} Ingressos ativados com sucesso (Pagamento: ${existingPayment.id}).`);
 
     return NextResponse.json({ received: true });
   } catch (error) {

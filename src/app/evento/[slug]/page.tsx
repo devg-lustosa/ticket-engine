@@ -3,10 +3,11 @@ import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Calendar, MapPin, Ticket, ArrowLeft, Clock } from "lucide-react";
+import { Calendar, MapPin, Ticket, ArrowLeft, ShieldCheck, User, CreditCard, AlertCircle, Pencil } from "lucide-react";
 import { siteConfig } from "@/config/site";
 import { UserNav } from "@/components/user-nav";
 import { createClient } from "@/lib/supabase/server";
+import { TicketsBox } from "./_components/tickets-box";
 
 interface EventPageProps {
   params: Promise<{
@@ -23,6 +24,9 @@ export default async function EventDetailsPage({ params }: EventPageProps) {
     include: {
       batches: {
         orderBy: { sortOrder: "asc" },
+      },
+      organizer: {
+        select: { name: true },
       },
     },
   });
@@ -44,7 +48,6 @@ export default async function EventDetailsPage({ params }: EventPageProps) {
 
   const eventDate = format(new Date(event.date), "dd 'de' MMMM yyyy", { locale: ptBR });
   const eventTime = format(new Date(event.date), "HH:mm", { locale: ptBR });
-  const doorsOpenTime = event.doorsOpen ? format(new Date(event.doorsOpen), "HH:mm") : null;
 
   return (
     <main className="min-h-dvh bg-[var(--background)]">
@@ -119,75 +122,118 @@ export default async function EventDetailsPage({ params }: EventPageProps) {
                     {(event.city || event.state) && <p>{event.city} - {event.state}</p>}
                   </div>
                 </div>
-                {doorsOpenTime && (
-                  <div className="flex items-center gap-3">
-                    <Clock size={20} className="text-[var(--brand-500)] shrink-0" />
-                    <p>Abertura dos portões: <span className="font-semibold text-[var(--foreground)]">{doorsOpenTime}</span></p>
+              </div>
+            </section>
+
+            {/* Política do Evento */}
+            <section className="border border-[var(--border)] rounded-2xl overflow-hidden">
+              <div className="flex items-center gap-2 px-6 py-4 border-b border-[var(--border)] bg-[var(--muted)]">
+                <ShieldCheck size={18} className="text-[var(--brand-500)]" />
+                <h3 className="font-bold text-[var(--foreground)]">Política do Evento</h3>
+              </div>
+              <div className="px-6 py-5 space-y-5">
+                <div className="flex gap-3">
+                  <AlertCircle size={18} className="text-[var(--brand-500)] shrink-0 mt-0.5" />
+                  <div className="text-sm text-[var(--muted-fg)]">
+                    <p className="font-semibold text-[var(--foreground)] mb-1">Cancelamento de pedidos pagos</p>
+                    <p>Cancelamentos de pedidos serão aceitos até <strong>7 dias após a compra</strong>, desde que a solicitação seja enviada até <strong>48 horas antes do início do evento</strong>.</p>
                   </div>
-                )}
+                </div>
+                <div className="h-px bg-[var(--border)]" />
+                <div className="flex gap-3">
+                  <Pencil size={18} className="text-[var(--brand-500)] shrink-0 mt-0.5" />
+                  <div className="text-sm text-[var(--muted-fg)]">
+                    <p className="font-semibold text-[var(--foreground)] mb-1">Editar participante</p>
+                    <p>Você poderá editar o participante de um ingresso <strong>apenas uma vez</strong>. Essa opção ficará disponível até <strong>24 horas antes do início do evento</strong>.</p>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            {/* Sobre o Produtor */}
+            <section className="border border-[var(--border)] rounded-2xl overflow-hidden">
+              <div className="flex items-center gap-2 px-6 py-4 border-b border-[var(--border)] bg-[var(--muted)]">
+                <User size={18} className="text-[var(--brand-500)]" />
+                <h3 className="font-bold text-[var(--foreground)]">Sobre o Produtor</h3>
+              </div>
+              <div className="px-6 py-5 flex items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-[var(--brand-500)]/10 flex items-center justify-center">
+                    <User size={20} className="text-[var(--brand-500)]" />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-[var(--foreground)] text-sm">{event.organizer.name}</p>
+                    <p className="text-xs text-[var(--muted-fg)]">Organizador do evento</p>
+                  </div>
+                </div>
+                <button
+                  disabled
+                  title="Em breve"
+                  className="px-4 py-2 text-sm font-medium border border-[var(--border)] rounded-lg text-[var(--muted-fg)] cursor-not-allowed opacity-60"
+                >
+                  Entrar em contato
+                </button>
+              </div>
+            </section>
+
+            {/* Métodos de Pagamento */}
+            <section className="border border-[var(--border)] rounded-2xl overflow-hidden">
+              <div className="flex items-center gap-2 px-6 py-4 border-b border-[var(--border)] bg-[var(--muted)]">
+                <CreditCard size={18} className="text-[var(--brand-500)]" />
+                <h3 className="font-bold text-[var(--foreground)]">Métodos de pagamento</h3>
+              </div>
+              <div className="px-6 py-5 space-y-4">
+                {/* Card brands */}
+                <div className="flex flex-wrap gap-2">
+                  {[
+                    { label: "VISA",  bg: "#1a1f71", text: "#fff", style: "italic font-black" },
+                    { label: "MC",    bg: "#eb001b", text: "#fff", style: "font-black", extra: "after:" },
+                    { label: "ELO",   bg: "#00a4e0", text: "#fff", style: "font-black" },
+                    { label: "AMEX",  bg: "#2e77bc", text: "#fff", style: "font-bold" },
+                  ].map((card) => (
+                    <span
+                      key={card.label}
+                      className="inline-flex items-center justify-center px-3 py-1.5 rounded-md text-xs font-bold tracking-wider"
+                      style={{ backgroundColor: card.bg, color: card.text }}
+                    >
+                      {card.label}
+                    </span>
+                  ))}
+                  {/* Pix */}
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold bg-[#32bcad]/10 text-[#32bcad] border border-[#32bcad]/30">
+                    <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 fill-current" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M5.615 14.625a3.98 3.98 0 0 0 2.83 1.17h.08l2.695 2.695a1.98 1.98 0 0 0 2.8 0l2.715-2.715a3.98 3.98 0 0 0 2.83-1.17l.955.955a.5.5 0 0 0 .707-.707l-.955-.955A3.98 3.98 0 0 0 20 11.07V10.9a3.98 3.98 0 0 0-1.17-2.83l-.955-.955a.5.5 0 0 0-.707.707l.955.955A2.98 2.98 0 0 1 19 10.9v.17a2.98 2.98 0 0 1-.875 2.125l-2.715 2.715a.98.98 0 0 1-1.386 0L11.33 13.22a.5.5 0 0 0-.707.707l2.694 2.694-2.715 2.715a.98.98 0 0 1-1.386 0L6.52 16.64a3.98 3.98 0 0 0 0-5.657L5.565 10.03A2.98 2.98 0 0 1 5 8.095a2.98 2.98 0 0 1 .875-2.12L8.59 3.26a.98.98 0 0 1 1.386 0l2.694 2.694a.5.5 0 0 0 .707-.707L10.68 2.551a1.98 1.98 0 0 0-2.8 0L5.165 5.267A3.98 3.98 0 0 0 4 8.095c0 1.063.415 2.073 1.17 2.83l.955.955a2.98 2.98 0 0 1 0 4.243l-.51-.51v.012z"/>
+                    </svg>
+                    Pix
+                  </span>
+                </div>
+                {/* Parcelamento */}
+                <div className="flex items-center gap-2 text-sm text-emerald-600 font-medium">
+                  <svg viewBox="0 0 24 24" className="w-4 h-4 fill-current" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/>
+                  </svg>
+                  Parcele sua compra em até <strong>12x</strong>
+                </div>
+                {/* Segurança */}
+                <div className="flex gap-3 bg-[var(--muted)] rounded-xl p-4 text-xs text-[var(--muted-fg)]">
+                  <ShieldCheck size={32} className="text-emerald-500 shrink-0" />
+                  <div>
+                    <p className="font-semibold text-[var(--foreground)] mb-0.5">Pagamento 100% seguro</p>
+                    <p>Transações processadas pela <strong>Asaas</strong>, plataforma de pagamentos certificada pelo Banco Central do Brasil (BACEN). Seus dados são criptografados e jamais compartilhados.</p>
+                  </div>
+                </div>
               </div>
             </section>
           </div>
 
           {/* Right Column: Tickets Box */}
           <div className="lg:col-span-1">
-            <div className="sticky top-6 bg-[var(--card)] rounded-2xl shadow-xl border border-[var(--border)] overflow-hidden">
-              <div className="bg-[var(--brand-500)] p-4 text-white text-center">
-                <h3 className="font-bold text-lg">Ingressos</h3>
-              </div>
-              
-              <div className="p-1 divide-y divide-[var(--border)]">
-                {event.batches.length === 0 ? (
-                  <div className="p-6 text-center text-sm text-[var(--muted-fg)]">
-                    Nenhum ingresso disponível no momento.
-                  </div>
-                ) : (
-                  event.batches.map((batch) => {
-                    const isAvailable = batch.soldQty < batch.totalQty;
-                    
-                    return (
-                      <div key={batch.id} className="p-5 flex flex-col gap-3">
-                        <div className="flex justify-between items-start">
-                          <div>
-                            <h4 className="font-bold text-[var(--foreground)] text-lg">{batch.name}</h4>
-                            {batch.description && (
-                              <p className="text-sm text-[var(--foreground)] opacity-80 mt-0.5">{batch.description}</p>
-                            )}
-                          </div>
-                          <span className="font-extrabold text-xl text-[var(--brand-500)] whitespace-nowrap">
-                            R$ {Number(batch.price).toFixed(2).replace(".", ",")}
-                          </span>
-                        </div>
-                        
-                        {isAvailable ? (
-                          <Link
-                            href={`/checkout/${batch.id}`}
-                            className="w-full mt-2 block rounded-xl bg-[var(--brand-500)] px-4 py-3 text-center text-sm font-bold text-white transition hover:bg-[var(--brand-600)] active:scale-[0.98]"
-                          >
-                            Comprar Ingresso
-                          </Link>
-                        ) : (
-                          <button
-                            disabled
-                            className="w-full mt-2 block rounded-xl bg-[var(--muted)] px-4 py-3 text-center text-sm font-bold text-[var(--muted-fg)] cursor-not-allowed"
-                          >
-                            Lote Esgotado
-                          </button>
-                        )}
-                        
-                        <div className="text-[11px] text-center text-[var(--foreground)] opacity-70 uppercase tracking-wider font-bold">
-                          Disponibilidade: {batch.totalQty - batch.soldQty} restantes
-                        </div>
-                      </div>
-                    );
-                  })
-                )}
-              </div>
-              
-              <div className="bg-[var(--muted)] p-4 text-xs text-[var(--muted-fg)] text-center border-t border-[var(--border)]">
-                Compras processadas via <strong>Asaas</strong> com Pix. Segurança 100% garantida.
-              </div>
-            </div>
+            <TicketsBox
+              batches={event.batches.map((b) => ({
+                ...b,
+                price: Number(b.price),
+              }))}
+            />
           </div>
 
         </div>
