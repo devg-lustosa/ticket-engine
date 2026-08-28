@@ -30,5 +30,9 @@ export default async function EditarEventoPage({
     redirect("/painel");
   }
 
-  return <EditEventoForm organizerId={dbUser.id} initialData={event} />;
+  // Next.js requires plain objects for Client Components.
+  // We use JSON parse/stringify to serialize Prisma's Decimal and Date types.
+  const serializedEvent = JSON.parse(JSON.stringify(event));
+
+  return <EditEventoForm organizerId={dbUser.id} initialData={serializedEvent} />;
 }
