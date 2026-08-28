@@ -186,16 +186,14 @@ export default async function EventDetailsPage({ params }: EventPageProps) {
                 {/* Card brands */}
                 <div className="flex flex-wrap items-center gap-2">
                   {/* Visa */}
-                  <div className="flex h-8 w-12 items-center justify-center rounded bg-[#1434CB]">
-                    <svg viewBox="0 0 32 10" className="h-3.5 w-auto fill-white" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M12.235 0L8.71 9.823H5.215L3.435 1.554C3.254.73 3.088.46 2.392.128L.044 0h.105c1.78.36 3.407.973 4.542 1.834l1.918 7.989h3.6L15.932 0h-3.697zm6.75 9.823h3.328V0h-3.328v9.823zm8.93-9.59c-1.464-.383-3.116-.547-4.47-.547-3.957 0-6.738 2.052-6.764 5.01-.027 2.188 1.986 3.415 3.513 4.148 1.564.75 2.086 1.233 2.086 1.9 0 1.018-1.242 1.484-2.392 1.484-1.59 0-2.455-.246-3.76-.827l-.53-.25-1.524 9.489h1.365z"/>
-                      <path d="M29.835 0c-.628 0-1.157.362-1.4.927l-5.305 12.656h3.498s.575-1.637.705-1.99c.38.002 3.844.002 4.28 0 .1.465.65 1.99.65 1.99h3.072L32.222 0h-2.387zm-.356 2.923l1.015 4.876h-2.186l1.17-4.876z"/>
-                      <path d="M23.11 3.567c-.208-1.025-1.096-2.584-2.83-3.24L18.47 9.82h3.5l1.14-3.003h.001z"/>
+                  <div className="flex h-8 w-14 items-center justify-center rounded" style={{ backgroundColor: "#1434CB" }}>
+                    <svg viewBox="0 0 38 12" className="h-3.5 w-auto" fill="#FFFFFF" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M14.52 0l-2.28 11.53H8.71L6.46 1.83C6.25.86 6.05.54 5.23.15L0 0h.13c2.09.43 4 .98 5.33 2.16l2.25 9.37h4.22L18.86 0h-4.34zm7.92 11.53h3.91V0h-3.91v11.53zm10.49-11.26c-1.72-.45-3.66-.64-5.25-.64-4.65 0-7.91 2.41-7.94 5.88-.03 2.57 2.33 4.01 4.12 4.87 1.84.88 2.45 1.45 2.45 2.23 0 1.2-.14 1.74-2.81 1.74-1.87 0-2.88-.29-4.41-.97l-.62-.29-1.79 11.14h1.6zm7.07 0c-.74 0-1.36.42-1.64 1.09l-6.23 14.86h4.11s.68-1.92.83-2.34c.45.01 4.51.01 5.03 0 .12.55.76 2.34.76 2.34h3.61l-6.47-15.95h-2.8zm-.42 3.43l1.19 5.73h-2.57l1.38-5.73z" />
                     </svg>
                   </div>
                   
                   {/* Mastercard */}
-                  <div className="flex h-8 w-12 items-center justify-center rounded bg-[#1C1C1F]">
+                  <div className="flex h-8 w-14 items-center justify-center rounded" style={{ backgroundColor: "#1C1C1F" }}>
                     <svg viewBox="0 0 36 24" className="h-5 w-auto" xmlns="http://www.w3.org/2000/svg">
                       <circle cx="12" cy="12" r="7.5" fill="#EB001B" />
                       <circle cx="24" cy="12" r="7.5" fill="#F79E1B" />
@@ -204,25 +202,25 @@ export default async function EventDetailsPage({ params }: EventPageProps) {
                   </div>
 
                   {/* Elo */}
-                  <div className="flex h-8 w-12 items-center justify-center rounded bg-black">
+                  <div className="flex h-8 w-14 items-center justify-center rounded" style={{ backgroundColor: "#000000" }}>
                     <svg viewBox="0 0 40 40" className="h-6 w-auto" xmlns="http://www.w3.org/2000/svg">
                       <circle cx="20" cy="20" r="16" fill="#00A4E0" />
-                      <path d="M12 18h8v2h-8zM12 22h8v2h-8zM24 16a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm0 2a1 1 0 1 1 0-2 1 1 0 0 1 0 2zM24 22a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm0 2a1 1 0 1 1 0-2 1 1 0 0 1 0 2z" fill="#FFF" />
-                      <text x="50%" y="54%" dominantBaseline="middle" textAnchor="middle" fill="#FFF" fontSize="14" fontWeight="bold" fontStyle="italic" letterSpacing="-1">elo</text>
+                      <path d="M12 18h8v2h-8zM12 22h8v2h-8zM24 16a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm0 2a1 1 0 1 1 0-2 1 1 0 0 1 0 2zM24 22a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm0 2a1 1 0 1 1 0-2 1 1 0 0 1 0 2z" fill="#FFFFFF" />
+                      <text x="50%" y="54%" dominantBaseline="middle" textAnchor="middle" fill="#FFFFFF" fontSize="14" fontWeight="bold" fontStyle="italic" letterSpacing="-1">elo</text>
                     </svg>
                   </div>
 
                   {/* Amex */}
-                  <div className="flex h-8 w-12 items-center justify-center rounded bg-[#006FCF]">
-                    <span className="text-[10px] font-bold text-white tracking-widest">AMEX</span>
+                  <div className="flex h-8 w-14 items-center justify-center rounded" style={{ backgroundColor: "#006FCF" }}>
+                    <span className="text-[11px] font-extrabold text-white tracking-wider" style={{ fontFamily: "Arial, sans-serif" }}>AMEX</span>
                   </div>
 
                   {/* Pix */}
-                  <div className="flex h-8 items-center gap-1.5 px-2.5 rounded bg-[#32bcad]/10 border border-[#32bcad]/30">
-                    <svg viewBox="0 0 24 24" className="w-4 h-4 fill-[#32bcad]" xmlns="http://www.w3.org/2000/svg">
+                  <div className="flex h-8 items-center gap-1.5 px-3 rounded border" style={{ backgroundColor: "rgba(50,188,173,0.1)", borderColor: "rgba(50,188,173,0.3)" }}>
+                    <svg viewBox="0 0 24 24" className="w-4 h-4" fill="#32bcad" xmlns="http://www.w3.org/2000/svg">
                       <path d="M5.615 14.625a3.98 3.98 0 0 0 2.83 1.17h.08l2.695 2.695a1.98 1.98 0 0 0 2.8 0l2.715-2.715a3.98 3.98 0 0 0 2.83-1.17l.955.955a.5.5 0 0 0 .707-.707l-.955-.955A3.98 3.98 0 0 0 20 11.07V10.9a3.98 3.98 0 0 0-1.17-2.83l-.955-.955a.5.5 0 0 0-.707.707l.955.955A2.98 2.98 0 0 1 19 10.9v.17a2.98 2.98 0 0 1-.875 2.125l-2.715 2.715a.98.98 0 0 1-1.386 0L11.33 13.22a.5.5 0 0 0-.707.707l2.694 2.694-2.715 2.715a.98.98 0 0 1-1.386 0L6.52 16.64a3.98 3.98 0 0 0 0-5.657L5.565 10.03A2.98 2.98 0 0 1 5 8.095a2.98 2.98 0 0 1 .875-2.12L8.59 3.26a.98.98 0 0 1 1.386 0l2.694 2.694a.5.5 0 0 0 .707-.707L10.68 2.551a1.98 1.98 0 0 0-2.8 0L5.165 5.267A3.98 3.98 0 0 0 4 8.095c0 1.063.415 2.073 1.17 2.83l.955.955a2.98 2.98 0 0 1 0 4.243l-.51-.51v.012z"/>
                     </svg>
-                    <span className="text-xs font-bold text-[#32bcad]">Pix</span>
+                    <span className="text-[13px] font-bold" style={{ color: "#32bcad" }}>Pix</span>
                   </div>
                 </div>
 
