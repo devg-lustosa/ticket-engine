@@ -259,7 +259,7 @@ export default function PortariaPage() {
           <div className="flex gap-2">
             <input 
               type="text" 
-              placeholder="Código Hash do Ingresso" 
+              placeholder="Código Curto (Ex: 8A4B2C1D)" 
               value={manualHash}
               onChange={(e) => setManualHash(e.target.value)}
               className="flex-1 bg-gray-950 border border-gray-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-brand"

@@ -28,11 +28,14 @@ export async function POST(request: NextRequest) {
     }
 
     const cleanHash = qrHash.trim();
-    console.log("Recebido na API checkin, cleanHash:", `"${cleanHash}"`);
+    const isShortCode = cleanHash.length === 8;
+    console.log("Recebido na API checkin, cleanHash:", `"${cleanHash}"`, "isShortCode:", isShortCode);
 
     // 3. Busca o ingresso
-    const ticket = await prisma.ticket.findUnique({
-      where: { qrHash: cleanHash },
+    const ticket = await prisma.ticket.findFirst({
+      where: isShortCode 
+        ? { id: { startsWith: cleanHash.toLowerCase() } }
+        : { qrHash: cleanHash },
       include: {
         user: { select: { name: true, email: true, cpf: true } },
         batch: {

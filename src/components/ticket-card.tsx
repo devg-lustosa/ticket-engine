@@ -154,11 +154,11 @@ export function TicketCard({ ticket }: TicketCardProps) {
                   }}
                 />
               </div>
-              <p className="text-[10px] text-slate-400 font-mono text-center break-all w-full mt-2 px-2">
-                {ticket.qrHash}
+              <p className="text-lg font-bold text-slate-700 tracking-[0.2em] font-mono text-center mt-2">
+                {ticket.id.split("-")[0].toUpperCase()}
               </p>
-              <p className="mt-2 text-xs text-center text-slate-500 max-w-[200px]">
-                Apresente este código na portaria para entrar no evento.
+              <p className="mt-1 text-[11px] text-center text-slate-400 max-w-[200px]">
+                Apresente o QR Code ou informe o código acima na portaria.
               </p>
             </>
           ) : ticket.status === "USED" ? (
