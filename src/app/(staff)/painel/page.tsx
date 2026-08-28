@@ -22,6 +22,7 @@ import {
   Percent,
 } from "lucide-react";
 import { PublishButton } from "./_components/publish-button";
+import { DeleteButton } from "./_components/delete-button";
 
 const STATUS_LABELS: Record<string, { label: string; color: string }> = {
   DRAFT: { label: "Rascunho", color: "bg-gray-700 text-gray-300" },
@@ -229,12 +230,7 @@ export default async function StaffDashboardPage() {
                           >
                             <Pencil size={16} />
                           </Link>
-                          <button
-                            className="p-2 text-gray-400 hover:text-red-400 hover:bg-red-900/20 rounded-lg transition-colors"
-                            title="Remover evento"
-                          >
-                            <Trash2 size={16} />
-                          </button>
+                          <DeleteButton eventId={event.id} />
                         </>
                       )}
                     </div>

@@ -46,3 +46,35 @@ export async function PATCH(
     );
   }
 }
+
+export async function DELETE(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
+    }
+
+    const dbUser = await prisma.user.findUnique({ where: { authId: user.id } });
+    if (!dbUser || dbUser.role !== "ORGANIZER") {
+      return NextResponse.json({ error: "Sem permissão" }, { status: 403 });
+    }
+
+    await prisma.event.delete({ where: { id } });
+
+    return NextResponse.json({ success: true });
+  } catch (err) {
+    console.error("[DELETE /api/painel/eventos/[id]]", err);
+    return NextResponse.json(
+      { error: "Erro interno do servidor" },
+      { status: 500 }
+    );
+  }
+}
