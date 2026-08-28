@@ -129,6 +129,7 @@ model Ticket {
   paymentId String?      @map("payment_id")
   participantName String @map("participant_name")
   participantCpf  String @map("participant_cpf")
+  isParticipantEdited Boolean @default(false) @map("is_participant_edited")
   status    TicketStatus @default(PENDING)
   /// SHA-256 hash: ticket_id + event_id + user_id + SECRET_HASH
   qrHash    String       @unique @map("qr_hash")
