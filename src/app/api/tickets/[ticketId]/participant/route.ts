@@ -5,9 +5,10 @@ import { isBefore, subHours } from "date-fns";
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { ticketId: string } }
+  { params }: { params: Promise<{ ticketId: string }> }
 ) {
   try {
+    const { ticketId } = await params;
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
@@ -15,14 +16,16 @@ export async function PATCH(
       return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
     }
 
-    const { participantName, participantCpf } = await request.json();
+    const body = await request.json();
+    const participantName = body.participantName as string;
+    const participantCpf = body.participantCpf as string;
 
     if (!participantName || !participantCpf) {
       return NextResponse.json({ error: "Nome e CPF são obrigatórios" }, { status: 400 });
     }
 
     const ticket = await prisma.ticket.findUnique({
-      where: { id: params.ticketId },
+      where: { id: ticketId },
       include: {
         batch: { include: { event: true } },
         user: true,
