@@ -15,6 +15,11 @@ import {
   Eye,
   EyeOff,
   Clock,
+  DollarSign,
+  Ticket as TicketIcon,
+  CheckSquare,
+  Wallet,
+  Percent,
 } from "lucide-react";
 import { PublishButton } from "./_components/publish-button";
 
@@ -48,6 +53,31 @@ export default async function StaffDashboardPage() {
       },
     },
   });
+
+  // Metrics calculations for ORGANIZER
+  let totalRevenue = 0;
+  let platformFee = 0;
+  let netRevenue = 0;
+  let ticketsSold = 0;
+  let checkins = 0;
+
+  if (dbUser.role === "ORGANIZER") {
+    const payments = await prisma.payment.findMany({
+      where: { status: "PAID" },
+      select: { amount: true },
+    });
+    totalRevenue = payments.reduce((acc, p) => acc + Number(p.amount), 0);
+    platformFee = totalRevenue * 0.05;
+    netRevenue = totalRevenue - platformFee;
+
+    ticketsSold = await prisma.ticket.count({
+      where: { status: { in: ["ACTIVE", "USED"] } },
+    });
+
+    checkins = await prisma.ticket.count({
+      where: { status: "USED" },
+    });
+  }
 
   return (
     <main className="min-h-screen bg-gray-950 text-white">
@@ -88,6 +118,97 @@ export default async function StaffDashboardPage() {
 
       {/* Conteúdo */}
       <div className="max-w-6xl mx-auto px-4 py-8">
+        
+        {/* Métricas (apenas para organizador) */}
+        {dbUser.role === "ORGANIZER" && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            {/* Ingressos Vendidos */}
+            <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 shadow-sm">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-gray-400 font-medium text-sm">Ingressos Vendidos</h3>
+                <div className="w-8 h-8 bg-brand/10 rounded-full flex items-center justify-center text-brand">
+                  <TicketIcon size={16} />
+                </div>
+              </div>
+              <p className="text-2xl font-bold">{ticketsSold}</p>
+            </div>
+
+            {/* Faturamento Bruto */}
+            <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 shadow-sm">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-gray-400 font-medium text-sm">Faturamento Bruto</h3>
+                <div className="w-8 h-8 bg-green-500/10 rounded-full flex items-center justify-center text-green-400">
+                  <DollarSign size={16} />
+                </div>
+              </div>
+              <p className="text-2xl font-bold">
+                {new Intl.NumberFormat("pt-BR", {
+                  style: "currency",
+                  currency: "BRL",
+                }).format(totalRevenue)}
+              </p>
+            </div>
+
+            {/* Taxa da Plataforma */}
+            <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 shadow-sm">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-gray-400 font-medium text-sm">Taxa do Site (5%)</h3>
+                <div className="w-8 h-8 bg-red-500/10 rounded-full flex items-center justify-center text-red-400">
+                  <Percent size={16} />
+                </div>
+              </div>
+              <p className="text-2xl font-bold text-red-400">
+                {new Intl.NumberFormat("pt-BR", {
+                  style: "currency",
+                  currency: "BRL",
+                }).format(platformFee)}
+              </p>
+            </div>
+
+            {/* Faturamento Líquido */}
+            <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 shadow-sm">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-gray-400 font-medium text-sm">Sua Receita</h3>
+                <div className="w-8 h-8 bg-emerald-500/10 rounded-full flex items-center justify-center text-emerald-400">
+                  <Wallet size={16} />
+                </div>
+              </div>
+              <p className="text-2xl font-bold text-emerald-400">
+                {new Intl.NumberFormat("pt-BR", {
+                  style: "currency",
+                  currency: "BRL",
+                }).format(netRevenue)}
+              </p>
+            </div>
+            
+            {/* Check-ins Realizados */}
+            <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 shadow-sm sm:col-span-2 lg:col-span-4">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-gray-400 font-medium text-sm">Check-ins (Portaria)</h3>
+                <div className="w-8 h-8 bg-blue-500/10 rounded-full flex items-center justify-center text-blue-400">
+                  <CheckSquare size={16} />
+                </div>
+              </div>
+              <p className="text-2xl font-bold">
+                {checkins}
+                <span className="text-sm font-normal text-gray-500 ml-2">
+                  / {ticketsSold}
+                </span>
+              </p>
+              <div className="mt-3 w-full bg-gray-800 rounded-full h-2">
+                <div
+                  className="bg-blue-500 h-2 rounded-full transition-all"
+                  style={{
+                    width: ticketsSold > 0 ? `${(checkins / ticketsSold) * 100}%` : "0%",
+                  }}
+                ></div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        <h2 className="text-lg font-semibold mb-4">Seus Eventos</h2>
+        
         {events.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-24 text-center">
             <Calendar size={48} className="text-gray-700 mb-4" />
