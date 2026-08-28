@@ -27,7 +27,11 @@ export async function signup(_prevState: unknown, formData: FormData) {
   const email    = formData.get("email") as string;
   const password = formData.get("password") as string;
   const name     = formData.get("name") as string;
-  const cpf      = formData.get("cpf") as string | null;
+  const cpf      = formData.get("cpf") as string;
+
+  if (!cpf) {
+    return { error: "CPF é obrigatório." };
+  }
 
   const { error } = await supabase.auth.signUp({
     email,
@@ -35,7 +39,7 @@ export async function signup(_prevState: unknown, formData: FormData) {
     options: {
       data: {
         name,
-        cpf: cpf ?? null,
+        cpf,
         role: "BUYER",
       },
     },

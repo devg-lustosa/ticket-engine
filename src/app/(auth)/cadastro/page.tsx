@@ -8,43 +8,44 @@ export default function CadastroPage() {
   const [state, formAction, isPending] = useActionState(signup, null);
 
   return (
-    <main className="min-h-dvh flex items-center justify-center bg-[var(--background)] px-4 py-12">
-      <div className="w-full max-w-md animate-fade-in">
+    <main className="relative min-h-dvh flex items-center justify-center bg-[#050505] px-4 overflow-hidden py-12">
+      {/* Background glowing orbs */}
+      <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-brand/20 rounded-full blur-[120px] mix-blend-screen opacity-50" />
+      <div className="absolute bottom-1/4 right-1/4 w-[400px] h-[400px] bg-purple-600/20 rounded-full blur-[100px] mix-blend-screen opacity-50" />
+
+      <div className="relative w-full max-w-md animate-in fade-in slide-in-from-bottom-4 duration-700">
         {/* Logo / Brand */}
-        <div className="mb-8 text-center">
-          <span className="inline-flex items-center gap-2 text-2xl font-bold text-[var(--foreground)]">
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[var(--brand-500)] text-white text-lg">
+        <div className="mb-10 text-center">
+          <span className="inline-flex items-center gap-3 text-3xl font-bold text-white tracking-tight">
+            <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-brand to-purple-600 text-white text-2xl shadow-lg shadow-brand/20">
               🎟
             </span>
             Ticket Engine
           </span>
-          <p className="mt-2 text-sm text-[var(--muted-fg)]">
-            Crie sua conta em segundos.
+          <p className="mt-4 text-base text-gray-400">
+            Crie sua conta em segundos e garanta seu ingresso.
           </p>
         </div>
 
         {/* Card */}
-        <div
-          className="rounded-2xl border bg-[var(--card)] p-8 shadow-xl"
-          style={{ borderColor: "var(--card-border)" }}
-        >
-          <h1 className="mb-6 text-xl font-semibold text-[var(--foreground)]">
+        <div className="rounded-3xl bg-gray-900/40 backdrop-blur-xl border border-gray-800/60 p-8 shadow-2xl">
+          <h1 className="mb-8 text-2xl font-semibold text-white tracking-tight">
             Criar conta
           </h1>
 
           {/* Error message */}
           {state?.error && (
-            <div className="mb-4 rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-600">
+            <div className="mb-6 rounded-xl bg-red-500/10 border border-red-500/20 px-4 py-3.5 text-sm text-red-400 font-medium">
               {state.error}
             </div>
           )}
 
-          <form className="space-y-4" id="signup-form" action={formAction}>
+          <form className="space-y-5" id="signup-form" action={formAction}>
             {/* Name */}
-            <div className="space-y-1">
+            <div className="space-y-1.5">
               <label
                 htmlFor="name"
-                className="block text-sm font-medium text-[var(--foreground)]"
+                className="block text-sm font-medium text-gray-300 ml-1"
               >
                 Nome completo
               </label>
@@ -56,46 +57,44 @@ export default function CadastroPage() {
                 required
                 placeholder="João da Silva"
                 className="
-                  w-full rounded-lg border bg-[var(--muted)] px-4 py-2.5 text-sm
-                  text-[var(--foreground)] placeholder:text-[var(--muted-fg)]
-                  outline-none transition focus:border-[var(--brand-500)]
-                  focus:ring-2 focus:ring-[var(--brand-500)]/20
+                  w-full rounded-xl border border-gray-800 bg-gray-950/50 px-4 py-3 text-sm
+                  text-white placeholder:text-gray-600
+                  outline-none transition-all focus:border-brand
+                  focus:ring-2 focus:ring-brand/20 focus:bg-gray-950
                 "
               />
             </div>
 
             {/* CPF */}
-            <div className="space-y-1">
+            <div className="space-y-1.5">
               <label
                 htmlFor="cpf"
-                className="block text-sm font-medium text-[var(--foreground)]"
+                className="block text-sm font-medium text-gray-300 ml-1"
               >
-                CPF{" "}
-                <span className="text-[var(--muted-fg)] font-normal">
-                  (opcional — usado na portaria)
-                </span>
+                CPF
               </label>
               <input
                 id="cpf"
                 name="cpf"
                 type="text"
                 autoComplete="off"
+                required
                 placeholder="000.000.000-00"
                 maxLength={14}
                 className="
-                  w-full rounded-lg border bg-[var(--muted)] px-4 py-2.5 text-sm
-                  text-[var(--foreground)] placeholder:text-[var(--muted-fg)]
-                  outline-none transition focus:border-[var(--brand-500)]
-                  focus:ring-2 focus:ring-[var(--brand-500)]/20
+                  w-full rounded-xl border border-gray-800 bg-gray-950/50 px-4 py-3 text-sm
+                  text-white placeholder:text-gray-600
+                  outline-none transition-all focus:border-brand
+                  focus:ring-2 focus:ring-brand/20 focus:bg-gray-950
                 "
               />
             </div>
 
             {/* Email */}
-            <div className="space-y-1">
+            <div className="space-y-1.5">
               <label
                 htmlFor="email"
-                className="block text-sm font-medium text-[var(--foreground)]"
+                className="block text-sm font-medium text-gray-300 ml-1"
               >
                 E-mail
               </label>
@@ -107,19 +106,19 @@ export default function CadastroPage() {
                 required
                 placeholder="voce@email.com"
                 className="
-                  w-full rounded-lg border bg-[var(--muted)] px-4 py-2.5 text-sm
-                  text-[var(--foreground)] placeholder:text-[var(--muted-fg)]
-                  outline-none transition focus:border-[var(--brand-500)]
-                  focus:ring-2 focus:ring-[var(--brand-500)]/20
+                  w-full rounded-xl border border-gray-800 bg-gray-950/50 px-4 py-3 text-sm
+                  text-white placeholder:text-gray-600
+                  outline-none transition-all focus:border-brand
+                  focus:ring-2 focus:ring-brand/20 focus:bg-gray-950
                 "
               />
             </div>
 
             {/* Password */}
-            <div className="space-y-1">
+            <div className="space-y-1.5">
               <label
                 htmlFor="password"
-                className="block text-sm font-medium text-[var(--foreground)]"
+                className="block text-sm font-medium text-gray-300 ml-1"
               >
                 Senha
               </label>
@@ -132,10 +131,10 @@ export default function CadastroPage() {
                 placeholder="Mínimo 8 caracteres"
                 minLength={8}
                 className="
-                  w-full rounded-lg border bg-[var(--muted)] px-4 py-2.5 text-sm
-                  text-[var(--foreground)] placeholder:text-[var(--muted-fg)]
-                  outline-none transition focus:border-[var(--brand-500)]
-                  focus:ring-2 focus:ring-[var(--brand-500)]/20
+                  w-full rounded-xl border border-gray-800 bg-gray-950/50 px-4 py-3 text-sm
+                  text-white placeholder:text-gray-600
+                  outline-none transition-all focus:border-brand
+                  focus:ring-2 focus:ring-brand/20 focus:bg-gray-950
                 "
               />
             </div>
@@ -146,12 +145,12 @@ export default function CadastroPage() {
               type="submit"
               disabled={isPending}
               className="
-                mt-2 w-full rounded-lg bg-[var(--brand-500)] px-4 py-2.5
-                text-sm font-semibold text-white shadow-md transition
-                hover:bg-[var(--brand-600)] hover:shadow-lg
+                mt-4 w-full rounded-xl bg-gradient-to-r from-brand to-brand/90 px-4 py-3.5
+                text-sm font-semibold text-white shadow-lg shadow-brand/20 transition-all
+                hover:shadow-brand/40 hover:scale-[1.02]
                 active:scale-[0.98] focus-visible:ring-2
-                focus-visible:ring-[var(--brand-500)]/60
-                disabled:opacity-60 disabled:cursor-not-allowed
+                focus-visible:ring-brand/60
+                disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100
               "
             >
               {isPending ? "Criando conta..." : "Criar conta"}
@@ -160,11 +159,11 @@ export default function CadastroPage() {
         </div>
 
         {/* Footer link */}
-        <p className="mt-6 text-center text-sm text-[var(--muted-fg)]">
+        <p className="mt-8 text-center text-sm text-gray-400">
           Já tem conta?{" "}
           <Link
             href="/login"
-            className="font-medium text-[var(--brand-500)] hover:underline"
+            className="font-semibold text-brand hover:text-brand/80 transition-colors"
           >
             Entrar
           </Link>
