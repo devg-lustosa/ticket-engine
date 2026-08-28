@@ -54,30 +54,7 @@ export default async function StaffDashboardPage() {
     },
   });
 
-  // Metrics calculations for ORGANIZER
-  let totalRevenue = 0;
-  let platformFee = 0;
-  let netRevenue = 0;
-  let ticketsSold = 0;
-  let checkins = 0;
 
-  if (dbUser.role === "ORGANIZER") {
-    const payments = await prisma.payment.findMany({
-      where: { status: "PAID" },
-      select: { amount: true },
-    });
-    totalRevenue = payments.reduce((acc, p) => acc + Number(p.amount), 0);
-    platformFee = totalRevenue * 0.05;
-    netRevenue = totalRevenue - platformFee;
-
-    ticketsSold = await prisma.ticket.count({
-      where: { status: { in: ["ACTIVE", "USED"] } },
-    });
-
-    checkins = await prisma.ticket.count({
-      where: { status: "USED" },
-    });
-  }
 
   return (
     <main className="min-h-screen bg-gray-950 text-white">
@@ -119,93 +96,7 @@ export default async function StaffDashboardPage() {
       {/* Conteúdo */}
       <div className="max-w-6xl mx-auto px-4 py-8">
         
-        {/* Métricas (apenas para organizador) */}
-        {dbUser.role === "ORGANIZER" && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            {/* Ingressos Vendidos */}
-            <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 shadow-sm">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-gray-400 font-medium text-sm">Ingressos Vendidos</h3>
-                <div className="w-8 h-8 bg-brand/10 rounded-full flex items-center justify-center text-brand">
-                  <TicketIcon size={16} />
-                </div>
-              </div>
-              <p className="text-2xl font-bold">{ticketsSold}</p>
-            </div>
 
-            {/* Faturamento Bruto */}
-            <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 shadow-sm">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-gray-400 font-medium text-sm">Faturamento Bruto</h3>
-                <div className="w-8 h-8 bg-green-500/10 rounded-full flex items-center justify-center text-green-400">
-                  <DollarSign size={16} />
-                </div>
-              </div>
-              <p className="text-2xl font-bold">
-                {new Intl.NumberFormat("pt-BR", {
-                  style: "currency",
-                  currency: "BRL",
-                }).format(totalRevenue)}
-              </p>
-            </div>
-
-            {/* Taxa da Plataforma */}
-            <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 shadow-sm">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-gray-400 font-medium text-sm">Taxa do Site (5%)</h3>
-                <div className="w-8 h-8 bg-red-500/10 rounded-full flex items-center justify-center text-red-400">
-                  <Percent size={16} />
-                </div>
-              </div>
-              <p className="text-2xl font-bold text-red-400">
-                {new Intl.NumberFormat("pt-BR", {
-                  style: "currency",
-                  currency: "BRL",
-                }).format(platformFee)}
-              </p>
-            </div>
-
-            {/* Faturamento Líquido */}
-            <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 shadow-sm">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-gray-400 font-medium text-sm">Sua Receita</h3>
-                <div className="w-8 h-8 bg-emerald-500/10 rounded-full flex items-center justify-center text-emerald-400">
-                  <Wallet size={16} />
-                </div>
-              </div>
-              <p className="text-2xl font-bold text-emerald-400">
-                {new Intl.NumberFormat("pt-BR", {
-                  style: "currency",
-                  currency: "BRL",
-                }).format(netRevenue)}
-              </p>
-            </div>
-            
-            {/* Check-ins Realizados */}
-            <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 shadow-sm sm:col-span-2 lg:col-span-4">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-gray-400 font-medium text-sm">Check-ins (Portaria)</h3>
-                <div className="w-8 h-8 bg-blue-500/10 rounded-full flex items-center justify-center text-blue-400">
-                  <CheckSquare size={16} />
-                </div>
-              </div>
-              <p className="text-2xl font-bold">
-                {checkins}
-                <span className="text-sm font-normal text-gray-500 ml-2">
-                  / {ticketsSold}
-                </span>
-              </p>
-              <div className="mt-3 w-full bg-gray-800 rounded-full h-2">
-                <div
-                  className="bg-blue-500 h-2 rounded-full transition-all"
-                  style={{
-                    width: ticketsSold > 0 ? `${(checkins / ticketsSold) * 100}%` : "0%",
-                  }}
-                ></div>
-              </div>
-            </div>
-          </div>
-        )}
 
         <h2 className="text-lg font-semibold mb-4">Seus Eventos</h2>
         
@@ -238,93 +129,157 @@ export default async function StaffDashboardPage() {
                 { locale: ptBR }
               );
 
+              let eventTicketsSold = 0;
+              let eventTotalRevenue = 0;
+              let eventCheckins = 0;
+              
+              if (dbUser.role === "ORGANIZER") {
+                event.batches.forEach((batch) => {
+                  batch.tickets.forEach((ticket) => {
+                    if (ticket.status === "ACTIVE" || ticket.status === "USED") {
+                      eventTicketsSold++;
+                      if (ticket.status === "USED") {
+                        eventCheckins++;
+                      }
+                      // @ts-ignore - we know payment exists if included
+                      if (ticket.payment && ticket.payment.status === "PAID") {
+                         // @ts-ignore
+                         eventTotalRevenue += Number(ticket.payment.amount);
+                      }
+                    }
+                  });
+                });
+              } else {
+                 event.batches.forEach((batch) => {
+                   eventTicketsSold += batch.tickets.length;
+                 });
+              }
+              
+              const eventPlatformFee = eventTotalRevenue * 0.05;
+              const eventNetRevenue = eventTotalRevenue - eventPlatformFee;
+
               return (
                 <div
                   key={event.id}
-                  className="flex items-center gap-4 bg-gray-900 border border-gray-800 rounded-xl p-4 hover:border-gray-700 transition-colors"
+                  className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden hover:border-gray-700 transition-colors"
                 >
-                  {/* Capa */}
-                  <div className="w-16 h-16 rounded-lg bg-gray-800 overflow-hidden shrink-0">
-                    {event.coverImage ? (
-                      <img
-                        src={event.coverImage}
-                        alt={event.title}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center">
-                        <Calendar size={24} className="text-gray-600" />
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Info */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <PublishButton eventId={event.id} status={event.status} />
-                    </div>
-                    <h3 className="font-semibold text-white truncate">
-                      {event.title}
-                    </h3>
-                    <div className="flex flex-wrap items-center gap-3 mt-1 text-xs text-gray-400">
-                      <span className="flex items-center gap-1">
-                        <Clock size={11} />
-                        {eventDate}
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <MapPin size={11} />
-                        {event.venue}
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <Users size={11} />
-                        {event.batches.reduce(
-                          (sum, b) => sum + b._count.tickets,
-                          0
-                        )}{" "}
-                        ingresso
-                        {event.batches.reduce(
-                          (sum, b) => sum + b._count.tickets,
-                          0
-                        ) !== 1
-                          ? "s"
-                          : ""}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Ações */}
-                  <div className="flex items-center gap-1 shrink-0">
-                    <Link
-                      href={`/evento/${event.slug}`}
-                      target="_blank"
-                      className="p-2 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition-colors"
-                      title="Visualizar página"
-                    >
-                      {event.status === "PUBLISHED" ? (
-                        <Eye size={16} />
+                  <div className="flex items-center gap-4 p-4">
+                    {/* Capa */}
+                    <div className="w-16 h-16 rounded-lg bg-gray-800 overflow-hidden shrink-0">
+                      {event.coverImage ? (
+                        <img
+                          src={event.coverImage}
+                          alt={event.title}
+                          className="w-full h-full object-cover"
+                        />
                       ) : (
-                        <EyeOff size={16} />
+                        <div className="w-full h-full flex items-center justify-center">
+                          <Calendar size={24} className="text-gray-600" />
+                        </div>
                       )}
-                    </Link>
+                    </div>
 
-                    {dbUser.role === "ORGANIZER" && (
-                      <>
-                        <Link
-                          href={`/painel/eventos/${event.id}/editar`}
-                          className="p-2 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition-colors"
-                          title="Editar evento"
-                        >
-                          <Pencil size={16} />
-                        </Link>
-                        <button
-                          className="p-2 text-gray-400 hover:text-red-400 hover:bg-red-900/20 rounded-lg transition-colors"
-                          title="Remover evento"
-                        >
-                          <Trash2 size={16} />
-                        </button>
-                      </>
-                    )}
+                    {/* Info */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <PublishButton eventId={event.id} status={event.status} />
+                      </div>
+                      <h3 className="font-semibold text-white truncate">
+                        {event.title}
+                      </h3>
+                      <div className="flex flex-wrap items-center gap-3 mt-1 text-xs text-gray-400">
+                        <span className="flex items-center gap-1">
+                          <Clock size={11} />
+                          {eventDate}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <MapPin size={11} />
+                          {event.venue}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <Users size={11} />
+                          {eventTicketsSold} ingresso{eventTicketsSold !== 1 ? "s" : ""}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Ações */}
+                    <div className="flex items-center gap-1 shrink-0">
+                      <Link
+                        href={`/evento/${event.slug}`}
+                        target="_blank"
+                        className="p-2 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition-colors"
+                        title="Visualizar página"
+                      >
+                        {event.status === "PUBLISHED" ? (
+                          <Eye size={16} />
+                        ) : (
+                          <EyeOff size={16} />
+                        )}
+                      </Link>
+
+                      {dbUser.role === "ORGANIZER" && (
+                        <>
+                          <Link
+                            href={`/painel/eventos/${event.id}/editar`}
+                            className="p-2 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition-colors"
+                            title="Editar evento"
+                          >
+                            <Pencil size={16} />
+                          </Link>
+                          <button
+                            className="p-2 text-gray-400 hover:text-red-400 hover:bg-red-900/20 rounded-lg transition-colors"
+                            title="Remover evento"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </>
+                      )}
+                    </div>
                   </div>
+                  
+                  {/* Minimetrics for Organizer */}
+                  {dbUser.role === "ORGANIZER" && (
+                    <div className="border-t border-gray-800/60 bg-gray-900/40 p-4">
+                      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                        <div>
+                          <p className="text-xs text-gray-500 mb-1 flex items-center gap-1"><TicketIcon size={12}/> Vendidos</p>
+                          <p className="text-lg font-bold">{eventTicketsSold}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-500 mb-1 flex items-center gap-1"><DollarSign size={12}/> Bruto</p>
+                          <p className="text-lg font-bold">
+                            {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(eventTotalRevenue)}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-500 mb-1 flex items-center gap-1 text-red-400/80"><Percent size={12}/> Taxa (5%)</p>
+                          <p className="text-lg font-bold text-red-400">
+                            {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(eventPlatformFee)}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-500 mb-1 flex items-center gap-1 text-emerald-400/80"><Wallet size={12}/> Receita</p>
+                          <p className="text-lg font-bold text-emerald-400">
+                            {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(eventNetRevenue)}
+                          </p>
+                        </div>
+                        <div className="col-span-2 md:col-span-1">
+                          <p className="text-xs text-gray-500 mb-1 flex items-center gap-1"><CheckSquare size={12}/> Check-ins</p>
+                          <div className="flex items-center gap-2">
+                            <span className="text-lg font-bold">{eventCheckins}</span>
+                            <span className="text-xs text-gray-600">/ {eventTicketsSold}</span>
+                          </div>
+                          <div className="mt-1 w-full bg-gray-800 rounded-full h-1.5">
+                            <div
+                              className="bg-blue-500 h-1.5 rounded-full transition-all"
+                              style={{ width: eventTicketsSold > 0 ? `${(eventCheckins / eventTicketsSold) * 100}%` : "0%" }}
+                            ></div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               );
             })}
