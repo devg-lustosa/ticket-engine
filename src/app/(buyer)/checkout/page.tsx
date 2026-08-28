@@ -68,7 +68,7 @@ export default async function CheckoutPage({ searchParams }: CheckoutPageProps) 
       id: b.id,
       name: b.name,
       price: Number(b.price),
-      event: { title: b.event.title, venue: b.event.venue },
+      event: { id: b.event.id, title: b.event.title, venue: b.event.venue },
       qty
     };
   });

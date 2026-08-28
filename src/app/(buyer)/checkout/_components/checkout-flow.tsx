@@ -10,7 +10,7 @@ interface CheckoutBatch {
   name: string;
   price: number;
   qty: number;
-  event: { title: string; venue: string };
+  event: { id: string; title: string; venue: string };
 }
 
 interface Participant {
