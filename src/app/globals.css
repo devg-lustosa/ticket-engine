@@ -55,16 +55,14 @@
   --font-sans: "Inter", system-ui, -apple-system, sans-serif;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background:  #0d0d14;
-    --foreground:  #f1f5f9;
-    --muted:       #1a1a2e;
-    --muted-fg:    #94a3b8;
-    --border:      #1e1b4b;
-    --card:        #12121f;
-    --card-border: #1e1b4b;
-  }
+.dark {
+  --background:  #0d0d14;
+  --foreground:  #f1f5f9;
+  --muted:       #1a1a2e;
+  --muted-fg:    #94a3b8;
+  --border:      #1e1b4b;
+  --card:        #12121f;
+  --card-border: #1e1b4b;
 }
 
 /* ─── Tailwind v4 Theme Extension ────────────────────────────── */

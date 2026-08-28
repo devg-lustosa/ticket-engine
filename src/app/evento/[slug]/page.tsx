@@ -6,6 +6,7 @@ import { ptBR } from "date-fns/locale";
 import { Calendar, MapPin, Ticket, ArrowLeft, ShieldCheck, User, CreditCard, AlertCircle, Pencil } from "lucide-react";
 import { siteConfig } from "@/config/site";
 import { UserNav } from "@/components/user-nav";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { createClient } from "@/lib/supabase/server";
 import { TicketsBox } from "./_components/tickets-box";
 
@@ -58,7 +59,10 @@ export default async function EventDetailsPage({ params }: EventPageProps) {
             <Ticket className="h-6 w-6" />
             <span className="hidden sm:inline-block">{siteConfig.name}</span>
           </Link>
-          <UserNav user={dbUser} />
+          <div className="flex items-center gap-4">
+            <ThemeToggle />
+            <UserNav user={dbUser} />
+          </div>
         </div>
       </div>
 

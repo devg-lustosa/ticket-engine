@@ -5,6 +5,7 @@ import { Ticket, HelpCircle, ShieldCheck, CreditCard, RefreshCw, Edit2 } from "l
 import { createClient } from "@/lib/supabase/server";
 import { UserNav } from "@/components/user-nav";
 import { Footer } from "@/components/footer";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 export const metadata = {
   title: "Central de Ajuda",
@@ -35,7 +36,10 @@ export default async function AjudaPage() {
             <Ticket className="h-6 w-6" />
             <span className="hidden sm:inline-block">{siteConfig.name}</span>
           </Link>
-          <UserNav user={dbUser} role={dbUser?.role} />
+          <div className="flex items-center gap-4">
+            <ThemeToggle />
+            <UserNav user={dbUser} role={dbUser?.role} />
+          </div>
         </div>
 
         <div className="relative mx-auto max-w-5xl px-4 text-center animate-fade-in mt-4">

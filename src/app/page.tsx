@@ -7,6 +7,7 @@ import { ptBR } from "date-fns/locale";
 import { createClient } from "@/lib/supabase/server";
 import { UserNav } from "@/components/user-nav";
 import { Footer } from "@/components/footer";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 export default async function HomePage() {
   // Busca os eventos publicados
@@ -28,7 +29,7 @@ export default async function HomePage() {
   }
 
   return (
-    <main className="min-h-dvh bg-[var(--background)] flex flex-col">
+    <main className="min-h-dvh bg-gray-50 dark:bg-[var(--background)] flex flex-col">
       {/* Header / Hero */}
       <header className="relative overflow-hidden pb-20 sm:pb-32 shrink-0 bg-slate-950">
         {/* Background Image & Overlays */}
@@ -39,7 +40,7 @@ export default async function HomePage() {
             alt="Festa" 
             className="w-full h-full object-cover opacity-50"
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-slate-950/80 via-slate-950/60 to-[var(--background)]" />
+          <div className="absolute inset-0 bg-slate-950/60" />
           <div className="absolute inset-0 bg-gradient-to-r from-[var(--brand-600)]/30 to-purple-600/30 mix-blend-overlay" />
         </div>
         
@@ -51,7 +52,10 @@ export default async function HomePage() {
             </div>
             <span className="hidden sm:inline-block text-xl tracking-tight text-white">{siteConfig.name}</span>
           </Link>
-          <UserNav user={dbUser} role={dbUser?.role} />
+          <div className="flex items-center gap-4">
+            <ThemeToggle />
+            <UserNav user={dbUser} role={dbUser?.role} />
+          </div>
         </div>
 
         <div className="relative z-20 mx-auto max-w-5xl px-4 text-center mt-6 sm:mt-12 animate-fade-in">
@@ -100,7 +104,7 @@ export default async function HomePage() {
               return (
                 <div
                   key={event.id}
-                  className="group flex flex-col overflow-hidden rounded-2xl border bg-[var(--card)] shadow-sm transition hover:shadow-md border-[var(--card-border)]"
+                  className="group flex flex-col overflow-hidden rounded-2xl bg-[var(--card)] shadow-xl shadow-black/5 hover:shadow-2xl hover:shadow-[var(--brand-500)]/10 hover:-translate-y-1 border border-[var(--card-border)] transition-all duration-300"
                 >
                   <div className="aspect-video bg-[var(--muted)] p-6 flex flex-col justify-end relative overflow-hidden">
                     {event.coverImage ? (

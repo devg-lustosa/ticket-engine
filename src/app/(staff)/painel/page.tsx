@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import { PublishButton } from "./_components/publish-button";
 import { DeleteButton } from "./_components/delete-button";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 const STATUS_LABELS: Record<string, { label: string; color: string }> = {
   DRAFT: { label: "Rascunho", color: "bg-gray-700 text-gray-300" },
@@ -76,7 +77,8 @@ export default async function StaffDashboardPage() {
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-4">
+            <ThemeToggle />
             <Link
               href="/"
               className="px-3 py-1.5 text-sm text-gray-400 hover:text-white transition-colors"

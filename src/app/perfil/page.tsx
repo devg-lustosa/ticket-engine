@@ -5,6 +5,7 @@ import { UserNav } from "@/components/user-nav";
 import Link from "next/link";
 import { Ticket, Lock, AlertCircle, CheckCircle2 } from "lucide-react";
 import { siteConfig } from "@/config/site";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 export default function PerfilPage() {
   const [password, setPassword] = useState("");
@@ -57,6 +58,7 @@ export default function PerfilPage() {
             <Ticket className="h-6 w-6" />
             <span className="hidden sm:inline-block">{siteConfig.name}</span>
           </Link>
+          <ThemeToggle />
           {/* Ocultamos o UserNav aqui ou carregamos dummy já que a pessoa JÁ está logada */}
           <Link href="/meus-ingressos" className="text-sm font-medium hover:underline">
             Voltar

@@ -5,6 +5,7 @@ import { CheckoutFlow } from "./_components/checkout-flow";
 import { siteConfig } from "@/config/site";
 import Link from "next/link";
 import { Ticket } from "lucide-react";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 interface CheckoutPageProps {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
@@ -80,11 +81,12 @@ export default async function CheckoutPage({ searchParams }: CheckoutPageProps) 
     <main className="min-h-dvh bg-[var(--background)] flex flex-col">
       {/* Header simples */}
       <div className="bg-[var(--card)] border-b border-[var(--border)] py-4">
-        <div className="mx-auto max-w-4xl px-4">
+        <div className="mx-auto max-w-4xl px-4 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2 font-bold text-[var(--foreground)] hover:opacity-90">
             <Ticket className="h-6 w-6 text-[var(--brand-500)]" />
             <span>{siteConfig.name}</span>
           </Link>
+          <ThemeToggle />
         </div>
       </div>
 

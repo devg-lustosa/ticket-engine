@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { TicketCard } from "@/components/ticket-card";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 export default async function MeusIngressosPage() {
   const supabase = await createClient();
@@ -31,11 +32,12 @@ export default async function MeusIngressosPage() {
   return (
     <main className="min-h-dvh bg-[var(--background)] px-4 py-12">
       <div className="mx-auto max-w-5xl">
-        <div className="mb-8 animate-fade-in">
+        <div className="mb-8 flex items-center justify-between animate-fade-in">
           <Link href="/" className="inline-flex items-center gap-2 text-sm font-medium text-[var(--muted-fg)] hover:text-[var(--foreground)] transition-colors">
             <ArrowLeft size={16} />
             Voltar para a loja
           </Link>
+          <ThemeToggle />
         </div>
 
         <div className="mb-10 text-center animate-fade-in">

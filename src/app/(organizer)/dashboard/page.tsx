@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import { SalesChart } from "@/components/dashboard/sales-chart";
 import { DollarSign, Ticket, CheckSquare, TrendingUp, Wallet, Percent } from "lucide-react";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -73,9 +74,12 @@ export default async function DashboardPage() {
   return (
     <main className="min-h-screen bg-gray-950 text-white p-6">
       <div className="max-w-6xl mx-auto">
-        <header className="mb-8">
-          <h1 className="text-3xl font-bold">Dashboard</h1>
-          <p className="text-gray-400">Visão geral do seu evento</p>
+        <header className="mb-8 flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold">Dashboard</h1>
+            <p className="text-gray-400">Visão geral do seu evento</p>
+          </div>
+          <ThemeToggle />
         </header>
 
         {/* Cards de Métricas */}

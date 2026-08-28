@@ -183,7 +183,7 @@ export function CheckoutFlow({ batches, totalValue, buyer }: CheckoutFlowProps) 
         <div className={`bg-[var(--card)] border ${step === 1 ? 'border-[var(--brand-500)]' : 'border-[var(--border)]'} rounded-2xl overflow-hidden transition-colors`}>
           <div className="bg-[var(--muted)] px-6 py-4 border-b border-[var(--border)] flex justify-between items-center">
             <h2 className="font-bold text-lg text-[var(--foreground)] flex items-center gap-2">
-              <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${step === 1 ? 'bg-[var(--brand-500)] text-white' : 'bg-gray-700 text-gray-400'}`}>1</span>
+              <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${step === 1 ? 'bg-[var(--brand-500)] text-white' : 'bg-gray-200 text-gray-500 dark:bg-gray-700 dark:text-gray-400'}`}>1</span>
               Dados dos Participantes
             </h2>
             {step === 2 && (
@@ -194,7 +194,7 @@ export function CheckoutFlow({ batches, totalValue, buyer }: CheckoutFlowProps) 
           {step === 1 && (
             <div className="p-6 space-y-6">
               {participants.map((p, idx) => (
-                <div key={p.id} className="bg-gray-900/50 p-4 rounded-xl border border-gray-800">
+                <div key={p.id} className="bg-[var(--muted)] p-4 rounded-xl border border-[var(--border)]">
                   <div className="flex items-center gap-2 mb-4">
                     <User size={16} className="text-[var(--brand-500)]" />
                     <h3 className="font-semibold text-sm">
@@ -206,7 +206,7 @@ export function CheckoutFlow({ batches, totalValue, buyer }: CheckoutFlowProps) 
                     <div>
                       <label className="block text-xs font-medium text-[var(--muted-fg)] mb-1">Nome Completo</label>
                       <input 
-                        className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-[var(--brand-500)]"
+                        className="w-full bg-[var(--background)] border border-[var(--border)] rounded-lg px-3 py-2 text-sm text-[var(--foreground)] focus:outline-none focus:border-[var(--brand-500)]"
                         placeholder="Nome de quem vai usar"
                         value={p.name}
                         onChange={(e) => handleParticipantChange(idx, "name", e.target.value)}
@@ -215,7 +215,7 @@ export function CheckoutFlow({ batches, totalValue, buyer }: CheckoutFlowProps) 
                     <div>
                       <label className="block text-xs font-medium text-[var(--muted-fg)] mb-1">CPF</label>
                       <input 
-                        className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-[var(--brand-500)]"
+                        className="w-full bg-[var(--background)] border border-[var(--border)] rounded-lg px-3 py-2 text-sm text-[var(--foreground)] focus:outline-none focus:border-[var(--brand-500)]"
                         placeholder="000.000.000-00"
                         value={p.cpf}
                         onChange={(e) => handleParticipantChange(idx, "cpf", e.target.value)}
@@ -241,7 +241,7 @@ export function CheckoutFlow({ batches, totalValue, buyer }: CheckoutFlowProps) 
         <div className={`bg-[var(--card)] border ${step === 2 ? 'border-[var(--brand-500)]' : 'border-[var(--border)]'} rounded-2xl overflow-hidden transition-colors`}>
           <div className="bg-[var(--muted)] px-6 py-4 border-b border-[var(--border)] flex justify-between items-center">
             <h2 className="font-bold text-lg text-[var(--foreground)] flex items-center gap-2">
-              <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${step === 2 ? 'bg-[var(--brand-500)] text-white' : 'bg-gray-700 text-gray-400'}`}>2</span>
+              <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${step === 2 ? 'bg-[var(--brand-500)] text-white' : 'bg-gray-200 text-gray-500 dark:bg-gray-700 dark:text-gray-400'}`}>2</span>
               Pagamento
             </h2>
           </div>
@@ -257,14 +257,14 @@ export function CheckoutFlow({ batches, totalValue, buyer }: CheckoutFlowProps) 
               <div className="flex gap-4 mb-6">
                 <button
                   onClick={() => setPaymentMethod("PIX")}
-                  className={`flex-1 flex flex-col items-center justify-center gap-2 py-4 rounded-xl border-2 transition-colors ${paymentMethod === "PIX" ? 'border-[#32bcad] bg-[#32bcad]/10 text-[#32bcad]' : 'border-gray-800 bg-gray-900 text-gray-400 hover:border-gray-700'}`}
+                  className={`flex-1 flex flex-col items-center justify-center gap-2 py-4 rounded-xl border-2 transition-colors ${paymentMethod === "PIX" ? 'border-[#32bcad] bg-[#32bcad]/10 text-[#32bcad]' : 'border-[var(--border)] bg-[var(--muted)] text-[var(--muted-fg)] hover:border-gray-300 dark:hover:border-gray-700'}`}
                 >
                   <QrCode size={24} />
                   <span className="font-bold">Pix</span>
                 </button>
                 <button
                   onClick={() => setPaymentMethod("CREDIT_CARD")}
-                  className={`flex-1 flex flex-col items-center justify-center gap-2 py-4 rounded-xl border-2 transition-colors ${paymentMethod === "CREDIT_CARD" ? 'border-[var(--brand-500)] bg-[var(--brand-500)]/10 text-[var(--brand-500)]' : 'border-gray-800 bg-gray-900 text-gray-400 hover:border-gray-700'}`}
+                  className={`flex-1 flex flex-col items-center justify-center gap-2 py-4 rounded-xl border-2 transition-colors ${paymentMethod === "CREDIT_CARD" ? 'border-[var(--brand-500)] bg-[var(--brand-500)]/10 text-[var(--brand-500)]' : 'border-[var(--border)] bg-[var(--muted)] text-[var(--muted-fg)] hover:border-gray-300 dark:hover:border-gray-700'}`}
                 >
                   <CreditCard size={24} />
                   <span className="font-bold">Cartão de Crédito</span>
@@ -276,7 +276,7 @@ export function CheckoutFlow({ batches, totalValue, buyer }: CheckoutFlowProps) 
                   <div>
                     <label className="block text-xs font-medium text-[var(--muted-fg)] mb-1">Nome no Cartão</label>
                     <input 
-                      className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none focus:border-[var(--brand-500)]"
+                      className="w-full bg-[var(--background)] border border-[var(--border)] rounded-lg px-3 py-2.5 text-sm text-[var(--foreground)] focus:outline-none focus:border-[var(--brand-500)]"
                       placeholder="Igual impresso no cartão"
                       value={cardInfo.holderName}
                       onChange={(e) => setCardInfo({...cardInfo, holderName: e.target.value})}
@@ -285,7 +285,7 @@ export function CheckoutFlow({ batches, totalValue, buyer }: CheckoutFlowProps) 
                   <div>
                     <label className="block text-xs font-medium text-[var(--muted-fg)] mb-1">Número do Cartão</label>
                     <input 
-                      className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none focus:border-[var(--brand-500)] tracking-widest"
+                      className="w-full bg-[var(--background)] border border-[var(--border)] rounded-lg px-3 py-2.5 text-sm text-[var(--foreground)] focus:outline-none focus:border-[var(--brand-500)] tracking-widest"
                       placeholder="0000 0000 0000 0000"
                       value={cardInfo.number}
                       onChange={(e) => setCardInfo({...cardInfo, number: e.target.value.replace(/\D/g, '').slice(0, 16)})}
@@ -295,7 +295,7 @@ export function CheckoutFlow({ batches, totalValue, buyer }: CheckoutFlowProps) 
                     <div>
                       <label className="block text-xs font-medium text-[var(--muted-fg)] mb-1">Mês (MM)</label>
                       <input 
-                        className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none focus:border-[var(--brand-500)] text-center"
+                        className="w-full bg-[var(--background)] border border-[var(--border)] rounded-lg px-3 py-2.5 text-sm text-[var(--foreground)] focus:outline-none focus:border-[var(--brand-500)] text-center"
                         placeholder="MM"
                         value={cardInfo.expiryMonth}
                         onChange={(e) => setCardInfo({...cardInfo, expiryMonth: e.target.value.replace(/\D/g, '').slice(0, 2)})}
@@ -304,7 +304,7 @@ export function CheckoutFlow({ batches, totalValue, buyer }: CheckoutFlowProps) 
                     <div>
                       <label className="block text-xs font-medium text-[var(--muted-fg)] mb-1">Ano (AAAA)</label>
                       <input 
-                        className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none focus:border-[var(--brand-500)] text-center"
+                        className="w-full bg-[var(--background)] border border-[var(--border)] rounded-lg px-3 py-2.5 text-sm text-[var(--foreground)] focus:outline-none focus:border-[var(--brand-500)] text-center"
                         placeholder="AAAA"
                         value={cardInfo.expiryYear}
                         onChange={(e) => setCardInfo({...cardInfo, expiryYear: e.target.value.replace(/\D/g, '').slice(0, 4)})}
@@ -314,7 +314,7 @@ export function CheckoutFlow({ batches, totalValue, buyer }: CheckoutFlowProps) 
                       <label className="block text-xs font-medium text-[var(--muted-fg)] mb-1">CVV</label>
                       <input 
                         type="password"
-                        className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none focus:border-[var(--brand-500)] text-center tracking-widest"
+                        className="w-full bg-[var(--background)] border border-[var(--border)] rounded-lg px-3 py-2.5 text-sm text-[var(--foreground)] focus:outline-none focus:border-[var(--brand-500)] text-center tracking-widest"
                         placeholder="***"
                         value={cardInfo.ccv}
                         onChange={(e) => setCardInfo({...cardInfo, ccv: e.target.value.replace(/\D/g, '').slice(0, 4)})}
@@ -324,7 +324,7 @@ export function CheckoutFlow({ batches, totalValue, buyer }: CheckoutFlowProps) 
                   <div>
                     <label className="block text-xs font-medium text-[var(--muted-fg)] mb-1">Parcelamento</label>
                     <select 
-                      className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none focus:border-[var(--brand-500)]"
+                      className="w-full bg-[var(--background)] border border-[var(--border)] rounded-lg px-3 py-2.5 text-sm text-[var(--foreground)] focus:outline-none focus:border-[var(--brand-500)]"
                       value={cardInfo.installmentCount}
                       onChange={(e) => setCardInfo({...cardInfo, installmentCount: e.target.value})}
                     >
@@ -391,18 +391,18 @@ export function CheckoutFlow({ batches, totalValue, buyer }: CheckoutFlowProps) 
               
               <div className="w-full">
                 <label className="block text-xs font-medium text-[var(--muted-fg)] mb-2">Ou copie o código (Pix Copia e Cola)</label>
-                <div className="flex bg-gray-900 border border-gray-700 rounded-lg overflow-hidden">
+                <div className="flex bg-[var(--background)] border border-[var(--border)] rounded-lg overflow-hidden">
                   <input 
                     readOnly
                     value={pixData.code}
-                    className="flex-1 bg-transparent px-4 py-3 text-xs text-white focus:outline-none"
+                    className="flex-1 bg-transparent px-4 py-3 text-xs text-[var(--foreground)] focus:outline-none"
                   />
                   <button 
                     onClick={() => {
                       navigator.clipboard.writeText(pixData.code);
                       alert("Código copiado!");
                     }}
-                    className="bg-gray-800 hover:bg-gray-700 px-4 py-3 text-sm font-bold border-l border-gray-700 transition-colors"
+                    className="bg-[var(--muted)] hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-[var(--foreground)] px-4 py-3 text-sm font-bold border-l border-[var(--border)] transition-colors"
                   >
                     Copiar
                   </button>
@@ -411,7 +411,7 @@ export function CheckoutFlow({ batches, totalValue, buyer }: CheckoutFlowProps) 
 
               <button
                 onClick={() => router.push("/meus-ingressos")}
-                className="w-full mt-8 bg-gray-800 text-white px-6 py-4 rounded-xl font-bold hover:bg-gray-700 transition-colors"
+                className="w-full mt-8 bg-gray-200 text-gray-900 hover:bg-gray-300 dark:bg-gray-800 dark:text-white dark:hover:bg-gray-700 px-6 py-4 rounded-xl font-bold transition-colors"
               >
                 Já paguei, ir para Meus Ingressos
               </button>
@@ -429,10 +429,10 @@ export function CheckoutFlow({ batches, totalValue, buyer }: CheckoutFlowProps) 
             {batches.map(b => (
               <div key={b.id} className="flex justify-between items-start text-sm">
                 <div>
-                  <p className="font-medium text-white">{b.qty}x {b.name}</p>
-                  <p className="text-gray-500 text-xs truncate max-w-[150px]">{b.event.title}</p>
+                  <p className="font-medium text-[var(--foreground)]">{b.qty}x {b.name}</p>
+                  <p className="text-[var(--muted-fg)] text-xs truncate max-w-[150px]">{b.event.title}</p>
                 </div>
-                <span className="font-semibold text-gray-300">R$ {(b.qty * b.price).toFixed(2).replace(".", ",")}</span>
+                <span className="font-semibold text-[var(--foreground)]">R$ {(b.qty * b.price).toFixed(2).replace(".", ",")}</span>
               </div>
             ))}
           </div>
@@ -444,7 +444,7 @@ export function CheckoutFlow({ batches, totalValue, buyer }: CheckoutFlowProps) 
                 <label className="block text-xs font-medium text-[var(--muted-fg)] mb-2">Cupom de Desconto</label>
                 <div className="flex gap-2">
                   <input 
-                    className="flex-1 bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-[var(--brand-500)] uppercase"
+                    className="flex-1 min-w-0 bg-[var(--background)] border border-[var(--border)] rounded-lg px-3 py-2 text-sm text-[var(--foreground)] focus:outline-none focus:border-[var(--brand-500)] uppercase"
                     placeholder="Código"
                     value={couponCode}
                     onChange={(e) => setCouponCode(e.target.value)}
@@ -452,7 +452,7 @@ export function CheckoutFlow({ batches, totalValue, buyer }: CheckoutFlowProps) 
                   <button 
                     onClick={handleApplyCoupon}
                     disabled={couponLoading || !couponCode.trim()}
-                    className="bg-gray-800 hover:bg-gray-700 text-white px-3 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 flex items-center justify-center min-w-[80px]"
+                    className="bg-[var(--brand-500)] hover:bg-[var(--brand-600)] text-white disabled:bg-[var(--muted)] disabled:text-[var(--muted-fg)] px-3 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-100 flex items-center justify-center min-w-[80px]"
                   >
                     {couponLoading ? <Loader2 size={16} className="animate-spin" /> : "Aplicar"}
                   </button>
@@ -486,9 +486,9 @@ export function CheckoutFlow({ batches, totalValue, buyer }: CheckoutFlowProps) 
                 <span>- R$ {(totalValue - finalValue).toFixed(2).replace(".", ",")}</span>
               </div>
             )}
-            <div className="flex justify-between items-center mt-2 pt-2 border-t border-[var(--border)]">
+            <div className="flex flex-wrap justify-between items-center mt-2 pt-2 gap-2 border-t border-[var(--border)]">
               <span className="text-[var(--muted-fg)] font-medium">Total a pagar</span>
-              <span className="text-2xl font-black text-[var(--brand-500)]">R$ {finalValue.toFixed(2).replace(".", ",")}</span>
+              <span className="text-2xl font-black text-[var(--brand-500)] whitespace-nowrap">R$ {finalValue.toFixed(2).replace(".", ",")}</span>
             </div>
           </div>
         </div>
