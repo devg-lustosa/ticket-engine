@@ -47,8 +47,10 @@ export default async function StaffDashboardPage() {
     orderBy: { date: "desc" },
     include: {
       batches: {
-        select: {
-          _count: { select: { tickets: true } },
+        include: {
+          tickets: {
+            include: { payment: true },
+          },
         },
       },
     },
