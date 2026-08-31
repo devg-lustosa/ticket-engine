@@ -8,11 +8,11 @@ interface Batch {
   id: string;
   name: string;
   description: string | null;
-  // Prisma Decimal is an object with toNumber(), toString() etc.
   price: { toNumber: () => number } | number | string;
   totalQty: number;
   soldQty: number;
-  endAt: Date | null;
+  startAt: Date | string | null;
+  endAt: Date | string | null;
 }
 
 interface TicketsBoxProps {
@@ -32,7 +32,15 @@ export function TicketsBox({ batches }: TicketsBoxProps) {
     Object.fromEntries(batches.map((b) => [b.id, 0]))
   );
 
-  const availableBatches = batches.filter((b) => b.soldQty < b.totalQty);
+  const now = new Date();
+  
+  // Disponíveis para compra: não esgotados, e dentro do período (se definido)
+  const availableBatches = batches.filter((b) => {
+    if (b.soldQty >= b.totalQty) return false;
+    if (b.startAt && now < new Date(b.startAt)) return false;
+    if (b.endAt && now > new Date(b.endAt)) return false;
+    return true;
+  });
 
   function change(id: string, delta: number) {
     const batch = batches.find((b) => b.id === id)!;
@@ -76,10 +84,13 @@ export function TicketsBox({ batches }: TicketsBoxProps) {
           batches.map((batch) => {
             const available = batch.totalQty - batch.soldQty;
             const isSoldOut = available <= 0;
+            const isBeforeStart = batch.startAt ? now < new Date(batch.startAt) : false;
+            const isAfterEnd = batch.endAt ? now > new Date(batch.endAt) : false;
+            const canBuy = !isSoldOut && !isBeforeStart && !isAfterEnd;
             const qty = quantities[batch.id] ?? 0;
 
             return (
-              <div key={batch.id} className="p-5">
+              <div key={batch.id} className={`p-5 ${!canBuy ? 'opacity-70' : ''}`}>
                 <div className="flex items-center justify-between gap-3">
                   {/* Info */}
                   <div className="min-w-0">
@@ -94,8 +105,14 @@ export function TicketsBox({ batches }: TicketsBoxProps) {
                     <p className="text-[var(--brand-500)] font-extrabold text-lg mt-1">
                       R$ {toNum(batch.price).toFixed(2).replace(".", ",")}
                     </p>
-                    {isSoldOut ? (
+                    {isAfterEnd ? (
+                      <span className="text-xs text-red-500 font-medium">Encerrado</span>
+                    ) : isSoldOut ? (
                       <span className="text-xs text-red-500 font-medium">Esgotado</span>
+                    ) : isBeforeStart ? (
+                      <span className="text-xs text-[var(--brand-500)] font-medium">
+                        Disponível em {new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short', timeStyle: 'short' }).format(new Date(batch.startAt!))}
+                      </span>
                     ) : (
                       <span className="text-xs text-[var(--muted-fg)]">
                         {available} disponíveis
@@ -103,8 +120,8 @@ export function TicketsBox({ batches }: TicketsBoxProps) {
                     )}
                   </div>
 
-                  {/* Quantity selector */}
-                  {!isSoldOut && (
+                  {/* Quantity selector or Status */}
+                  {canBuy ? (
                     <div className="flex items-center gap-2 shrink-0">
                       <button
                         onClick={() => change(batch.id, -1)}
@@ -123,6 +140,10 @@ export function TicketsBox({ batches }: TicketsBoxProps) {
                       >
                         <Plus size={14} />
                       </button>
+                    </div>
+                  ) : (
+                    <div className="shrink-0 text-sm font-semibold text-[var(--muted-fg)]">
+                      {isBeforeStart ? "Em breve" : isAfterEnd ? "Encerrado" : "Esgotado"}
                     </div>
                   )}
                 </div>
