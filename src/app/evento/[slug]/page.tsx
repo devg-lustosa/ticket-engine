@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
@@ -10,6 +11,8 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { createClient } from "@/lib/supabase/server";
 import { TicketsBox } from "./_components/tickets-box";
 
+export const revalidate = 60;
+
 interface EventPageProps {
   params: Promise<{
     slug: string;
@@ -18,27 +21,27 @@ interface EventPageProps {
 
 export default async function EventDetailsPage({ params }: EventPageProps) {
   const { slug } = await params;
+  const supabase = await createClient();
 
-  // Busca o evento pelo slug e inclui os lotes ordenados
-  const event = await prisma.event.findUnique({
-    where: { slug },
-    include: {
-      batches: {
-        orderBy: { sortOrder: "asc" },
+  // Paraleliza a busca do evento e do usuário logado
+  const [event, { data: { user: authUser } }] = await Promise.all([
+    prisma.event.findUnique({
+      where: { slug },
+      include: {
+        batches: {
+          orderBy: { sortOrder: "asc" },
+        },
+        organizer: {
+          select: { name: true },
+        },
       },
-      organizer: {
-        select: { name: true },
-      },
-    },
-  });
+    }),
+    supabase.auth.getUser()
+  ]);
 
   if (!event || event.status !== "PUBLISHED") {
     notFound();
   }
-
-  // Autenticação para o UserNav
-  const supabase = await createClient();
-  const { data: { user: authUser } } = await supabase.auth.getUser();
   let dbUser = null;
   if (authUser) {
     dbUser = await prisma.user.findUnique({
@@ -69,10 +72,13 @@ export default async function EventDetailsPage({ params }: EventPageProps) {
       {/* Header / Cover */}
       <div className="relative w-full h-[300px] md:h-[400px] bg-[var(--brand-900)] overflow-hidden">
         {event.coverImage ? (
-          <img 
+          <Image 
             src={event.coverImage} 
             alt={event.title}
-            className="w-full h-full object-cover opacity-60"
+            fill
+            priority
+            sizes="100vw"
+            className="object-cover opacity-60"
           />
         ) : (
           <div className="absolute inset-0 opacity-20 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]" />

@@ -141,3 +141,42 @@ body {
 .animate-fade-in  { animation: fadeIn 0.35s ease both; }
 .animate-slide-in { animation: slideIn 0.3s ease both; }
 .animate-pulse-brand { animation: pulse-brand 2s infinite; }
+
+/* ─── Footer – Light Theme ─────────────────────────────────────── */
+.light footer {
+  background: linear-gradient(180deg, #4f46e5 0%, #4338ca 100%);
+  color: #e0e7ff;
+  border-color: #4338ca;
+}
+
+/* headings inside footer */
+.light footer h3,
+.light footer h4 {
+  color: #ffffff;
+}
+
+/* secondary text */
+.light footer p,
+.light footer ul li {
+  color: #c7d2fe;
+}
+
+/* links */
+.light footer a {
+  color: #c7d2fe;
+}
+.light footer a:hover {
+  color: #ffffff;
+}
+
+/* divider line */
+.light footer .border-t {
+  border-color: #6366f1;
+}
+
+/* bottom copyright / legal text */
+.light footer .text-slate-500 {
+  color: #a5b4fc;
+}
+
+

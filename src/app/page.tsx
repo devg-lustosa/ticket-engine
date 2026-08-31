@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { siteConfig } from "@/config/site";
@@ -9,16 +10,19 @@ import { UserNav } from "@/components/user-nav";
 import { Footer } from "@/components/footer";
 import { ThemeToggle } from "@/components/theme-toggle";
 
-export default async function HomePage() {
-  // Busca os eventos publicados
-  const events = await prisma.event.findMany({
-    where: { status: "PUBLISHED" },
-    orderBy: { date: "asc" },
-  });
+export const revalidate = 30;
 
-  // Busca o usuário logado (se houver)
+export default async function HomePage() {
   const supabase = await createClient();
-  const { data: { user: authUser } } = await supabase.auth.getUser();
+
+  // Paraleliza a busca de eventos e a verificação do usuário
+  const [events, { data: { user: authUser } }] = await Promise.all([
+    prisma.event.findMany({
+      where: { status: "PUBLISHED" },
+      orderBy: { date: "asc" },
+    }),
+    supabase.auth.getUser()
+  ]);
   
   let dbUser = null;
   if (authUser) {
@@ -34,11 +38,13 @@ export default async function HomePage() {
       <header className="relative overflow-hidden pb-20 sm:pb-32 shrink-0 bg-slate-950">
         {/* Background Image & Overlays */}
         <div className="absolute inset-0 z-0">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img 
+          <Image 
             src="https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?q=80&w=2070&auto=format&fit=crop" 
             alt="Festa" 
-            className="w-full h-full object-cover opacity-50"
+            fill
+            priority
+            sizes="100vw"
+            className="object-cover opacity-50"
           />
           <div className="absolute inset-0 bg-slate-950/60" />
           <div className="absolute inset-0 bg-gradient-to-r from-[var(--brand-600)]/30 to-purple-600/30 mix-blend-overlay" />
@@ -108,10 +114,12 @@ export default async function HomePage() {
                 >
                   <div className="aspect-video bg-[var(--muted)] p-6 flex flex-col justify-end relative overflow-hidden">
                     {event.coverImage ? (
-                      <img 
+                      <Image 
                         src={event.coverImage} 
                         alt={event.title}
-                        className="absolute inset-0 h-full w-full object-cover z-0"
+                        fill
+                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                        className="object-cover z-0"
                       />
                     ) : null}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent z-10" />
