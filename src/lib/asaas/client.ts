@@ -94,3 +94,20 @@ export async function createCreditCardCharge(
   const { data } = await asaas.post<AsaasPixCharge>("/payments", input);
   return data;
 }
+
+/**
+ * Realiza o estorno (parcial ou total) de uma cobrança.
+ * Se `value` não for informado, estorna o valor total.
+ */
+export async function refundCharge(
+  chargeId: string,
+  value?: number,
+  description?: string
+): Promise<any> {
+  const payload: any = {};
+  if (value) payload.value = value;
+  if (description) payload.description = description;
+
+  const { data } = await asaas.post(`/payments/${chargeId}/refund`, payload);
+  return data;
+}

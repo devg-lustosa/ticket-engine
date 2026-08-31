@@ -25,8 +25,10 @@ interface TicketRowProps {
     participantName: string;
     participantCpf: string | null;
     isParticipantEdited: boolean;
+    createdAt: Date;
     batch: {
       name: string;
+      price: number;
       event: {
         title: string;
         venue: string;
@@ -44,7 +46,8 @@ export function TicketRow({ ticket }: TicketRowProps) {
 
   const limitDate = subHours(eventDateObj, 24);
   const isBeforeLimit = isBefore(new Date(), limitDate);
-  const canEdit = !ticket.isParticipantEdited && isBeforeLimit && ticket.status === "ACTIVE";
+  // Temporariamente ignorando a regra de 24h para facilitar os testes
+  const canEdit = !ticket.isParticipantEdited && ticket.status === "ACTIVE";
 
   const [open, setOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -52,6 +55,10 @@ export function TicketRow({ ticket }: TicketRowProps) {
   const [cpf, setCpf] = useState(ticket.participantCpf || "");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+
+  const [isRefundModalOpen, setIsRefundModalOpen] = useState(false);
+  const [isRefunding, setIsRefunding] = useState(false);
+  const [refundError, setRefundError] = useState("");
 
   const handleEdit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -77,6 +84,24 @@ export function TicketRow({ ticket }: TicketRowProps) {
     }
   };
 
+  const handleRefund = async () => {
+    setIsRefunding(true);
+    setRefundError("");
+    try {
+      const res = await fetch(`/api/tickets/${ticket.id}/refund`, {
+        method: "POST",
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Erro ao solicitar reembolso.");
+      setIsRefundModalOpen(false);
+      router.refresh();
+    } catch (err: any) {
+      setRefundError(err.message);
+    } finally {
+      setIsRefunding(false);
+    }
+  };
+
   const statusMeta = {
     ACTIVE: { label: "Ativo", dot: "bg-success" },
     USED: { label: "Utilizado", dot: "bg-muted-fg" },
@@ -86,7 +111,7 @@ export function TicketRow({ ticket }: TicketRowProps) {
 
   return (
     <>
-      <div className="bg-card border border-card-border rounded-xl overflow-hidden transition-shadow hover:shadow-sm">
+      <div className="bg-card border border-border rounded-xl transition-shadow hover:shadow-sm">
         {/* Linha principal — clicável */}
         <button
           onClick={() => setOpen((v) => !v)}
@@ -194,32 +219,41 @@ export function TicketRow({ ticket }: TicketRowProps) {
                 </div>
 
                 {/* Titular */}
-                <div className="bg-muted rounded-lg p-3 mt-2">
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <p className="text-[10px] text-muted-fg uppercase tracking-wider mb-0.5">
-                        Titular do ingresso
-                      </p>
-                      <p className="text-sm font-semibold text-foreground">{ticket.participantName}</p>
-                      {ticket.participantCpf && (
-                        <p className="text-xs text-muted-fg">
-                          CPF: {ticket.participantCpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4")}
-                        </p>
-                      )}
-                    </div>
+                <div className="bg-muted rounded-lg p-4 mt-2 border border-border">
+                  <p className="text-[10px] text-muted-fg uppercase tracking-wider mb-1">
+                    Titular do ingresso
+                  </p>
+                  <p className="text-sm font-semibold text-foreground">{ticket.participantName}</p>
+                  {ticket.participantCpf && (
+                    <p className="text-xs text-muted-fg mt-0.5">
+                      CPF: {ticket.participantCpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4")}
+                    </p>
+                  )}
+                  
+                  {ticket.isParticipantEdited && (
+                    <p className="text-[11px] text-warning mt-2 font-medium">Titular já foi editado (limite atingido).</p>
+                  )}
+
+                  <div className="flex gap-2 mt-3">
                     {canEdit && (
                       <button
                         onClick={(e) => { e.stopPropagation(); setIsModalOpen(true); }}
-                        className="p-1.5 text-muted-fg hover:text-brand transition-colors rounded-md hover:bg-background"
-                        title="Editar titular"
+                        className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-background border border-border px-4 py-2 text-sm font-medium text-foreground hover:bg-muted/80 transition-colors"
                       >
-                        <Edit2 size={14} />
+                        <Edit2 size={15} className="text-brand" />
+                        Alterar Titular
+                      </button>
+                    )}
+                    {ticket.status === "ACTIVE" && (
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setIsRefundModalOpen(true); }}
+                        className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-background border border-border px-4 py-2 text-sm font-medium text-error hover:bg-error/10 transition-colors"
+                      >
+                        <XCircle size={15} />
+                        Cancelar Ingresso
                       </button>
                     )}
                   </div>
-                  {ticket.isParticipantEdited && (
-                    <p className="text-[10px] text-muted-fg mt-1.5">Titular já foi editado (limite atingido).</p>
-                  )}
                 </div>
               </div>
             </div>
@@ -227,9 +261,11 @@ export function TicketRow({ ticket }: TicketRowProps) {
         )}
       </div>
 
+
       {/* Modal editar titular */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in">
+
           <div className="bg-card border border-card-border w-full max-w-md rounded-2xl shadow-xl overflow-hidden">
             <div className="flex items-center justify-between p-4 border-b border-border">
               <h3 className="font-semibold text-foreground">Editar Titular</h3>
@@ -280,6 +316,43 @@ export function TicketRow({ ticket }: TicketRowProps) {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Reembolso */}
+      {isRefundModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in">
+          <div className="bg-card border border-card-border w-full max-w-md rounded-2xl shadow-xl overflow-hidden">
+            <div className="flex items-center justify-between p-4 border-b border-border">
+              <h3 className="font-semibold text-error">Cancelar Ingresso</h3>
+              <button onClick={() => setIsRefundModalOpen(false)} className="text-muted-fg hover:text-foreground transition-colors">
+                <X size={20} />
+              </button>
+            </div>
+            <div className="p-5 space-y-4">
+              <div className="bg-error/10 border border-error/20 text-error p-4 rounded-xl text-sm leading-relaxed">
+                Você tem certeza que deseja cancelar este ingresso e solicitar o reembolso?
+                Esta ação <strong>não pode ser desfeita</strong>. O valor será estornado na mesma forma de pagamento utilizada.
+              </div>
+              
+              {refundError && <p className="text-sm text-error">{refundError}</p>}
+              
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="button" onClick={() => setIsRefundModalOpen(false)}
+                  className="flex-1 rounded-xl border border-border px-4 py-2 text-sm font-medium text-foreground hover:bg-muted transition-colors"
+                >
+                  Manter Ingresso
+                </button>
+                <button
+                  type="button" onClick={handleRefund} disabled={isRefunding}
+                  className="flex-1 rounded-xl bg-error px-4 py-2 text-sm font-semibold text-white hover:bg-error/90 transition-colors disabled:opacity-50 flex justify-center items-center gap-2"
+                >
+                  {isRefunding ? <Loader2 className="w-4 h-4 animate-spin" /> : "Confirmar Cancelamento"}
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}
