@@ -9,6 +9,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
+import { useEffect, useState } from "react";
 
 interface SalesChartProps {
   data: {
@@ -17,7 +18,37 @@ interface SalesChartProps {
   }[];
 }
 
+function getCSSVar(name: string) {
+  if (typeof window === "undefined") return "";
+  return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+}
+
 export function SalesChart({ data }: SalesChartProps) {
+  const [colors, setColors] = useState({
+    border: "#374151",
+    mutedFg: "#9ca3af",
+    tooltipBg: "#1f2937",
+    tooltipBorder: "#374151",
+    tooltipText: "#f3f4f6",
+  });
+
+  useEffect(() => {
+    function read() {
+      setColors({
+        border: getCSSVar("--border") || "#374151",
+        mutedFg: getCSSVar("--muted-fg") || "#9ca3af",
+        tooltipBg: getCSSVar("--card") || "#1f2937",
+        tooltipBorder: getCSSVar("--card-border") || "#374151",
+        tooltipText: getCSSVar("--foreground") || "#f3f4f6",
+      });
+    }
+    read();
+    // re-read when theme changes (html class toggled)
+    const observer = new MutationObserver(read);
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
+    return () => observer.disconnect();
+  }, []);
+
   return (
     <div className="w-full h-[300px]">
       <ResponsiveContainer width="100%" height="100%">
@@ -30,17 +61,17 @@ export function SalesChart({ data }: SalesChartProps) {
             dot={{ r: 4, fill: "#10b981", strokeWidth: 0 }}
             activeDot={{ r: 6 }}
           />
-          <CartesianGrid stroke="#374151" strokeDasharray="3 3" vertical={false} />
+          <CartesianGrid stroke={colors.border} strokeDasharray="3 3" vertical={false} />
           <XAxis
             dataKey="date"
-            stroke="#9ca3af"
+            stroke={colors.mutedFg}
             fontSize={12}
             tickLine={false}
             axisLine={false}
             dy={10}
           />
           <YAxis
-            stroke="#9ca3af"
+            stroke={colors.mutedFg}
             fontSize={12}
             tickLine={false}
             axisLine={false}
@@ -49,14 +80,14 @@ export function SalesChart({ data }: SalesChartProps) {
           />
           <Tooltip
             contentStyle={{
-              backgroundColor: "#1f2937",
-              border: "1px solid #374151",
+              backgroundColor: colors.tooltipBg,
+              border: `1px solid ${colors.tooltipBorder}`,
               borderRadius: "8px",
-              color: "#f3f4f6",
+              color: colors.tooltipText,
             }}
             itemStyle={{ color: "#10b981", fontWeight: "bold" }}
             formatter={(value: any) => [`R$ ${Number(value).toFixed(2)}`, "Faturamento"]}
-            labelStyle={{ color: "#9ca3af", marginBottom: "4px" }}
+            labelStyle={{ color: colors.mutedFg, marginBottom: "4px" }}
           />
         </LineChart>
       </ResponsiveContainer>

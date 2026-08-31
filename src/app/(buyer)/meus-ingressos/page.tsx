@@ -1,70 +1,77 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
-import { TicketCard } from "@/components/ticket-card";
+import { TicketRow } from "@/components/ticket-row";
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Ticket } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 
 export default async function MeusIngressosPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
-  if (!user) {
-    redirect("/login");
-  }
+  if (!user) redirect("/login");
 
-  // Busca os ingressos do usuário que não estão PENDING
   const tickets = await prisma.ticket.findMany({
     where: {
       user: { authId: user.id },
       status: { not: "PENDING" },
     },
     include: {
-      batch: {
-        include: { event: true },
-      },
+      batch: { include: { event: true } },
       user: true,
     },
     orderBy: { createdAt: "desc" },
   });
 
   return (
-    <main className="min-h-dvh bg-[var(--background)] px-4 py-12">
-      <div className="mx-auto max-w-5xl">
-        <div className="mb-8 flex items-center justify-between animate-fade-in">
-          <Link href="/" className="inline-flex items-center gap-2 text-sm font-medium text-[var(--muted-fg)] hover:text-[var(--foreground)] transition-colors">
-            <ArrowLeft size={16} />
-            Voltar para a loja
+    <main className="min-h-dvh bg-background flex flex-col">
+      {/* Header */}
+      <header className="border-b border-border bg-card/80 backdrop-blur-sm sticky top-0 z-10">
+        <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
+          <Link
+            href="/"
+            className="flex items-center gap-2 text-sm text-muted-fg hover:text-foreground transition-colors"
+          >
+            <ArrowLeft size={15} />
+            Voltar à loja
           </Link>
           <ThemeToggle />
         </div>
+      </header>
 
-        <div className="mb-10 text-center animate-fade-in">
-          <h1 className="text-3xl font-bold text-[var(--foreground)]">Meus Ingressos</h1>
-          <p className="mt-2 text-[var(--muted-fg)]">
-            Apresente o QR Code na portaria do evento.
+      {/* Conteúdo */}
+      <div className="max-w-2xl mx-auto w-full px-4 py-8 flex-1">
+        {/* Título */}
+        <div className="mb-6 animate-fade-in">
+          <div className="flex items-center gap-2 mb-1">
+            <Ticket size={18} className="text-brand" />
+            <h1 className="text-xl font-bold text-foreground">Meus Ingressos</h1>
+          </div>
+          <p className="text-sm text-muted-fg">
+            Toque em um ingresso para ver o QR Code.
           </p>
         </div>
 
+        {/* Lista */}
         {tickets.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-[var(--border)] p-12 text-center text-[var(--muted-fg)]">
-            Você ainda não possui ingressos confirmados.
+          <div className="rounded-xl border border-dashed border-border p-12 text-center text-muted-fg animate-fade-in">
+            <Ticket size={32} className="mx-auto mb-3 opacity-30" />
+            <p className="font-medium text-foreground text-sm">Nenhum ingresso encontrado</p>
+            <p className="text-xs mt-1">Seus ingressos confirmados aparecerão aqui.</p>
           </div>
         ) : (
-          <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="space-y-2 animate-fade-in">
             {tickets.map((ticket) => {
               const serializableTicket = {
                 ...ticket,
                 batch: {
                   ...ticket.batch,
                   price: ticket.batch.price.toNumber(),
-                }
+                },
               };
               return (
-                <div key={ticket.id} className="animate-fade-in">
-                  <TicketCard ticket={serializableTicket as any} />
-                </div>
+                <TicketRow key={ticket.id} ticket={serializableTicket as any} />
               );
             })}
           </div>

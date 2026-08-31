@@ -26,21 +26,21 @@ export default async function TeamManagementPage() {
   });
 
   return (
-    <main className="min-h-screen bg-gray-950 text-white">
+    <main className="min-h-screen bg-background text-foreground">
       {/* Header */}
-      <header className="border-b border-gray-800 bg-gray-900/80 backdrop-blur-sm sticky top-0 z-10">
+      <header className="border-b border-border bg-card/80 backdrop-blur-sm sticky top-0 z-10">
         <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-lg bg-brand/20 flex items-center justify-center">
               <LayoutDashboard size={16} className="text-brand" />
             </div>
             <div>
-              <h1 className="text-base font-semibold">Dashboard de Eventos</h1>
-              <p className="text-xs text-gray-400">Organizador</p>
+              <h1 className="text-base font-semibold text-foreground">Dashboard de Eventos</h1>
+              <p className="text-xs text-muted-fg">Organizador</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <Link href="/" className="px-3 py-1.5 text-sm text-gray-400 hover:text-white transition-colors">
+            <Link href="/" className="px-3 py-1.5 text-sm text-muted-fg hover:text-foreground transition-colors">
               ← Voltar
             </Link>
           </div>
@@ -51,8 +51,8 @@ export default async function TeamManagementPage() {
       <div className="max-w-6xl mx-auto px-4 py-8">
         
         {/* Navegação Secundária */}
-        <div className="flex items-center gap-6 border-b border-gray-800 mb-8 pb-4">
-          <Link href="/painel" className="text-gray-400 hover:text-gray-200 font-medium pb-4 -mb-[17px] transition-colors">
+        <div className="flex items-center gap-6 border-b border-border mb-8 pb-4">
+          <Link href="/painel" className="text-muted-fg hover:text-foreground font-medium pb-4 -mb-[17px] transition-colors">
             Seus Eventos
           </Link>
           <Link href="/painel/equipe" className="text-brand font-medium border-b-2 border-brand pb-4 -mb-[17px]">
@@ -64,9 +64,9 @@ export default async function TeamManagementPage() {
           
           {/* Formulário (Esquerda) */}
           <div className="lg:col-span-1">
-            <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 shadow-xl sticky top-28">
-              <h2 className="text-lg font-semibold mb-1">Convidar Membro</h2>
-              <p className="text-sm text-gray-400 mb-6">
+            <div className="bg-card border border-card-border rounded-xl p-6 shadow-xl sticky top-28">
+              <h2 className="text-lg font-semibold mb-1 text-foreground">Convidar Membro</h2>
+              <p className="text-sm text-muted-fg mb-6">
                 O usuário já deve ter criado uma conta na plataforma.
               </p>
               <AddTeamMemberForm />
@@ -75,16 +75,16 @@ export default async function TeamManagementPage() {
 
           {/* Lista (Direita) */}
           <div className="lg:col-span-2">
-            <h2 className="text-lg font-semibold mb-4">Membros da Equipe</h2>
+            <h2 className="text-lg font-semibold mb-4 text-foreground">Membros da Equipe</h2>
             
             <div className="space-y-4">
               {teamMembers.map((member) => (
                 <div 
                   key={member.id} 
-                  className="bg-gray-900 border border-gray-800 rounded-xl p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-colors hover:border-gray-700"
+                  className="bg-card border border-card-border rounded-xl p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-colors hover:shadow-sm"
                 >
                   <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center shrink-0">
+                    <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center shrink-0">
                       {member.role === "ORGANIZER" ? (
                         <Shield size={18} className="text-brand" />
                       ) : (
@@ -93,12 +93,12 @@ export default async function TeamManagementPage() {
                     </div>
                     <div>
                       <div className="flex items-center gap-2 mb-1">
-                        <h3 className="font-semibold text-white">{member.name}</h3>
+                        <h3 className="font-semibold text-foreground">{member.name}</h3>
                         {member.id === dbUser.id && (
                           <span className="text-[10px] bg-brand/20 text-brand px-2 py-0.5 rounded-full border border-brand/30 uppercase tracking-wider font-bold">Você</span>
                         )}
                       </div>
-                      <p className="text-sm text-gray-400">{member.email}</p>
+                      <p className="text-sm text-muted-fg">{member.email}</p>
                     </div>
                   </div>
                   

@@ -72,12 +72,12 @@ export default async function DashboardPage() {
   }
 
   return (
-    <main className="min-h-screen bg-gray-950 text-white p-6">
+    <main className="min-h-screen bg-background text-foreground p-6">
       <div className="max-w-6xl mx-auto">
         <header className="mb-8 flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold">Dashboard</h1>
-            <p className="text-gray-400">Visão geral do seu evento</p>
+            <h1 className="text-3xl font-bold text-foreground">Dashboard</h1>
+            <p className="text-muted-fg">Visão geral do seu evento</p>
           </div>
           <ThemeToggle />
         </header>
@@ -85,25 +85,25 @@ export default async function DashboardPage() {
         {/* Cards de Métricas */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           {/* Ingressos Vendidos */}
-          <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 shadow-sm">
+          <div className="bg-card border border-card-border rounded-xl p-6 shadow-sm">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-gray-400 font-medium">Ingressos Vendidos</h3>
+              <h3 className="text-muted-fg font-medium">Ingressos Vendidos</h3>
               <div className="w-10 h-10 bg-accent/10 rounded-full flex items-center justify-center text-accent">
                 <Ticket size={20} />
               </div>
             </div>
-            <p className="text-3xl font-bold">{ticketsSold}</p>
+            <p className="text-3xl font-bold text-foreground">{ticketsSold}</p>
           </div>
 
           {/* Faturamento Bruto */}
-          <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 shadow-sm">
+          <div className="bg-card border border-card-border rounded-xl p-6 shadow-sm">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-gray-400 font-medium">Faturamento Bruto</h3>
+              <h3 className="text-muted-fg font-medium">Faturamento Bruto</h3>
               <div className="w-10 h-10 bg-brand/10 rounded-full flex items-center justify-center text-brand">
                 <DollarSign size={20} />
               </div>
             </div>
-            <p className="text-3xl font-bold">
+            <p className="text-3xl font-bold text-foreground">
               {new Intl.NumberFormat("pt-BR", {
                 style: "currency",
                 currency: "BRL",
@@ -112,9 +112,9 @@ export default async function DashboardPage() {
           </div>
 
           {/* Taxa da Plataforma */}
-          <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 shadow-sm">
+          <div className="bg-card border border-card-border rounded-xl p-6 shadow-sm">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-gray-400 font-medium">Taxa do Site (5%)</h3>
+              <h3 className="text-muted-fg font-medium">Taxa do Site (5%)</h3>
               <div className="w-10 h-10 bg-red-500/10 rounded-full flex items-center justify-center text-red-400">
                 <Percent size={20} />
               </div>
@@ -128,9 +128,9 @@ export default async function DashboardPage() {
           </div>
 
           {/* Faturamento Líquido */}
-          <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 shadow-sm">
+          <div className="bg-card border border-card-border rounded-xl p-6 shadow-sm">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-gray-400 font-medium">Sua Receita</h3>
+              <h3 className="text-muted-fg font-medium">Sua Receita</h3>
               <div className="w-10 h-10 bg-success/10 rounded-full flex items-center justify-center text-success">
                 <Wallet size={20} />
               </div>
@@ -144,20 +144,20 @@ export default async function DashboardPage() {
           </div>
 
           {/* Check-ins Realizados */}
-          <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 shadow-sm sm:col-span-2 lg:col-span-4">
+          <div className="bg-card border border-card-border rounded-xl p-6 shadow-sm sm:col-span-2 lg:col-span-4">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-gray-400 font-medium">Check-ins (Portaria)</h3>
+              <h3 className="text-muted-fg font-medium">Check-ins (Portaria)</h3>
               <div className="w-10 h-10 bg-blue-500/10 rounded-full flex items-center justify-center text-blue-400">
                 <CheckSquare size={20} />
               </div>
             </div>
-            <p className="text-3xl font-bold">
+            <p className="text-3xl font-bold text-foreground">
               {checkins}
-              <span className="text-sm font-normal text-gray-500 ml-2">
+              <span className="text-sm font-normal text-muted-fg ml-2">
                 / {ticketsSold}
               </span>
             </p>
-            <div className="mt-3 w-full bg-gray-800 rounded-full h-2">
+            <div className="mt-3 w-full bg-border rounded-full h-2">
               <div
                 className="bg-blue-500 h-2 rounded-full transition-all"
                 style={{
@@ -169,9 +169,9 @@ export default async function DashboardPage() {
         </div>
 
         {/* Gráfico */}
-        <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 shadow-sm">
+        <div className="bg-card border border-card-border rounded-xl p-6 shadow-sm">
           <div className="flex items-center mb-6">
-            <TrendingUp size={20} className="text-gray-400 mr-2" />
+            <TrendingUp size={20} className="text-muted-fg mr-2" />
             <h3 className="text-lg font-medium">Desempenho de Vendas (Diário)</h3>
           </div>
           <SalesChart data={chartData} />

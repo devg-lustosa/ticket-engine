@@ -27,10 +27,10 @@ import { DeleteButton } from "./_components/delete-button";
 import { ThemeToggle } from "@/components/theme-toggle";
 
 const STATUS_LABELS: Record<string, { label: string; color: string }> = {
-  DRAFT: { label: "Rascunho", color: "bg-gray-700 text-gray-300" },
-  PUBLISHED: { label: "Publicado", color: "bg-green-900/50 text-green-400" },
-  CANCELLED: { label: "Cancelado", color: "bg-red-900/50 text-red-400" },
-  FINISHED: { label: "Encerrado", color: "bg-yellow-900/50 text-yellow-400" },
+  DRAFT: { label: "Rascunho", color: "bg-muted text-muted-fg" },
+  PUBLISHED: { label: "Publicado", color: "bg-success/15 text-success" },
+  CANCELLED: { label: "Cancelado", color: "bg-error/15 text-error" },
+  FINISHED: { label: "Encerrado", color: "bg-warning/15 text-warning" },
 };
 
 export default async function StaffDashboardPage() {
@@ -62,17 +62,17 @@ export default async function StaffDashboardPage() {
 
 
   return (
-    <main className="min-h-screen bg-gray-950 text-white">
+    <main className="min-h-screen bg-background text-foreground">
       {/* Header */}
-      <header className="border-b border-gray-800 bg-gray-900/80 backdrop-blur-sm sticky top-0 z-10">
+      <header className="border-b border-border bg-card/80 backdrop-blur-sm sticky top-0 z-10">
         <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-lg bg-brand/20 flex items-center justify-center">
               <LayoutDashboard size={16} className="text-brand" />
             </div>
             <div>
-              <h1 className="text-base font-semibold">Dashboard de Eventos</h1>
-              <p className="text-xs text-gray-400">
+              <h1 className="text-base font-semibold text-foreground">Dashboard de Eventos</h1>
+              <p className="text-xs text-muted-fg">
                 {dbUser.role === "ORGANIZER" ? "Organizador" : "Colaborador"}
               </p>
             </div>
@@ -81,7 +81,7 @@ export default async function StaffDashboardPage() {
             <ThemeToggle />
             <Link
               href="/"
-              className="px-3 py-1.5 text-sm text-gray-400 hover:text-white transition-colors"
+              className="px-3 py-1.5 text-sm text-muted-fg hover:text-foreground transition-colors"
             >
               ← Voltar
             </Link>
@@ -104,11 +104,11 @@ export default async function StaffDashboardPage() {
         
         {/* Navegação Secundária */}
         {dbUser.role === "ORGANIZER" && (
-          <div className="flex items-center gap-6 border-b border-gray-800 mb-8 pb-4">
+          <div className="flex items-center gap-6 border-b border-border mb-8 pb-4">
             <Link href="/painel" className="text-brand font-medium border-b-2 border-brand pb-4 -mb-[17px]">
               Seus Eventos
             </Link>
-            <Link href="/painel/equipe" className="text-gray-400 hover:text-gray-200 font-medium pb-4 -mb-[17px] transition-colors">
+            <Link href="/painel/equipe" className="text-muted-fg hover:text-foreground font-medium pb-4 -mb-[17px] transition-colors">
               Gestão de Equipe
             </Link>
           </div>
@@ -120,11 +120,11 @@ export default async function StaffDashboardPage() {
         
         {events.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-24 text-center">
-            <Calendar size={48} className="text-gray-700 mb-4" />
-            <h2 className="text-xl font-semibold text-gray-300 mb-2">
+            <Calendar size={48} className="text-muted-fg mb-4 opacity-50" />
+            <h2 className="text-xl font-semibold text-foreground mb-2">
               Nenhum evento cadastrado
             </h2>
-            <p className="text-gray-500 mb-6">
+            <p className="text-muted-fg mb-6">
               Crie seu primeiro evento para começar a vender ingressos.
             </p>
             {dbUser.role === "ORGANIZER" && (
@@ -179,11 +179,11 @@ export default async function StaffDashboardPage() {
               return (
                 <div
                   key={event.id}
-                  className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden hover:border-gray-700 transition-colors"
+                  className="bg-card border border-card-border rounded-xl overflow-hidden hover:border-border/80 transition-colors shadow-sm"
                 >
                   <div className="flex items-center gap-4 p-4">
                     {/* Capa */}
-                    <div className="w-16 h-16 rounded-lg bg-gray-800 overflow-hidden shrink-0">
+                    <div className="w-16 h-16 rounded-lg bg-muted overflow-hidden shrink-0">
                       {event.coverImage ? (
                         <img
                           src={event.coverImage}
@@ -192,7 +192,7 @@ export default async function StaffDashboardPage() {
                         />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center">
-                          <Calendar size={24} className="text-gray-600" />
+                          <Calendar size={24} className="text-muted-fg" />
                         </div>
                       )}
                     </div>
@@ -202,10 +202,10 @@ export default async function StaffDashboardPage() {
                       <div className="flex items-center gap-2 mb-1">
                         <PublishButton eventId={event.id} status={event.status} />
                       </div>
-                      <h3 className="font-semibold text-white truncate">
+                      <h3 className="font-semibold text-foreground truncate">
                         {event.title}
                       </h3>
-                      <div className="flex flex-wrap items-center gap-3 mt-1 text-xs text-gray-400">
+                      <div className="flex flex-wrap items-center gap-3 mt-1 text-xs text-muted-fg">
                         <span className="flex items-center gap-1">
                           <Clock size={11} />
                           {eventDate}
@@ -226,7 +226,7 @@ export default async function StaffDashboardPage() {
                       <Link
                         href={`/evento/${event.slug}`}
                         target="_blank"
-                        className="p-2 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition-colors"
+                        className="p-2 text-muted-fg hover:text-foreground hover:bg-muted rounded-lg transition-colors"
                         title="Visualizar página"
                       >
                         {event.status === "PUBLISHED" ? (
@@ -240,14 +240,14 @@ export default async function StaffDashboardPage() {
                         <>
                           <Link
                             href={`/painel/eventos/${event.id}/cupons`}
-                            className="p-2 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition-colors"
+                            className="p-2 text-muted-fg hover:text-foreground hover:bg-muted rounded-lg transition-colors"
                             title="Gerenciar cupons"
                           >
                             <Tag size={16} />
                           </Link>
                           <Link
                             href={`/painel/eventos/${event.id}/editar`}
-                            className="p-2 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition-colors"
+                            className="p-2 text-muted-fg hover:text-foreground hover:bg-muted rounded-lg transition-colors"
                             title="Editar evento"
                           >
                             <Pencil size={16} />
@@ -260,37 +260,37 @@ export default async function StaffDashboardPage() {
                   
                   {/* Minimetrics for Organizer */}
                   {dbUser.role === "ORGANIZER" && (
-                    <div className="border-t border-gray-800/60 bg-gray-900/40 p-4">
+                    <div className="border-t border-border/60 bg-muted/40 p-4">
                       <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
                         <div>
-                          <p className="text-xs text-gray-500 mb-1 flex items-center gap-1"><TicketIcon size={12}/> Vendidos</p>
-                          <p className="text-lg font-bold">{eventTicketsSold}</p>
+                          <p className="text-xs text-muted-fg mb-1 flex items-center gap-1"><TicketIcon size={12}/> Vendidos</p>
+                          <p className="text-lg font-bold text-foreground">{eventTicketsSold}</p>
                         </div>
                         <div>
-                          <p className="text-xs text-gray-500 mb-1 flex items-center gap-1"><DollarSign size={12}/> Bruto</p>
-                          <p className="text-lg font-bold">
+                          <p className="text-xs text-muted-fg mb-1 flex items-center gap-1"><DollarSign size={12}/> Bruto</p>
+                          <p className="text-lg font-bold text-foreground">
                             {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(eventTotalRevenue)}
                           </p>
                         </div>
                         <div>
-                          <p className="text-xs text-gray-500 mb-1 flex items-center gap-1 text-red-400/80"><Percent size={12}/> Taxa (5%)</p>
-                          <p className="text-lg font-bold text-red-400">
+                          <p className="text-xs text-muted-fg mb-1 flex items-center gap-1 text-error/70"><Percent size={12}/> Taxa (5%)</p>
+                          <p className="text-lg font-bold text-error">
                             {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(eventPlatformFee)}
                           </p>
                         </div>
                         <div>
-                          <p className="text-xs text-gray-500 mb-1 flex items-center gap-1 text-emerald-400/80"><Wallet size={12}/> Receita</p>
-                          <p className="text-lg font-bold text-emerald-400">
+                          <p className="text-xs text-muted-fg mb-1 flex items-center gap-1 text-success/70"><Wallet size={12}/> Receita</p>
+                          <p className="text-lg font-bold text-success">
                             {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(eventNetRevenue)}
                           </p>
                         </div>
                         <div className="col-span-2 md:col-span-1">
-                          <p className="text-xs text-gray-500 mb-1 flex items-center gap-1"><CheckSquare size={12}/> Check-ins</p>
+                          <p className="text-xs text-muted-fg mb-1 flex items-center gap-1"><CheckSquare size={12}/> Check-ins</p>
                           <div className="flex items-center gap-2">
-                            <span className="text-lg font-bold">{eventCheckins}</span>
-                            <span className="text-xs text-gray-600">/ {eventTicketsSold}</span>
+                            <span className="text-lg font-bold text-foreground">{eventCheckins}</span>
+                            <span className="text-xs text-muted-fg">/ {eventTicketsSold}</span>
                           </div>
-                          <div className="mt-1 w-full bg-gray-800 rounded-full h-1.5">
+                          <div className="mt-1 w-full bg-border rounded-full h-1.5">
                             <div
                               className="bg-blue-500 h-1.5 rounded-full transition-all"
                               style={{ width: eventTicketsSold > 0 ? `${(eventCheckins / eventTicketsSold) * 100}%` : "0%" }}

@@ -37,8 +37,8 @@ export function PublishButton({ eventId, status }: PublishButtonProps) {
       title={isPublished ? "Despublicar evento" : "Publicar evento"}
       className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors disabled:opacity-60 disabled:cursor-not-allowed
         ${isPublished
-          ? "bg-green-900/30 text-green-400 hover:bg-red-900/30 hover:text-red-400 border border-green-800/50 hover:border-red-800/50"
-          : "bg-gray-800 text-gray-400 hover:bg-green-900/30 hover:text-green-400 border border-gray-700 hover:border-green-800/50"
+          ? "bg-success/15 text-success hover:bg-error/15 hover:text-error border border-success/30 hover:border-error/30"
+          : "bg-muted text-muted-fg hover:bg-success/15 hover:text-success border border-border hover:border-success/30"
         }`}
     >
       {loading ? (

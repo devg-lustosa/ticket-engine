@@ -57,7 +57,7 @@ export function AddTeamMemberForm() {
       )}
 
       <div>
-        <label className="block text-sm font-medium text-gray-300 mb-1">
+        <label className="block text-sm font-medium text-foreground mb-1">
           E-mail do usuário
         </label>
         <input
@@ -65,17 +65,17 @@ export function AddTeamMemberForm() {
           name="email"
           required
           placeholder="email@exemplo.com"
-          className="w-full bg-gray-950 border border-gray-800 rounded-lg px-4 py-2.5 text-white focus:border-brand focus:ring-1 focus:ring-brand outline-none"
+          className="w-full bg-muted border border-border rounded-lg px-4 py-2.5 text-foreground placeholder:text-muted-fg focus:border-brand focus:ring-1 focus:ring-brand outline-none"
         />
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-300 mb-1">
+        <label className="block text-sm font-medium text-foreground mb-1">
           Cargo
         </label>
         <select
           name="role"
-          className="w-full bg-gray-950 border border-gray-800 rounded-lg px-4 py-2.5 text-white focus:border-brand focus:ring-1 focus:ring-brand outline-none"
+          className="w-full bg-muted border border-border rounded-lg px-4 py-2.5 text-foreground focus:border-brand focus:ring-1 focus:ring-brand outline-none"
         >
           <option value="STAFF">Segurança (Acesso ao Scanner)</option>
           <option value="ORGANIZER">Organizador (Acesso Total)</option>

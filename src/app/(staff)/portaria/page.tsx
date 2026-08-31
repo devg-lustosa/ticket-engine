@@ -167,21 +167,21 @@ export default function PortariaPage() {
   }, []);
 
   return (
-    <main className="min-h-screen bg-gray-950 text-white flex flex-col items-center justify-center p-4 relative">
+    <main className="min-h-screen bg-background text-foreground flex flex-col items-center justify-center p-4 relative">
       {/* Botão Voltar */}
       <button 
         onClick={() => router.back()}
-        className="absolute top-6 left-6 text-gray-400 hover:text-white flex items-center gap-2 font-medium transition-colors bg-gray-900/50 px-4 py-2 rounded-full border border-gray-800 backdrop-blur-sm z-10"
+        className="absolute top-6 left-6 text-muted-fg hover:text-foreground flex items-center gap-2 font-medium transition-colors bg-card/50 px-4 py-2 rounded-full border border-border backdrop-blur-sm z-10"
       >
         <ArrowLeft size={18} />
         Voltar
       </button>
 
-      <div className="w-full max-w-md bg-gray-900 border border-gray-800 rounded-2xl p-6 shadow-2xl flex flex-col items-center mt-12">
+      <div className="w-full max-w-md bg-card border border-card-border rounded-2xl p-6 shadow-2xl flex flex-col items-center mt-12">
         
         <div className="mb-6 text-center">
-          <h1 className="text-2xl font-bold mb-1 text-white">Validador</h1>
-          <p className="text-gray-400 text-sm">Aponte a câmera para o QR Code</p>
+          <h1 className="text-2xl font-bold mb-1 text-foreground">Validador</h1>
+          <p className="text-muted-fg text-sm">Aponte a câmera para o QR Code</p>
         </div>
 
         {/* Scanner Container */}
@@ -198,7 +198,7 @@ export default function PortariaPage() {
           <div id="reader" style={{ width: "100%", height: "100%", display: scannerActive ? 'block' : 'none' }}></div>
 
           {!scannerActive && (
-            <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-500 bg-gray-950 p-4 text-center">
+            <div className="absolute inset-0 flex flex-col items-center justify-center text-muted-fg bg-muted p-4 text-center">
               <Camera size={48} className="mb-2 opacity-50" />
               <button 
                 onClick={startScanner}
@@ -219,7 +219,7 @@ export default function PortariaPage() {
         {/* Feedback Area */}
         <div className="mt-6 w-full min-h-[120px] flex items-center justify-center">
           {result.type === "idle" && (
-            <div className="text-center text-gray-500 flex flex-col items-center animate-pulse">
+            <div className="text-center text-muted-fg flex flex-col items-center animate-pulse">
               <Scan size={32} className="mb-2" />
               <p>Aguardando leitura...</p>
             </div>
@@ -265,20 +265,20 @@ export default function PortariaPage() {
         </div>
 
         {/* Manual Input (Contingência / Teste) */}
-        <form onSubmit={handleManualSubmit} className="mt-8 w-full border-t border-gray-800 pt-6">
-          <p className="text-sm text-gray-400 mb-2 text-center">Ou digite o código do ingresso manualmente:</p>
+        <form onSubmit={handleManualSubmit} className="mt-8 w-full border-t border-border pt-6">
+          <p className="text-sm text-muted-fg mb-2 text-center">Ou digite o código do ingresso manualmente:</p>
           <div className="flex gap-2">
             <input 
               type="text" 
               placeholder="Código Curto (Ex: 8A4B2C1D)" 
               value={manualHash}
               onChange={(e) => setManualHash(e.target.value)}
-              className="flex-1 bg-gray-950 border border-gray-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-brand"
+              className="flex-1 bg-muted border border-border rounded-lg px-3 py-2 text-sm text-foreground placeholder:text-muted-fg focus:outline-none focus:border-brand"
             />
             <button 
               type="submit" 
               disabled={!manualHash.trim() || result.type === 'loading'}
-              className="bg-gray-800 hover:bg-gray-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
+              className="bg-muted hover:bg-border text-foreground px-4 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
             >
               Validar
             </button>
