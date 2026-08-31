@@ -18,7 +18,7 @@ export async function login(_prevState: unknown, formData: FormData) {
   }
 
   revalidatePath("/", "layout");
-  redirect("/meus-ingressos");
+  redirect("/");
 }
 
 export async function signup(_prevState: unknown, formData: FormData) {
@@ -50,7 +50,7 @@ export async function signup(_prevState: unknown, formData: FormData) {
   }
 
   revalidatePath("/", "layout");
-  redirect("/meus-ingressos");
+  redirect("/");
 }
 
 export async function logout() {

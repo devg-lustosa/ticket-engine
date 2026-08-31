@@ -57,7 +57,7 @@ export async function proxy(request: NextRequest) {
   if (user) {
     // Redirect authenticated users away from auth pages
     if (pathname === "/login" || pathname === "/cadastro") {
-      return redirect("/meus-ingressos");
+      return redirect("/");
     }
   }
 
