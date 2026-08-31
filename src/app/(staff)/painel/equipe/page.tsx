@@ -5,6 +5,7 @@ import Link from "next/link";
 import { LayoutDashboard, Users, Shield, Plus, MoreVertical } from "lucide-react";
 import { AddTeamMemberForm } from "./_components/add-team-member-form";
 import { RemoveTeamMemberButton } from "./_components/remove-team-member-button";
+import { ChangeRoleSelect } from "./_components/change-role-select";
 
 export default async function TeamManagementPage() {
   const supabase = await createClient();
@@ -103,9 +104,13 @@ export default async function TeamManagementPage() {
                   </div>
                   
                   <div className="flex items-center gap-3">
-                    <span className={`text-xs px-2.5 py-1 rounded-md font-medium border ${member.role === 'ORGANIZER' ? 'bg-brand/10 text-brand border-brand/20' : 'bg-blue-500/10 text-blue-400 border-blue-500/20'}`}>
-                      {member.role === "ORGANIZER" ? "Organizador" : "Segurança (Portaria)"}
-                    </span>
+                    {member.id === dbUser.id ? (
+                      <span className={`text-xs px-2.5 py-1 rounded-md font-medium border ${member.role === 'ORGANIZER' ? 'bg-brand/10 text-brand border-brand/20' : 'bg-blue-500/10 text-blue-400 border-blue-500/20'}`}>
+                        {member.role === "ORGANIZER" ? "Organizador" : "Segurança (Portaria)"}
+                      </span>
+                    ) : (
+                      <ChangeRoleSelect email={member.email} currentRole={member.role} />
+                    )}
                     
                     {member.id !== dbUser.id && (
                       <RemoveTeamMemberButton userId={member.id} />

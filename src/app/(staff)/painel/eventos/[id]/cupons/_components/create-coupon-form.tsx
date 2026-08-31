@@ -11,10 +11,11 @@ export function CreateCouponForm({ eventId }: { eventId: string }) {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    const form = e.currentTarget;
     setLoading(true);
     setError("");
 
-    const formData = new FormData(e.currentTarget);
+    const formData = new FormData(form);
     const data = {
       code: formData.get("code"),
       discountType: formData.get("discountType"),
@@ -33,7 +34,7 @@ export function CreateCouponForm({ eventId }: { eventId: string }) {
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || "Erro ao criar cupom");
 
-      e.currentTarget.reset();
+      form.reset();
       router.refresh();
     } catch (err: any) {
       setError(err.message);

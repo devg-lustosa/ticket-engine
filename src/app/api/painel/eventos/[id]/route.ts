@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
 
@@ -115,25 +116,68 @@ export async function PUT(
         },
       });
 
-      // Simple implementation: Delete existing batches and recreate them
-      // NOTE: In production, you would only delete batches with no sold tickets
-      // Since this is a simple dashboard, we assume batches can be recreated if they have no tickets
-      // But because tickets reference batches, deleting a batch with tickets would cascade delete the tickets!
-      // To prevent this, we'll UPSERT by matching by name or just use basic update logic.
-      // Wait, we can't easily upsert if we don't have batch IDs in the form. The form uses _key which is a random string.
-      // We will leave the batches untouched if we don't want to break it, or we delete and recreate.
-      // To be safe, we won't touch batches in the Edit form for now unless we implement proper batch IDs.
-      // For the MVP edit, just updating event details is enough.
+      // Logica de atualização de lotes:
+      // Busca lotes existentes
+      const existingBatches = await tx.batch.findMany({ where: { eventId: id } });
+      
+      const payloadBatches = batches || [];
+      const incomingNames = payloadBatches.map((b: any) => b.name.trim());
+
+      // Atualiza ou Cria
+      for (let i = 0; i < payloadBatches.length; i++) {
+        const b = payloadBatches[i];
+        const existing = existingBatches.find(eb => eb.name.toLowerCase() === b.name.trim().toLowerCase());
+        
+        if (existing) {
+          await tx.batch.update({
+            where: { id: existing.id },
+            data: {
+              price: b.price,
+              totalQty: b.totalQty,
+              endAt: b.endAt ? new Date(b.endAt) : null,
+              startAt: b.startAt ? new Date(b.startAt) : null,
+              sortOrder: b.sortOrder ?? i,
+            }
+          });
+        } else {
+          await tx.batch.create({
+            data: {
+              eventId: id,
+              name: b.name.trim(),
+              price: b.price,
+              totalQty: b.totalQty,
+              soldQty: 0,
+              startAt: b.startAt ? new Date(b.startAt) : null,
+              endAt: b.endAt ? new Date(b.endAt) : null,
+              sortOrder: b.sortOrder ?? i,
+            }
+          });
+        }
+      }
+
+      // Deleta lotes que não estão no payload e que tenham 0 ingressos vendidos (para evitar erros de FK cascade)
+      for (const eb of existingBatches) {
+        if (!incomingNames.some((name: string) => name.toLowerCase() === eb.name.toLowerCase())) {
+          if (eb.soldQty > 0) {
+            throw new Error(`O lote "${eb.name}" já possui ${eb.soldQty} ingresso(s) vendido(s) e não pode ser excluído. Para parar de vendê-lo, altere a data de término (Fim) para uma data no passado.`);
+          }
+          await tx.batch.delete({ where: { id: eb.id } });
+        }
+      }
 
       return evt;
     });
 
+    revalidatePath("/", "layout");
+    revalidatePath(`/evento/${updatedEvent.slug}`, "page");
+
     return NextResponse.json({ event: updatedEvent });
   } catch (err) {
     console.error("[PUT /api/painel/eventos/[id]]", err);
+    const msg = err instanceof Error ? err.message : "Erro interno do servidor";
     return NextResponse.json(
-      { error: "Erro interno do servidor" },
-      { status: 500 }
+      { error: msg },
+      { status: 400 }
     );
   }
 }

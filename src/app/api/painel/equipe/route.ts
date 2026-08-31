@@ -16,7 +16,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Acesso negado" }, { status: 403 });
     }
 
-    const { email, role } = await request.json();
+    const { email: rawEmail, role } = await request.json();
+    const email = rawEmail?.trim().toLowerCase();
 
     if (!email || !role || (role !== "STAFF" && role !== "ORGANIZER")) {
       return NextResponse.json({ error: "Dados inválidos" }, { status: 400 });
