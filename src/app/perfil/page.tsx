@@ -67,60 +67,62 @@ export default function PerfilPage() {
       </header>
 
       <div className="mx-auto max-w-xl px-4 py-12">
-        <h1 className="text-2xl font-bold mb-8">Configurações da Conta</h1>
+        <h1 className="text-3xl font-extrabold text-foreground mb-8">Configurações da Conta</h1>
 
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
-          <h2 className="text-lg font-semibold flex items-center gap-2 mb-6">
-            <Lock size={20} className="text-gray-500" />
+        <div className="bg-card border border-border rounded-2xl shadow-sm p-6 md:p-8">
+          <h2 className="text-xl font-semibold text-foreground flex items-center gap-2 mb-6">
+            <Lock size={20} className="text-muted-fg" />
             Trocar Senha
           </h2>
 
-          <form onSubmit={handleUpdatePassword} className="space-y-4">
+          <form onSubmit={handleUpdatePassword} className="space-y-5">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Nova Senha</label>
+              <label className="block text-sm font-medium text-foreground mb-1.5">Nova Senha</label>
               <input
                 type="password"
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full bg-gray-50 border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-colors"
+                className="w-full bg-background border border-border text-foreground placeholder:text-muted-fg/70 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent transition-all"
                 placeholder="Mínimo 6 caracteres"
               />
             </div>
             
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Confirmar Nova Senha</label>
+              <label className="block text-sm font-medium text-foreground mb-1.5">Confirmar Nova Senha</label>
               <input
                 type="password"
                 required
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                className="w-full bg-gray-50 border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-colors"
+                className="w-full bg-background border border-border text-foreground placeholder:text-muted-fg/70 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent transition-all"
                 placeholder="Repita a nova senha"
               />
             </div>
 
             {status === "error" && (
-              <div className="p-3 bg-red-50 text-red-700 rounded-lg text-sm flex items-start gap-2">
-                <AlertCircle size={16} className="mt-0.5 shrink-0" />
-                <span>{errorMessage}</span>
+              <div className="p-4 bg-error/10 border border-error/20 text-error rounded-xl text-sm flex items-start gap-3">
+                <AlertCircle size={18} className="mt-0.5 shrink-0" />
+                <span className="font-medium">{errorMessage}</span>
               </div>
             )}
 
             {status === "success" && (
-              <div className="p-3 bg-green-50 text-green-700 rounded-lg text-sm flex items-start gap-2">
-                <CheckCircle2 size={16} className="mt-0.5 shrink-0" />
-                <span>Sua senha foi atualizada com sucesso!</span>
+              <div className="p-4 bg-success/10 border border-success/20 text-success rounded-xl text-sm flex items-start gap-3">
+                <CheckCircle2 size={18} className="mt-0.5 shrink-0" />
+                <span className="font-medium">Sua senha foi atualizada com sucesso!</span>
               </div>
             )}
 
-            <button
-              type="submit"
-              disabled={status === "loading"}
-              className="w-full bg-black text-white rounded-lg py-2.5 font-medium hover:bg-gray-800 transition-colors disabled:opacity-50"
-            >
-              {status === "loading" ? "Atualizando..." : "Atualizar Senha"}
-            </button>
+            <div className="pt-2">
+              <button
+                type="submit"
+                disabled={status === "loading"}
+                className="w-full flex items-center justify-center gap-2 bg-brand text-white rounded-xl py-3 font-semibold hover:bg-brand/90 hover:shadow-md transition-all active:scale-[0.98] disabled:opacity-70 disabled:active:scale-100"
+              >
+                {status === "loading" ? "Atualizando..." : "Atualizar Senha"}
+              </button>
+            </div>
           </form>
         </div>
       </div>

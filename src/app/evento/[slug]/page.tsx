@@ -135,6 +135,16 @@ export default async function EventDetailsPage({ params }: EventPageProps) {
               </div>
             </section>
 
+            {/* Mobile Tickets Box (Visible only on mobile, below Local) */}
+            <div className="block lg:hidden">
+              <TicketsBox
+                batches={event.batches.map((b) => ({
+                  ...b,
+                  price: Number(b.price),
+                }))}
+              />
+            </div>
+
             {/* Política do Evento */}
             <section className="border border-[var(--border)] rounded-2xl overflow-hidden">
               <div className="flex items-center gap-2 px-6 py-4 border-b border-[var(--border)] bg-[var(--muted)]">
@@ -263,7 +273,7 @@ export default async function EventDetailsPage({ params }: EventPageProps) {
           </div>
 
           {/* Right Column: Tickets Box */}
-          <div className="lg:col-span-1">
+          <div className="hidden lg:block lg:col-span-1">
             <TicketsBox
               batches={event.batches.map((b) => ({
                 ...b,

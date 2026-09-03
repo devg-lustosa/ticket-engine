@@ -30,18 +30,20 @@ export default async function TeamManagementPage() {
     <main className="min-h-screen bg-background text-foreground">
       {/* Header */}
       <header className="border-b border-border bg-card/80 backdrop-blur-sm sticky top-0 z-10">
-        <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
+        <div className="max-w-6xl mx-auto px-4 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-brand/20 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-lg bg-brand/20 flex items-center justify-center shrink-0">
               <LayoutDashboard size={16} className="text-brand" />
             </div>
             <div>
-              <h1 className="text-base font-semibold text-foreground">Dashboard de Eventos</h1>
+              <h1 className="text-base font-semibold text-foreground leading-tight sm:leading-normal">
+                Dashboard de Eventos
+              </h1>
               <p className="text-xs text-muted-fg">Organizador</p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <Link href="/" className="px-3 py-1.5 text-sm text-muted-fg hover:text-foreground transition-colors">
+          <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+            <Link href="/" className="px-2 py-1.5 text-sm text-muted-fg hover:text-foreground transition-colors whitespace-nowrap">
               ← Voltar
             </Link>
           </div>

@@ -65,34 +65,39 @@ export default async function StaffDashboardPage() {
     <main className="min-h-screen bg-background text-foreground">
       {/* Header */}
       <header className="border-b border-border bg-card/80 backdrop-blur-sm sticky top-0 z-10">
-        <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
+        <div className="max-w-6xl mx-auto px-4 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-brand/20 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-lg bg-brand/20 flex items-center justify-center shrink-0">
               <LayoutDashboard size={16} className="text-brand" />
             </div>
             <div>
-              <h1 className="text-base font-semibold text-foreground">Dashboard de Eventos</h1>
+              <h1 className="text-base font-semibold text-foreground leading-tight sm:leading-normal">
+                Dashboard de Eventos
+              </h1>
               <p className="text-xs text-muted-fg">
                 {dbUser.role === "ORGANIZER" ? "Organizador" : "Colaborador"}
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-4">
-            <ThemeToggle />
-            <Link
-              href="/"
-              className="px-3 py-1.5 text-sm text-muted-fg hover:text-foreground transition-colors"
-            >
-              ← Voltar
-            </Link>
+          <div className="flex items-center gap-3 sm:gap-4 w-full sm:w-auto justify-between sm:justify-end">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <ThemeToggle />
+              <Link
+                href="/"
+                className="px-2 py-1.5 text-sm text-muted-fg hover:text-foreground transition-colors whitespace-nowrap"
+              >
+                ← Voltar
+              </Link>
+            </div>
             {/* Botão de novo evento — apenas para Organizer */}
             {dbUser.role === "ORGANIZER" && (
               <Link
                 href="/painel/eventos/novo"
-                className="flex items-center gap-1.5 px-4 py-1.5 bg-brand text-white text-sm font-medium rounded-lg hover:bg-brand/90 transition-colors"
+                className="flex items-center justify-center gap-1.5 px-4 py-2 bg-brand text-white text-sm font-medium rounded-lg hover:bg-brand/90 transition-colors whitespace-nowrap shrink-0"
               >
                 <Plus size={15} />
-                Novo Evento
+                <span className="hidden sm:inline">Novo Evento</span>
+                <span className="sm:hidden">Novo</span>
               </Link>
             )}
           </div>
