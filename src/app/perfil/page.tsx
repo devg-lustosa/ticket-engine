@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { UserNav } from "@/components/user-nav";
 import Link from "next/link";
 import { Ticket, Lock, AlertCircle, CheckCircle2 } from "lucide-react";
 import { siteConfig } from "@/config/site";

@@ -1,8 +1,6 @@
 import Link from "next/link";
-import { prisma } from "@/lib/prisma";
 import { siteConfig } from "@/config/site";
 import { Ticket, HelpCircle, ShieldCheck, CreditCard, RefreshCw, Edit2 } from "lucide-react";
-import { createClient } from "@/lib/supabase/server";
 import { UserNav } from "@/components/user-nav";
 import { Footer } from "@/components/footer";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -12,17 +10,7 @@ export const metadata = {
   description: "Tire suas dúvidas, veja como comprar, formas de pagamento e políticas de cancelamento.",
 };
 
-export default async function AjudaPage() {
-  const supabase = await createClient();
-  const { data: { user: authUser } } = await supabase.auth.getUser();
-  
-  let dbUser = null;
-  if (authUser) {
-    dbUser = await prisma.user.findUnique({
-      where: { authId: authUser.id },
-      select: { name: true, email: true, role: true }
-    });
-  }
+export default function AjudaPage() {
 
   return (
     <main className="min-h-dvh bg-[var(--background)] flex flex-col">
@@ -38,7 +26,7 @@ export default async function AjudaPage() {
           </Link>
           <div className="flex items-center gap-4">
             <ThemeToggle />
-            <UserNav user={dbUser} role={dbUser?.role} />
+            <UserNav />
           </div>
         </div>
 
