@@ -1,36 +1,21 @@
 import Image from "next/image";
 import Link from "next/link";
-import { prisma } from "@/lib/prisma";
+import { getPublishedEvents } from "@/services/event.service";
 import { siteConfig } from "@/config/site";
 import { Calendar, MapPin, Ticket } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { createClient } from "@/lib/supabase/server";
 import { UserNav } from "@/components/user-nav";
 import { Footer } from "@/components/footer";
 import { ThemeToggle } from "@/components/theme-toggle";
 
+// ISR: O Vercel gerará essa página de forma estática e a atualizará no fundo a cada 30 segundos.
+// Zero Cold Starts e 100% Cache Hit para os usuários!
 export const revalidate = 30;
 
 export default async function HomePage() {
-  const supabase = await createClient();
-
-  // Paraleliza a busca de eventos e a verificação do usuário
-  const [events, { data: { user: authUser } }] = await Promise.all([
-    prisma.event.findMany({
-      where: { status: "PUBLISHED" },
-      orderBy: { date: "asc" },
-    }),
-    supabase.auth.getUser()
-  ]);
-  
-  let dbUser = null;
-  if (authUser) {
-    dbUser = await prisma.user.findUnique({
-      where: { authId: authUser.id },
-      select: { name: true, email: true, role: true }
-    });
-  }
+  // Chamamos o serviço de backend isolado (agora sem cookies/auth aqui, a página fica 100% estática)
+  const events = await getPublishedEvents();
 
   return (
     <main className="min-h-dvh bg-gray-50 dark:bg-[var(--background)] flex flex-col">
@@ -60,7 +45,7 @@ export default async function HomePage() {
           </Link>
           <div className="flex items-center gap-4">
             <ThemeToggle />
-            <UserNav user={dbUser} role={dbUser?.role} />
+            <UserNav />
           </div>
         </div>
 

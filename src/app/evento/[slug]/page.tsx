@@ -1,6 +1,6 @@
 import Image from "next/image";
 import { notFound } from "next/navigation";
-import { prisma } from "@/lib/prisma";
+import { getEventBySlug } from "@/services/event.service";
 import Link from "next/link";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -8,7 +8,6 @@ import { Calendar, MapPin, Ticket, ArrowLeft, ShieldCheck, User, CreditCard, Ale
 import { siteConfig } from "@/config/site";
 import { UserNav } from "@/components/user-nav";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { createClient } from "@/lib/supabase/server";
 import { TicketsBox } from "./_components/tickets-box";
 
 export const revalidate = 60;
@@ -21,33 +20,12 @@ interface EventPageProps {
 
 export default async function EventDetailsPage({ params }: EventPageProps) {
   const { slug } = await params;
-  const supabase = await createClient();
 
-  // Paraleliza a busca do evento e do usuário logado
-  const [event, { data: { user: authUser } }] = await Promise.all([
-    prisma.event.findUnique({
-      where: { slug },
-      include: {
-        batches: {
-          orderBy: { sortOrder: "asc" },
-        },
-        organizer: {
-          select: { name: true },
-        },
-      },
-    }),
-    supabase.auth.getUser()
-  ]);
+  // Busca do evento utilizando a camada de serviço (com cache ativado)
+  const event = await getEventBySlug(slug);
 
   if (!event || event.status !== "PUBLISHED") {
     notFound();
-  }
-  let dbUser = null;
-  if (authUser) {
-    dbUser = await prisma.user.findUnique({
-      where: { authId: authUser.id },
-      select: { name: true, email: true },
-    });
   }
 
   const eventDate = format(new Date(event.date), "dd 'de' MMMM yyyy", { locale: ptBR });
@@ -64,7 +42,7 @@ export default async function EventDetailsPage({ params }: EventPageProps) {
           </Link>
           <div className="flex items-center gap-4">
             <ThemeToggle />
-            <UserNav user={dbUser} />
+            <UserNav />
           </div>
         </div>
       </div>

@@ -54,3 +54,10 @@ next-env.d.ts
 # IDEs
 .vscode/
 .idea/
+
+# AI Tools / Agents
+.agents/
+.cursor/
+.cursorrules
+.claude/
+.devin/

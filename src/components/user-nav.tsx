@@ -3,20 +3,36 @@
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { User, Settings, Ticket, LogOut, LayoutDashboard, ScanLine, ChevronDown } from "lucide-react";
+import { getCurrentUser } from "@/services/user.service";
 
-interface UserNavProps {
-  user: {
-    name: string;
-    email: string;
-  } | null;
-  role?: string | null;
+interface UserData {
+  name: string;
+  email: string;
+  role: string | null;
 }
 
-export function UserNav({ user, role }: UserNavProps) {
+export function UserNav() {
   const [isOpen, setIsOpen] = useState(false);
   const [isPainelOpen, setIsPainelOpen] = useState(false);
+  const [user, setUser] = useState<UserData | null>(null);
+  const [loading, setLoading] = useState(true);
+  
   const dropdownRef = useRef<HTMLDivElement>(null);
   const painelRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    async function fetchUser() {
+      try {
+        const dbUser = await getCurrentUser();
+        setUser(dbUser);
+      } catch (e) {
+        console.error(e);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchUser();
+  }, []);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -31,7 +47,11 @@ export function UserNav({ user, role }: UserNavProps) {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const isStaff = role === "STAFF" || role === "ORGANIZER";
+  const isStaff = user?.role === "STAFF" || user?.role === "ORGANIZER";
+
+  if (loading) {
+    return <div className="h-9 w-20 animate-pulse bg-white/10 rounded-full"></div>;
+  }
 
   if (!user) {
     return (
@@ -144,3 +164,4 @@ export function UserNav({ user, role }: UserNavProps) {
     </div>
   );
 }
+
