@@ -43,3 +43,15 @@ export const getEventBySlug = unstable_cache(
   ["event-details"],
   { revalidate: 60, tags: ["event-details"] }
 );
+
+export async function getAllEventSlugs() {
+  try {
+    const events = await prisma.event.findMany({
+      select: { slug: true },
+      where: { status: "PUBLISHED" }
+    });
+    return events;
+  } catch (error) {
+    return [];
+  }
+}

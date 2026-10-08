@@ -1,6 +1,6 @@
 import Image from "next/image";
 import { notFound } from "next/navigation";
-import { getEventBySlug } from "@/services/event.service";
+import { getEventBySlug, getAllEventSlugs } from "@/services/event.service";
 import Link from "next/link";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -11,6 +11,14 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { TicketsBox } from "./_components/tickets-box";
 
 export const revalidate = 60;
+
+// Garante que os links de eventos carreguem instantaneamente construindo-os na CDN do Vercel
+export async function generateStaticParams() {
+  const events = await getAllEventSlugs();
+  return events.map((e) => ({
+    slug: e.slug,
+  }));
+}
 
 interface EventPageProps {
   params: Promise<{
