@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { generateTicketHash } from "@/lib/ticket/hash";
 import type { AsaasWebhookPayload } from "@/lib/asaas/types";
+import { sendTicketEmail } from "@/services/email.service";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 export async function POST(request: NextRequest) {
   try {
@@ -28,7 +31,14 @@ export async function POST(request: NextRequest) {
     // ── 3. Idempotência — verifica se já foi processado ───────────
     const existingPayment = await prisma.payment.findUnique({
       where: { gatewayId: payment.id },
-      include: { tickets: { include: { batch: true } } },
+      include: { 
+        tickets: { 
+          include: { 
+            batch: { include: { event: true } },
+            user: true
+          } 
+        } 
+      },
     });
 
     if (!existingPayment) {
@@ -43,6 +53,8 @@ export async function POST(request: NextRequest) {
     }
 
     // ── 4. Atualiza Payment e Ticket atomicamente ─────────────────
+    const processedTickets: any[] = [];
+
     await prisma.$transaction(async (tx) => {
       // Atualiza pagamento
       await tx.payment.update({
@@ -65,6 +77,8 @@ export async function POST(request: NextRequest) {
             qrHash,
           },
         });
+
+        processedTickets.push({ ...ticket, qrHash });
       }
 
       // Incrementa o uso do cupom se existir
@@ -77,6 +91,27 @@ export async function POST(request: NextRequest) {
     });
 
     console.log(`[webhook/asaas] ✅ ${existingPayment.tickets.length} Ingressos ativados com sucesso (Pagamento: ${existingPayment.id}).`);
+
+    // ── 5. Dispara e-mails de ingresso ────────────────────────────
+    for (const ticket of processedTickets) {
+      try {
+        const formattedDate = format(
+          new Date(ticket.batch.event.date),
+          "dd 'de' MMMM 'de' yyyy 'às' HH:mm",
+          { locale: ptBR }
+        );
+
+        await sendTicketEmail(ticket.user.email, {
+          participantName: ticket.participantName || ticket.user.name,
+          eventName: ticket.batch.event.title,
+          eventDate: formattedDate,
+          venue: ticket.batch.event.venue,
+          qrHash: ticket.qrHash,
+        });
+      } catch (err) {
+        console.error(`[webhook/asaas] Falha ao enviar email para ${ticket.user.email}:`, err);
+      }
+    }
 
     return NextResponse.json({ received: true });
   } catch (error) {

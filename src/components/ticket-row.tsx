@@ -51,8 +51,9 @@ export function TicketRow({ ticket }: TicketRowProps) {
 
   const [open, setOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [name, setName] = useState(ticket.participantName);
-  const [cpf, setCpf] = useState(ticket.participantCpf || "");
+  const [name, setName] = useState("");
+  const [cpf, setCpf] = useState("");
+  const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -62,7 +63,7 @@ export function TicketRow({ ticket }: TicketRowProps) {
 
   const handleEdit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim() || !cpf.trim()) { setError("Preencha todos os campos."); return; }
+    if (!name.trim() || !cpf.trim() || !email.trim()) { setError("Preencha todos os campos."); return; }
     const cleanCpf = cpf.replace(/\D/g, "");
     if (cleanCpf.length !== 11) { setError("CPF inválido."); return; }
     setIsLoading(true);
@@ -71,7 +72,7 @@ export function TicketRow({ ticket }: TicketRowProps) {
       const res = await fetch(`/api/tickets/${ticket.id}/participant`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ participantName: name, participantCpf: cleanCpf }),
+        body: JSON.stringify({ participantName: name, participantCpf: cleanCpf, participantEmail: email }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Erro ao editar titular.");
@@ -241,7 +242,7 @@ export function TicketRow({ ticket }: TicketRowProps) {
                         className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-background border border-border px-4 py-2 text-sm font-medium text-foreground hover:bg-muted/80 transition-colors"
                       >
                         <Edit2 size={15} className="text-brand" />
-                        Alterar Titular
+                        Transferir Ingresso
                       </button>
                     )}
                     {ticket.status === "ACTIVE" && (
@@ -268,14 +269,22 @@ export function TicketRow({ ticket }: TicketRowProps) {
 
           <div className="bg-card border border-card-border w-full max-w-md rounded-2xl shadow-xl overflow-hidden">
             <div className="flex items-center justify-between p-4 border-b border-border">
-              <h3 className="font-semibold text-foreground">Editar Titular</h3>
+              <h3 className="font-semibold text-foreground">Transferir Ingresso</h3>
               <button onClick={() => setIsModalOpen(false)} className="text-muted-fg hover:text-foreground transition-colors">
                 <X size={20} />
               </button>
             </div>
             <form onSubmit={handleEdit} className="p-5 space-y-4">
               <div className="bg-warning/10 border border-warning/20 text-warning p-3 rounded-lg text-xs">
-                <strong>Atenção:</strong> Você só pode alterar o titular <strong>1 única vez</strong>.
+                <strong>Atenção:</strong> Você só pode transferir o ingresso <strong>1 única vez</strong>. O QR Code atual será invalidado e o novo será enviado para o e-mail do novo dono.
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-1">E-mail do Novo Dono</label>
+                <input
+                  type="email" required value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full rounded-xl border border-border bg-muted px-4 py-2 text-sm text-foreground placeholder:text-muted-fg focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand"
+                />
               </div>
               <div>
                 <label className="block text-sm font-medium text-foreground mb-1">Nome Completo</label>
@@ -312,7 +321,7 @@ export function TicketRow({ ticket }: TicketRowProps) {
                   type="submit" disabled={isLoading}
                   className="flex-1 rounded-xl bg-brand px-4 py-2 text-sm font-semibold text-white hover:bg-brand-dark transition-colors disabled:opacity-50 flex justify-center items-center"
                 >
-                  {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Salvar"}
+                  {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Transferir"}
                 </button>
               </div>
             </form>

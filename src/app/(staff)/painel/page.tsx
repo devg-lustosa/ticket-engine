@@ -24,6 +24,8 @@ import {
 } from "lucide-react";
 import { PublishButton } from "./_components/publish-button";
 import { DeleteButton } from "./_components/delete-button";
+import { CortesiaButton } from "./_components/cortesia-button";
+import { BorderoButton } from "./_components/bordero-button";
 import { ThemeToggle } from "@/components/theme-toggle";
 
 const STATUS_LABELS: Record<string, { label: string; color: string }> = {
@@ -47,6 +49,7 @@ export default async function StaffDashboardPage() {
   }
 
   const events = await prisma.event.findMany({
+    where: dbUser.role === "ORGANIZER" ? { organizerId: dbUser.id } : undefined,
     orderBy: { date: "desc" },
     include: {
       batches: {
@@ -258,6 +261,8 @@ export default async function StaffDashboardPage() {
                           >
                             <Pencil size={16} />
                           </Link>
+                          <CortesiaButton eventId={event.id} eventTitle={event.title} batches={event.batches.map(b => ({id: b.id, name: b.name}))} />
+                          <BorderoButton eventId={event.id} eventTitle={event.title} />
                           <DeleteButton eventId={event.id} />
                         </>
                       )}
