@@ -9,6 +9,7 @@ import { siteConfig } from "@/config/site";
 import { UserNav } from "@/components/user-nav";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { TicketsBox } from "./_components/tickets-box";
+import { EventMap } from "@/components/event-map";
 
 export const revalidate = 60;
 
@@ -107,18 +108,29 @@ export default async function EventDetailsPage({ params }: EventPageProps) {
               </div>
             </section>
 
-            <section className="bg-[var(--muted)] rounded-2xl p-6 border border-[var(--border)]">
-              <h3 className="font-bold text-[var(--foreground)] mb-4">Informações de Local</h3>
-              <div className="space-y-3 text-[var(--muted-fg)] text-sm">
-                <div className="flex items-start gap-3">
-                  <MapPin size={20} className="text-[var(--brand-500)] shrink-0 mt-0.5" />
-                  <div>
-                    <p className="font-semibold text-[var(--foreground)]">{event.venue}</p>
-                    {event.address && <p>{event.address}</p>}
-                    {(event.city || event.state) && <p>{event.city} - {event.state}</p>}
+            <section className="bg-[var(--muted)] rounded-2xl overflow-hidden border border-[var(--border)]">
+              <div className="p-6">
+                <h3 className="font-bold text-[var(--foreground)] mb-4">Informações de Local</h3>
+                <div className="space-y-3 text-[var(--muted-fg)] text-sm">
+                  <div className="flex items-start gap-3">
+                    <MapPin size={20} className="text-[var(--brand-500)] shrink-0 mt-0.5" />
+                    <div>
+                      <p className="font-semibold text-[var(--foreground)]">{event.venue}</p>
+                      {event.address && <p>{event.address}</p>}
+                      {(event.city || event.state) && <p>{event.city} - {event.state}</p>}
+                    </div>
                   </div>
                 </div>
               </div>
+              
+              {/* Renderiza o mapa apenas se tivermos endereço para pesquisar */}
+              {(event.address || event.city) && (
+                <div className="border-t border-[var(--border)]">
+                  <EventMap 
+                    address={`${event.address ? event.address + ", " : ""}${event.city ? event.city + ", " : ""}${event.state || ""}`}
+                  />
+                </div>
+              )}
             </section>
 
             {/* Mobile Tickets Box (Visible only on mobile, below Local) */}
