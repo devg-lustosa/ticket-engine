@@ -59,7 +59,7 @@ export function NicknameModal({ hasNickname }: { hasNickname: boolean }) {
               <input 
                 type="text" 
                 value={nickname}
-                onChange={e => setNickname(e.target.value.replace(/[^a-zA-Z0-9_]/g, "").toLowerCase())}
+                onChange={e => setNickname(e.target.value.replace(/[^a-zA-Z0-9_.]/g, "").toLowerCase())}
                 placeholder="seunickname"
                 className="w-full px-4 py-3 bg-background border border-border rounded-xl focus:ring-2 focus:ring-brand focus:border-brand transition-all outline-none text-foreground"
                 maxLength={20}

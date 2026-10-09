@@ -1,14 +1,16 @@
 "use client";
 
 import { useState } from "react";
-import { ShieldCheck, Loader2 } from "lucide-react";
+import { ShieldCheck, Loader2, User as UserIcon, Camera } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { AvatarCropper } from "@/components/avatar-cropper";
 
 export function MinhaContaClient({ user }: { user: any }) {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<"dados" | "config">("dados");
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
   
   const [formData, setFormData] = useState({
     name: user.name || "",
@@ -36,8 +38,28 @@ export function MinhaContaClient({ user }: { user: any }) {
     }
   };
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      const file = e.target.files[0];
+      if (file.size > 5 * 1024 * 1024) {
+        alert("A imagem não pode ter mais que 5MB");
+        return;
+      }
+      const reader = new FileReader();
+      reader.addEventListener("load", () => setSelectedImage(reader.result?.toString() || null));
+      reader.readAsDataURL(file);
+    }
+  };
+
   return (
     <>
+      {selectedImage && (
+        <AvatarCropper 
+          imageSrc={selectedImage} 
+          onCancel={() => setSelectedImage(null)} 
+          onUploadSuccess={() => setSelectedImage(null)} 
+        />
+      )}
       <div className="flex items-center gap-6 border-b border-border mb-8 pb-4 animate-fade-in">
         <button 
           onClick={() => setActiveTab("dados")}
@@ -56,9 +78,29 @@ export function MinhaContaClient({ user }: { user: any }) {
       <div className="space-y-6 animate-fade-in">
         {activeTab === "dados" && (
           <div className="bg-card border border-border rounded-2xl p-6 shadow-sm relative overflow-hidden">
-            <div className="flex items-center gap-2 mb-6 border-b border-border pb-4">
-              <ShieldCheck className="text-brand w-5 h-5" />
-              <h2 className="text-lg font-semibold text-foreground">Informações Pessoais</h2>
+            <div className="flex flex-col md:flex-row items-start md:items-center gap-6 mb-8 border-b border-border pb-6">
+              <div className="relative group">
+                <div className="w-24 h-24 rounded-full bg-muted flex items-center justify-center overflow-hidden shrink-0 border-4 border-background shadow-md">
+                  {user.avatarUrl ? (
+                    <img src={user.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+                  ) : (
+                    <UserIcon size={32} className="text-muted-fg" />
+                  )}
+                </div>
+                <label className="absolute inset-0 flex flex-col items-center justify-center bg-black/60 rounded-full opacity-0 group-hover:opacity-100 cursor-pointer transition-opacity">
+                  <Camera size={20} className="text-white mb-1" />
+                  <span className="text-[10px] text-white font-medium uppercase tracking-wider">Alterar</span>
+                  <input type="file" accept="image/png, image/jpeg" className="hidden" onChange={handleFileChange} />
+                </label>
+              </div>
+              
+              <div>
+                <div className="flex items-center gap-2">
+                  <ShieldCheck className="text-brand w-5 h-5" />
+                  <h2 className="text-xl font-semibold text-foreground">Informações Pessoais</h2>
+                </div>
+                <p className="text-sm text-muted-fg mt-1">Sua foto é pública e será exibida em eventos que você confirmar presença.</p>
+              </div>
             </div>
             
             {isEditing ? (

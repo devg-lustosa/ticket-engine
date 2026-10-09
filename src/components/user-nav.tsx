@@ -12,6 +12,7 @@ interface UserData {
   nickname?: string | null;
   cpf?: string | null;
   birthDate?: Date | null;
+  avatarUrl?: string | null;
 }
 
 export function UserNav() {
@@ -121,8 +122,12 @@ export function UserNav() {
           onClick={() => setIsOpen(!isOpen)}
           className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-white bg-black/20 hover:bg-black/30 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-white/50"
         >
-          <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center">
-            <User size={14} />
+          <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center overflow-hidden shrink-0">
+            {user.avatarUrl ? (
+              <img src={user.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+            ) : (
+              <User size={14} />
+            )}
           </div>
           <span className="hidden sm:inline-block max-w-[120px] truncate">
             {user.nickname ? user.nickname : user.name}

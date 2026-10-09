@@ -17,10 +17,10 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: "Nickname inválido" }, { status: 400 });
     }
 
-    // Validate regex (letters, numbers, underscores)
-    const isValid = /^[a-zA-Z0-9_]+$/.test(nickname);
+    // Validate regex (letters, numbers, underscores, periods)
+    const isValid = /^[a-zA-Z0-9_.]+$/.test(nickname);
     if (!isValid) {
-      return NextResponse.json({ error: "O nickname deve conter apenas letras, números e underlines (_)" }, { status: 400 });
+      return NextResponse.json({ error: "O nickname deve conter apenas letras, números, pontos (.) e underlines (_)" }, { status: 400 });
     }
 
     // Convert to lowercase
