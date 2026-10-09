@@ -176,7 +176,8 @@ model Payment {
   updatedAt   DateTime      @updatedAt @map("updated_at")
   
   couponId    String?       @map("coupon_id")
-
+  acceptedTermsAt DateTime? @map("accepted_terms_at")
+  buyerIp         String?   @map("buyer_ip")
   // Relations
   tickets     Ticket[]
   coupon      Coupon?       @relation(fields: [couponId], references: [id])

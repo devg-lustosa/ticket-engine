@@ -34,6 +34,7 @@ export function CheckoutFlow({ batches, totalValue, buyer }: CheckoutFlowProps) 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pixData, setPixData] = useState<{ code: string; qrBase64: string } | null>(null);
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
 
   // Coupon state
   const [couponCode, setCouponCode] = useState("");
@@ -145,7 +146,8 @@ export function CheckoutFlow({ batches, totalValue, buyer }: CheckoutFlowProps) 
             ...cardInfo,
             installmentCount: parseInt(cardInfo.installmentCount, 10)
           } : undefined,
-          couponCode: appliedCoupon?.code
+          couponCode: appliedCoupon?.code,
+          acceptedTerms
         })
       });
 
@@ -352,6 +354,22 @@ export function CheckoutFlow({ batches, totalValue, buyer }: CheckoutFlowProps) 
                   </div>
                 </div>
               )}
+
+              <div className="mt-6 flex items-start gap-3 text-left bg-[var(--muted)] p-4 rounded-xl border border-[var(--border)] transition-colors hover:border-[var(--brand-500)]/50">
+                <input 
+                  type="checkbox" 
+                  id="terms" 
+                  className="mt-1 shrink-0 w-4 h-4 accent-[var(--brand-500)] cursor-pointer"
+                  checked={acceptedTerms}
+                  onChange={(e) => {
+                    setAcceptedTerms(e.target.checked);
+                    if (e.target.checked) setError(null);
+                  }}
+                />
+                <label htmlFor="terms" className="text-sm text-[var(--muted-fg)] leading-snug cursor-pointer">
+                  Li e concordo com os <a href="/termos" target="_blank" className="text-[var(--brand-500)] hover:underline font-bold">Termos de Uso e Privacidade</a>. Entendo que compras efetuadas não são reembolsáveis no dia do evento.
+                </label>
+              </div>
 
               <button
                 onClick={handleSubmit}

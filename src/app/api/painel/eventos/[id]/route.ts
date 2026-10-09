@@ -166,6 +166,9 @@ export async function PUT(
       }
 
       return evt;
+    }, {
+      timeout: 15000,
+      maxWait: 20000
     });
 
     revalidatePath("/", "layout");

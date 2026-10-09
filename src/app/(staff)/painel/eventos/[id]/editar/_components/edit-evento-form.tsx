@@ -257,7 +257,8 @@ export function EditEventoForm({ organizerId, initialData }: { organizerId: stri
   const isLastStep = step === STEPS.length - 1;
 
   function canProceed() {
-    if (step === 0) return form.title && form.dateStart && form.venueName;
+    if (step === 0) return form.title && form.dateStart;
+    if (step === 1) return form.venueName;
     return true;
   }
 
@@ -371,38 +372,6 @@ export function EditEventoForm({ organizerId, initialData }: { organizerId: stri
                 />
               </Field>
             </div>
-
-            <Field label="Nome da Casa / Espaço" required>
-              <input
-                className={inputCls}
-                placeholder="Ex: Club Inferno, Arena XP..."
-                value={form.venueName}
-                onChange={(e) => setField("venueName", e.target.value)}
-              />
-            </Field>
-
-            <div className="grid grid-cols-2 gap-4">
-              <Field label="Cidade" required>
-                <input
-                  className={inputCls}
-                  placeholder="São Paulo"
-                  value={form.city}
-                  onChange={(e) => setField("city", e.target.value)}
-                />
-              </Field>
-              <Field label="Estado">
-                <select
-                  className={inputCls}
-                  value={form.state}
-                  onChange={(e) => setField("state", e.target.value)}
-                >
-                  <option value="">Selecione</option>
-                  {STATES_BR.map((s) => (
-                    <option key={s} value={s}>{s}</option>
-                  ))}
-                </select>
-              </Field>
-            </div>
           </div>
         )}
 
@@ -413,6 +382,15 @@ export function EditEventoForm({ organizerId, initialData }: { organizerId: stri
               <h2 className="text-xl font-bold mb-1">Endereço do Local</h2>
               <p className="text-sm text-gray-400">Detalhes do local para os participantes</p>
             </div>
+
+            <Field label="Nome da Casa / Espaço" required>
+              <input
+                className={inputCls}
+                placeholder="Ex: Club Inferno, Arena XP..."
+                value={form.venueName}
+                onChange={(e) => setField("venueName", e.target.value)}
+              />
+            </Field>
 
             <div className="grid grid-cols-3 gap-4">
               <Field label="Rua / Avenida" required>

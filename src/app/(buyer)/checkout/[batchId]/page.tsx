@@ -4,6 +4,7 @@ import { useEffect, useState, use } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2, QrCode, CheckCircle2, Copy } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
 
 export default function CheckoutPage(props: { params: Promise<{ batchId: string }> }) {
   const params = use(props.params);
@@ -11,6 +12,7 @@ export default function CheckoutPage(props: { params: Promise<{ batchId: string 
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
   
   // Dados recebidos após gerar o Pix
   const [ticketId, setTicketId] = useState<string | null>(null);
@@ -24,13 +26,17 @@ export default function CheckoutPage(props: { params: Promise<{ batchId: string 
 
   // 1. Inicia o checkout (gera o Pix via API)
   const handleCheckout = async () => {
+    if (!acceptedTerms) {
+      setError("Você deve aceitar os Termos de Uso para prosseguir.");
+      return;
+    }
     setLoading(true);
     setError(null);
     try {
       const res = await fetch("/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ batchId: params.batchId }),
+        body: JSON.stringify({ batchId: params.batchId, acceptedTerms }),
       });
 
       const data = await res.json();
@@ -109,6 +115,20 @@ export default function CheckoutPage(props: { params: Promise<{ batchId: string 
                 <p className="text-[var(--foreground)] mb-6">
                   Você está prestes a reservar seu ingresso. O pagamento é feito via Pix.
                 </p>
+
+                <div className="flex items-start gap-3 mb-6 text-left bg-muted/30 p-3 rounded-lg border border-border">
+                  <input 
+                    type="checkbox" 
+                    id="terms" 
+                    className="mt-1 shrink-0 w-4 h-4 accent-[var(--brand-500)] cursor-pointer"
+                    checked={acceptedTerms}
+                    onChange={(e) => setAcceptedTerms(e.target.checked)}
+                  />
+                  <label htmlFor="terms" className="text-sm text-[var(--muted-fg)] leading-snug cursor-pointer">
+                    Li e concordo com os <Link href="/termos" target="_blank" className="text-[var(--brand-500)] hover:underline font-medium">Termos de Uso e Privacidade</Link>. Entendo que compras efetuadas não são reembolsáveis no dia do evento.
+                  </label>
+                </div>
+
                 <button
                   onClick={handleCheckout}
                   disabled={loading}

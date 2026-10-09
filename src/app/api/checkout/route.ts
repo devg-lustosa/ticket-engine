@@ -21,12 +21,20 @@ export async function POST(request: NextRequest) {
 
     // ── 2. Validação do payload ──────────────────────────────────
     const body = await request.json();
-    const { tickets, paymentMethod, creditCardInfo, couponCode } = body as { 
+    const { tickets, paymentMethod, creditCardInfo, couponCode, acceptedTerms } = body as { 
       tickets: { batchId: string, participantName: string, participantCpf: string }[],
       paymentMethod: "PIX" | "CREDIT_CARD",
       creditCardInfo?: { holderName: string, number: string, expiryMonth: string, expiryYear: string, ccv: string, installmentCount: number },
-      couponCode?: string
+      couponCode?: string,
+      acceptedTerms?: boolean
     };
+
+    if (!acceptedTerms) {
+      return NextResponse.json({ error: "Você deve aceitar os Termos de Uso." }, { status: 400 });
+    }
+
+    const forwardedFor = request.headers.get("x-forwarded-for");
+    const buyerIp = forwardedFor ? forwardedFor.split(',')[0] : "127.0.0.1";
 
     if (!tickets || tickets.length === 0) {
       return NextResponse.json({ error: "Nenhum ingresso selecionado." }, { status: 400 });
@@ -190,6 +198,8 @@ export async function POST(request: NextRequest) {
           pixQrUrl: pixQr?.encodedImage,
           expiresAt: pixQr?.expirationDate ? new Date(pixQr.expirationDate) : null,
           couponId: validCoupon ? validCoupon.id : null,
+          acceptedTermsAt: acceptedTerms ? new Date() : null,
+          buyerIp: buyerIp,
         },
       });
 
