@@ -60,7 +60,7 @@ export default async function CheckoutPage({ searchParams }: CheckoutPageProps) 
     );
   }
 
-  let dbUser = await prisma.user.findUnique({ where: { authId: user.id } });
+  const dbUser = await prisma.user.findUnique({ where: { authId: user.id } });
   
   // Monta a estrutura para o client component
   const selectedBatches = batches.map(b => {

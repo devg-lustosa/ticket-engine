@@ -116,6 +116,9 @@ export default async function StaffDashboardPage() {
             <Link href="/painel/equipe" className="text-muted-fg hover:text-foreground font-medium pb-4 -mb-[17px] transition-colors">
               Gestão de Equipe
             </Link>
+            <Link href="/painel/configuracoes" className="text-muted-fg hover:text-foreground font-medium pb-4 -mb-[17px] transition-colors">
+              Configurações
+            </Link>
           </div>
         )}
 
@@ -164,9 +167,9 @@ export default async function StaffDashboardPage() {
                       if (ticket.status === "USED") {
                         eventCheckins++;
                       }
-                      // @ts-ignore - we know payment exists if included
+                      // @ts-expect-error - we know payment exists if included
                       if (ticket.payment && ticket.payment.status === "PAID") {
-                         // @ts-ignore
+                         // @ts-expect-error
                          eventTotalRevenue += Number(ticket.payment.amount);
                       }
                     }

@@ -65,6 +65,7 @@ model User {
   name      String
   cpf       String?  @unique
   phone     String?
+  asaasWalletId String? @map("asaas_wallet_id")
   role      Role     @default(BUYER)
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")

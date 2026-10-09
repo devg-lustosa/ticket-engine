@@ -61,6 +61,9 @@ export default async function TeamManagementPage() {
           <Link href="/painel/equipe" className="text-brand font-medium border-b-2 border-brand pb-4 -mb-[17px]">
             Gestão de Equipe
           </Link>
+          <Link href="/painel/configuracoes" className="text-muted-fg hover:text-foreground font-medium pb-4 -mb-[17px] transition-colors">
+            Configurações
+          </Link>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">

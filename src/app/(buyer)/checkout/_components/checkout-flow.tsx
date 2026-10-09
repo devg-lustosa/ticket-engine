@@ -404,7 +404,7 @@ export function CheckoutFlow({ batches, totalValue, buyer }: CheckoutFlowProps) 
               </div>
               
               <p className="text-[var(--muted-fg)] text-sm text-center mb-6 max-w-sm">
-                Abra o aplicativo do seu banco, vá na opção Pix e escolha "Ler QR Code".
+                Abra o aplicativo do seu banco, vá na opção Pix e escolha &quot;Ler QR Code&quot;.
               </p>
               
               <div className="w-full">

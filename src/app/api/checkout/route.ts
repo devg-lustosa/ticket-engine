@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
     const batchIds = [...new Set(tickets.map(t => t.batchId))];
     const batches = await prisma.batch.findMany({
       where: { id: { in: batchIds } },
-      include: { event: true },
+      include: { event: { include: { organizer: true } } },
     });
 
     if (batches.length !== batchIds.length) {
@@ -138,6 +138,20 @@ export async function POST(request: NextRequest) {
     const dueDate = format(addDays(now, 1), "yyyy-MM-dd");
     let charge;
     
+    // Configuração do Split (Exemplo: 10% para plataforma, 90% para o organizador)
+    const PLATFORM_FEE_PERCENT = 10;
+    const organizerWalletId = batches[0].event.organizer.asaasWalletId;
+    let splitConfig;
+    
+    if (organizerWalletId) {
+      splitConfig = [
+        {
+          walletId: organizerWalletId,
+          percentualValue: 100 - PLATFORM_FEE_PERCENT,
+        }
+      ];
+    }
+    
     if (paymentMethod === "CREDIT_CARD" && creditCardInfo) {
       charge = await createCreditCardCharge({
         customer: asaasCustomer.id,
@@ -148,6 +162,7 @@ export async function POST(request: NextRequest) {
         externalReference: `user:${dbUser.id}:${Date.now()}`,
         installmentCount: creditCardInfo.installmentCount,
         installmentValue: totalAmount / creditCardInfo.installmentCount,
+        split: splitConfig,
         creditCard: {
           holderName: creditCardInfo.holderName,
           number: creditCardInfo.number,
@@ -174,6 +189,7 @@ export async function POST(request: NextRequest) {
         dueDate,
         description: `Compra de Ingressos - ${batches[0].event.title} e outros`,
         externalReference: `user:${dbUser.id}:${Date.now()}`,
+        split: splitConfig,
       });
     }
 
@@ -238,7 +254,8 @@ export async function POST(request: NextRequest) {
       pixQrBase64: pixQr?.encodedImage
     });
     
-  } catch (error: any) {
+  } catch (err) {
+    const error = err as any;
     const asaasError = error.response?.data?.errors?.[0]?.description;
     console.error("[checkout/route] Error:", asaasError || error.message || error);
     

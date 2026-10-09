@@ -32,6 +32,12 @@ export interface AsaasPixCharge {
   };
 }
 
+export interface AsaasSplit {
+  walletId: string;
+  fixedValue?: number;
+  percentualValue?: number;
+}
+
 export interface AsaasPixChargeInput {
   customer: string;
   billingType: "PIX";
@@ -39,6 +45,7 @@ export interface AsaasPixChargeInput {
   dueDate: string;
   description?: string;
   externalReference?: string;
+  split?: AsaasSplit[];
 }
 
 export interface AsaasPixQrCode {
@@ -62,6 +69,7 @@ export interface AsaasCreditCardChargeInput {
   dueDate: string;
   description?: string;
   externalReference?: string;
+  split?: AsaasSplit[];
   installmentCount?: number;
   installmentValue?: number;
   creditCard: AsaasCreditCardInfo;

@@ -32,7 +32,7 @@ export default function TermosPage() {
         <div className="mb-8 text-center animate-fade-in">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-[var(--brand-100)] dark:bg-[var(--brand-900)] text-[var(--brand-600)] dark:text-[var(--brand-400)] mb-4">
             <FileText size={32} />
-          </div>
+          </div>ID). O Asaas é feito sob medida para
           <h1 className="text-3xl font-extrabold text-[var(--foreground)] tracking-tight">
             Termos de Uso e Privacidade
           </h1>
@@ -42,7 +42,7 @@ export default function TermosPage() {
         </div>
 
         <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-6 md:p-10 shadow-sm space-y-8 animate-fade-in text-[var(--muted-fg)] leading-relaxed">
-          
+
           <section>
             <h2 className="text-xl font-bold text-[var(--foreground)] mb-3 flex items-center gap-2">
               <Shield size={20} className="text-[var(--brand-500)]" />
