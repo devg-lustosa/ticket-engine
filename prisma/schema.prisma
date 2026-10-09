@@ -63,8 +63,10 @@ model User {
   authId    String   @unique @map("auth_id")
   email     String   @unique
   name      String
+  nickname  String?  @unique
   cpf       String?  @unique
   phone     String?
+  birthDate DateTime? @map("birth_date")
   asaasWalletId String? @map("asaas_wallet_id")
   role      Role     @default(BUYER)
   createdAt DateTime @default(now()) @map("created_at")

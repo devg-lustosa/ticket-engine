@@ -9,6 +9,9 @@ interface UserData {
   name: string;
   email: string;
   role: string | null;
+  nickname?: string | null;
+  cpf?: string | null;
+  birthDate?: Date | null;
 }
 
 export function UserNav() {
@@ -121,13 +124,17 @@ export function UserNav() {
           <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center">
             <User size={14} />
           </div>
-          <span className="hidden sm:inline-block max-w-[120px] truncate">{user.name}</span>
+          <span className="hidden sm:inline-block max-w-[120px] truncate">
+            {user.nickname ? user.nickname : user.name}
+          </span>
         </button>
 
         {isOpen && (
           <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-xl border border-gray-100 overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200">
             <div className="px-4 py-3 border-b border-gray-100 bg-gray-50/50">
-              <p className="text-sm font-medium text-gray-900 truncate">{user.name}</p>
+              <p className="text-sm font-medium text-gray-900 truncate">
+                {user.nickname ? user.nickname : user.name}
+              </p>
               <p className="text-xs text-gray-500 truncate">{user.email}</p>
             </div>
             <div className="p-1">
@@ -140,12 +147,12 @@ export function UserNav() {
                 Meus Ingressos
               </Link>
               <Link
-                href="/perfil"
+                href="/minha-conta"
                 onClick={() => setIsOpen(false)}
                 className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
               >
                 <Settings size={16} />
-                Configurar Conta
+                Minha Conta
               </Link>
               <div className="h-px bg-gray-100 my-1 mx-2" />
               <form action="/api/auth/signout" method="POST">

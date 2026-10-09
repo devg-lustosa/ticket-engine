@@ -27,6 +27,7 @@ import { DeleteButton } from "./_components/delete-button";
 import { CortesiaButton } from "./_components/cortesia-button";
 import { BorderoButton } from "./_components/bordero-button";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { NicknameModal } from "@/components/nickname-modal";
 
 const STATUS_LABELS: Record<string, { label: string; color: string }> = {
   DRAFT: { label: "Rascunho", color: "bg-muted text-muted-fg" },
@@ -66,6 +67,8 @@ export default async function StaffDashboardPage() {
 
   return (
     <main className="min-h-screen bg-background text-foreground">
+      <NicknameModal hasNickname={!!dbUser.nickname} />
+      
       {/* Header */}
       <header className="border-b border-border bg-card/80 backdrop-blur-sm sticky top-0 z-10">
         <div className="max-w-6xl mx-auto px-4 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">

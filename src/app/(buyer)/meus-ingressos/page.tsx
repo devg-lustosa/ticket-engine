@@ -5,12 +5,16 @@ import { TicketRow } from "@/components/ticket-row";
 import Link from "next/link";
 import { ArrowLeft, Ticket } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { NicknameModal } from "@/components/nickname-modal";
 
 export default async function MeusIngressosPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) redirect("/login");
+
+  const dbUser = await prisma.user.findUnique({ where: { authId: user.id } });
+  if (!dbUser) redirect("/login");
 
   const tickets = await prisma.ticket.findMany({
     where: {
@@ -26,6 +30,8 @@ export default async function MeusIngressosPage() {
 
   return (
     <main className="min-h-dvh bg-background flex flex-col">
+      <NicknameModal hasNickname={!!dbUser.nickname} />
+      
       {/* Header */}
       <header className="border-b border-border bg-card/80 backdrop-blur-sm sticky top-0 z-10">
         <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
