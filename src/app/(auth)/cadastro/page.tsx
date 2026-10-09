@@ -9,6 +9,15 @@ import { Ticket } from "lucide-react";
 export default function CadastroPage() {
   const [state, formAction, isPending] = useActionState(signup, null);
 
+  const formatCPF = (val: string) => {
+    let v = val.replace(/\D/g, "");
+    if (v.length > 11) v = v.slice(0, 11);
+    if (v.length > 3) v = `${v.slice(0, 3)}.${v.slice(3)}`;
+    if (v.length > 7) v = `${v.slice(0, 7)}.${v.slice(7)}`;
+    if (v.length > 11) v = `${v.slice(0, 11)}-${v.slice(11)}`;
+    return v;
+  };
+
   return (
     <main className="min-h-dvh bg-background flex flex-col">
       {/* Topo */}
@@ -76,6 +85,7 @@ export default function CadastroPage() {
                   required
                   placeholder="000.000.000-00"
                   maxLength={14}
+                  onChange={(e) => { e.target.value = formatCPF(e.target.value) }}
                   className="w-full rounded-xl border border-border bg-muted px-4 py-2.5 text-sm text-foreground placeholder:text-muted-fg outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/20"
                 />
               </div>
@@ -97,20 +107,38 @@ export default function CadastroPage() {
               </div>
 
               {/* Senha */}
-              <div className="space-y-1.5">
-                <label htmlFor="password" className="block text-sm font-medium text-foreground">
-                  Senha
-                </label>
-                <input
-                  id="password"
-                  name="password"
-                  type="password"
-                  autoComplete="new-password"
-                  required
-                  placeholder="Mínimo 8 caracteres"
-                  minLength={8}
-                  className="w-full rounded-xl border border-border bg-muted px-4 py-2.5 text-sm text-foreground placeholder:text-muted-fg outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/20"
-                />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label htmlFor="password" className="block text-sm font-medium text-foreground">
+                    Senha
+                  </label>
+                  <input
+                    id="password"
+                    name="password"
+                    type="password"
+                    autoComplete="new-password"
+                    required
+                    placeholder="Mín. 8 caracteres"
+                    minLength={8}
+                    className="w-full rounded-xl border border-border bg-muted px-4 py-2.5 text-sm text-foreground placeholder:text-muted-fg outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/20"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label htmlFor="confirmPassword" className="block text-sm font-medium text-foreground">
+                    Confirmar Senha
+                  </label>
+                  <input
+                    id="confirmPassword"
+                    name="confirmPassword"
+                    type="password"
+                    autoComplete="new-password"
+                    required
+                    placeholder="Mín. 8 caracteres"
+                    minLength={8}
+                    className="w-full rounded-xl border border-border bg-muted px-4 py-2.5 text-sm text-foreground placeholder:text-muted-fg outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/20"
+                  />
+                </div>
               </div>
 
               {/* Submit */}

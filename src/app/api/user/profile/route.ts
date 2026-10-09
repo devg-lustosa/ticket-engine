@@ -11,9 +11,9 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
     }
 
-    const { name, cpf, phone, birthDate } = await request.json();
+    const { name, cpf, phone, birthDate, nickname } = await request.json();
 
-    if (!name || name.trim().length < 2) {
+    if (name !== undefined && (!name || name.trim().length < 2)) {
       return NextResponse.json({ error: "Nome inválido" }, { status: 400 });
     }
 
@@ -28,10 +28,11 @@ export async function PATCH(request: NextRequest) {
     const updatedUser = await prisma.user.update({
       where: { authId: user.id },
       data: {
-        name,
-        cpf: cpf || null,
+        name: name || undefined,
+        cpf: cpf || undefined,
         phone: phone || null,
         birthDate: parsedDate,
+        nickname: nickname || undefined,
       },
     });
 
@@ -41,6 +42,9 @@ export async function PATCH(request: NextRequest) {
     // Tratar violação de unique constraint do CPF
     if (error.code === 'P2002' && error.meta?.target?.includes('cpf')) {
       return NextResponse.json({ error: "Este CPF já está em uso por outra conta." }, { status: 409 });
+    }
+    if (error.code === 'P2002' && error.meta?.target?.includes('nickname')) {
+      return NextResponse.json({ error: "Este nickname já está em uso. Escolha outro." }, { status: 409 });
     }
     return NextResponse.json({ error: "Erro interno no servidor" }, { status: 500 });
   }

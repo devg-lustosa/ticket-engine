@@ -47,10 +47,15 @@ export async function login(_prevState: unknown, formData: FormData) {
 export async function signup(_prevState: unknown, formData: FormData) {
   const supabase = await createClient();
 
-  const email    = formData.get("email") as string;
-  const password = formData.get("password") as string;
-  const name     = formData.get("name") as string;
-  const cpf      = formData.get("cpf") as string;
+  const email           = formData.get("email") as string;
+  const password        = formData.get("password") as string;
+  const confirmPassword = formData.get("confirmPassword") as string;
+  const name            = formData.get("name") as string;
+  const cpf             = formData.get("cpf") as string;
+
+  if (password !== confirmPassword) {
+    return { error: "As senhas não coincidem." };
+  }
 
   if (!cpf) {
     return { error: "CPF é obrigatório." };
@@ -96,12 +101,42 @@ export async function signup(_prevState: unknown, formData: FormData) {
   }
 
   revalidatePath("/", "layout");
-  redirect("/");
+  redirect("/completar-perfil");
 }
 
 export async function logout() {
   const supabase = await createClient();
   await supabase.auth.signOut();
   revalidatePath("/", "layout");
+  redirect("/login");
+}
+
+export async function resetPassword(_prevState: unknown, formData: FormData) {
+  const supabase = await createClient();
+  const email = formData.get("email") as string;
+  
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: `${siteUrl}/api/auth/callback?next=/atualizar-senha`,
+  });
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  return { success: "E-mail de recuperação enviado! Verifique sua caixa de entrada." };
+}
+
+export async function updatePassword(_prevState: unknown, formData: FormData) {
+  const supabase = await createClient();
+  const password = formData.get("password") as string;
+
+  const { error } = await supabase.auth.updateUser({ password });
+
+  if (error) {
+    return { error: error.message };
+  }
+
   redirect("/login");
 }
