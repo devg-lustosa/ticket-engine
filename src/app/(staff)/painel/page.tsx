@@ -167,9 +167,7 @@ export default async function StaffDashboardPage() {
                       if (ticket.status === "USED") {
                         eventCheckins++;
                       }
-                      // @ts-expect-error - we know payment exists if included
                       if (ticket.payment && ticket.payment.status === "PAID") {
-                         // @ts-expect-error
                          eventTotalRevenue += Number(ticket.payment.amount);
                       }
                     }
