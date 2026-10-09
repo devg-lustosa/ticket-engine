@@ -2,7 +2,8 @@ import { Resend } from "resend";
 import TicketEmail from "@/emails/TicketEmail";
 import { render } from "@react-email/render";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+// Usa um valor genérico durante o build do Vercel caso a variável não exista
+const resend = new Resend(process.env.RESEND_API_KEY || "re_dummy_key_for_build");
 
 export async function sendTicketEmail(
   to: string,
