@@ -55,3 +55,35 @@ export async function getAllEventSlugs() {
     return [];
   }
 }
+
+export const getEventAttendees = unstable_cache(
+  async (eventId: string) => {
+    try {
+      const tickets = await prisma.ticket.findMany({
+        where: {
+          batch: { eventId },
+          status: { in: ["ACTIVE", "USED"] },
+          user: { hideFromAttendees: false },
+        },
+        select: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              nickname: true,
+              avatarUrl: true,
+            },
+          },
+        },
+        distinct: ["userId"],
+      });
+
+      return tickets.map((t) => t.user);
+    } catch (error) {
+      console.error("Error fetching event attendees:", error);
+      return [];
+    }
+  },
+  ["event-attendees"],
+  { revalidate: 60, tags: ["event-attendees"] }
+);

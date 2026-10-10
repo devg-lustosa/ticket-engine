@@ -69,6 +69,7 @@ model User {
   birthDate DateTime? @map("birth_date")
   avatarUrl String?   @map("avatar_url")
   asaasWalletId String? @map("asaas_wallet_id")
+  hideFromAttendees Boolean @default(false) @map("hide_from_attendees")
   role      Role     @default(BUYER)
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")

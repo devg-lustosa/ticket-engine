@@ -1,6 +1,6 @@
 import Image from "next/image";
 import { notFound } from "next/navigation";
-import { getEventBySlug, getAllEventSlugs } from "@/services/event.service";
+import { getEventBySlug, getAllEventSlugs, getEventAttendees } from "@/services/event.service";
 import Link from "next/link";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -10,6 +10,7 @@ import { UserNav } from "@/components/user-nav";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { TicketsBox } from "./_components/tickets-box";
 import { EventMap } from "@/components/event-map";
+import { EventAttendees } from "./_components/event-attendees";
 
 export const revalidate = 60;
 
@@ -36,6 +37,8 @@ export default async function EventDetailsPage({ params }: EventPageProps) {
   if (!event || event.status !== "PUBLISHED") {
     notFound();
   }
+  
+  const attendees = await getEventAttendees(event.id);
 
   const eventDate = format(new Date(event.date), "dd 'de' MMMM yyyy", { locale: ptBR });
   const eventTime = format(new Date(event.date), "HH:mm", { locale: ptBR });
@@ -142,6 +145,9 @@ export default async function EventDetailsPage({ params }: EventPageProps) {
                 }))}
               />
             </div>
+
+            {/* Participantes (Quem vai) */}
+            <EventAttendees attendees={attendees} />
 
             {/* Política do Evento */}
             <section className="border border-[var(--border)] rounded-2xl overflow-hidden">
