@@ -49,6 +49,10 @@ Classes compartilhadas: `ui-button`, `ui-input`, `nav-control`, `nav-popover`. E
 
 `npm run check:ui` confere botões e links com Lucide/SVG; foram identificados 81 controles. A checagem comprova presença da descrição no código. A [rodada de navegador](testes-locais.md) verificou tooltips e estados selecionados; isso não garante a qualidade de toda legenda.
 
+## Tema
+
+O [controle de tema](../src/components/theme-toggle.tsx) mantém o nome acessível e o tooltip “Alternar entre tema claro e escuro” em todas as renderizações. O servidor não conhece a preferência salva no navegador; esses atributos não podem depender de `resolvedTheme` no HTML inicial. Os dois ícones já são renderizados juntos e o CSS escolhe qual mostrar; o clique continua alternando a preferência pelo `next-themes`. [Regressão e capturas](testes-locais.md#correção-posterior-hidratação-do-tema).
+
 ## Hierarquia e linguagem
 
 - Um `h1` nomeia a tarefa da página; `h2` organiza seções. A ação principal usa verbo: “Escolher ingressos”, “Criar evento”, “Validar”.

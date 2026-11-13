@@ -16,7 +16,7 @@ Plano da etapa solicitada após adiar os MRs. O servidor normal permanece na por
 
 A inspeção visual e os testes HTTP não substituem câmera física, som audível em aparelho, antifraude real, entrega externa de e-mail ou carga em produção. As regras de prazo e valor continuam cobertas por testes com relógio controlado; a jornada HTTP usa serviços locais reais e fixtures com janelas amplas.
 
-**Resultado: 86 testes automatizados passaram, além das jornadas de navegador descritas abaixo.** Ao concluir a validação, o trabalho ainda estava local. Em seguida, o usuário autorizou commit e push da entrega validada; MRs permanecem adiados.
+**Resultado da rodada inicial: 86 testes automatizados passaram, além das jornadas de navegador descritas abaixo.** O usuário autorizou commit e push e, depois da correção de tema registrada abaixo, também a abertura do MR.
 
 ## Evidência automatizada
 
@@ -24,7 +24,7 @@ A inspeção visual e os testes HTTP não substituem câmera física, som audív
 |---|---|
 | `npm run lint` | Passou |
 | `npm run check:ui` | 81 controles com ícones possuem tooltip no código |
-| `npm test` | 27 testes, seis arquivos |
+| `npm test` | 30 testes, sete arquivos, incluindo três regressões de tema adicionadas após a rodada inicial |
 | `npm run test:integration` | 43 testes com PostgreSQL descartável e migrations reais |
 | `npm run test:e2e:http` | 16 testes no servidor Next de produção, com Auth/cookies Supabase reais e Asaas simulado |
 | `NODE_ENV=production npm ci --include=dev` + `npm run build` | Passou em cópia isolada, incluindo `prisma generate` |
@@ -80,6 +80,20 @@ O tooltip atrás do diálogo foi reproduzido em janela real na porta 3101. A cor
 | Isolamento E2E | Banco e contas próprios; servidor compilado separado; interceptação apenas do gateway | Inicialização custa um build e exige Supabase/Docker local; não homologa o provedor real |
 
 O erro de horário foi reproduzido: editar 20h mostrava 23h, e salvar mudava `23:00Z` para `02:00Z` do dia seguinte. Quatro regressões falharam com a conversão anterior; seis cenários de data passaram após a correção, incluindo virada de ano e datas inválidas. Código: [src/lib/event-date-time.ts:1](../src/lib/event-date-time.ts).
+
+## Correção posterior: hidratação do tema
+
+Um tema escuro salvo produzia atributos diferentes no servidor e no primeiro render do navegador. O aviso foi reproduzido em `/login`, que compartilha o controle com `/painel`. O teste de HTML inicial falhou antes da correção; os 30 testes unitários passaram depois. O contrato do componente está no [Design System](design-system.md#tema).
+
+Foram verificadas recargas com tema escuro salvo, tema claro salvo e preferência escura do sistema sem valor salvo. Nenhuma produziu novo erro de hidratação. O clique alternou para claro e persistiu a escolha; o tooltip manteve o nome acessível.
+
+`npm run lint` e `npm run check:ui` passaram. O build no diretório de desenvolvimento encontrou `EPERM` ao substituir a DLL do Prisma em uso. Uma cópia isolada recebeu `npm ci --include=dev` e executou `NODE_ENV=production npm run build` com sucesso, sem parar a porta 3000 nem gravar `.env` na cópia. Integração (43) e E2E HTTP (16) pertencem à rodada anterior; não foram repetidos para a mudança dos atributos do botão. A suíte contém agora 89 casos.
+
+O audit atual mantém quatro avisos baixos em produção. Incluindo ferramentas de desenvolvimento, são 13 moderados e três altos adicionais (`brace-expansion`, `js-yaml`, `zod`), com correção indicada. Esta correção de interface não atualizou dependências.
+
+| Antes: erro reproduzido | Depois: tooltip e tela sem o erro |
+|---|---|
+| ![Erro de hidratação com tema escuro](evidencias/hidratacao-tema-antes.png) | ![Controle de tema após a correção](evidencias/hidratacao-tema-depois.png) |
 
 ## Reproduzir sem alterar a massa do usuário
 

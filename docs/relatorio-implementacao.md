@@ -1,10 +1,10 @@
 # Relatório de implementação — Ticket Engine
 
-Implementação e validação local em 12/11/2026. O usuário autorizou commit e push após os testes. MRs e implantação permanecem adiados; não houve túnel ou pagamento real.
+Implementação e validação local em 12/11/2026. O usuário autorizou commit, push e abertura do MR após os testes, incluindo capturas antes/depois da correção de tema. A implantação permanece adiada; não houve túnel ou pagamento real.
 
 ## Avaliação para revisão
 
-**Pode seguir para revisão técnica local. Não considero liberado para produção.** As correções têm regressões e build aprovado; gateway real, conciliação de extrato, operação com aparelhos e capacidade de pico ainda não foram comprovados. Não foi aberto PR, conforme instrução do usuário.
+**Pode seguir para revisão técnica pelo MR. Não considero liberado para produção.** As correções têm regressões e build aprovado; gateway real, conciliação de extrato, operação com aparelhos e capacidade de pico ainda não foram comprovados.
 
 O diff reúne dinheiro/portaria, navegação e documentação. A entrega usa a branch `refactor/refatoracao-geral`, com o conjunto integrado que passou pelos testes. Em uma revisão futura, avaliar esses blocos separadamente ajuda a conferir permissões, migrations e comportamento visual. A massa local e as contas existentes foram preservadas; testes destrutivos usam outro banco. O seed preparado separadamente e a documentação de agentes no diretório pai ficam fora deste commit.
 
@@ -76,6 +76,8 @@ A decisão final do usuário foi oferecer os dois. `ENABLE_CREDIT_CARD=true` est
 
 O teste HTTP encontrou uma falha nova do catálogo ao reutilizar cache: datas viravam strings. Ela foi corrigida com DTO explícito de datas ISO/preços numéricos e reconstrução das datas na página. Uma regressão com PostgreSQL e serialização do cache cobre data e preço disponível. O serviço legado ainda converte falha de consulta em lista vazia; distinguir indisponibilidade e catálogo vazio é um ajuste operacional pendente.
 
+O usuário encontrou depois um aviso de hidratação ao carregar o tema escuro. O rótulo do botão dependia de uma preferência que só o navegador conhece. O controle agora usa uma descrição estável, preservando ícones e alternância. **Trade-off:** a descrição explica a ação, sem anunciar qual tema virá a seguir; evita estado adicional e um render só para liberar o botão. [Contrato](design-system.md#tema), [três regressões e capturas antes/depois](testes-locais.md#correção-posterior-hidratação-do-tema). Esse cenário não estava coberto na rodada inicial.
+
 ### Dependências, diagnósticos e e-mail
 
 Client Prisma está em `dependencies`; dev/build geram o client explicitamente. O lock foi corrigido. Next e eslint-config-next estão fixados em 16.4.6; transitivas com correção disponível foram atualizadas. O audit final de produção não apontou avisos altos/críticos; ficaram quatro baixos na cadeia de e-mail, sem correção indicada.
@@ -102,7 +104,7 @@ O QR do e-mail agora é PNG gerado no servidor, anexado por CID ao Resend. O tes
 | Instalação limpa `npm ci --include=dev`, com lock final | Passou em cópia isolada |
 | `npm run lint` | Passou |
 | `npm run check:ui` | 81 controles com ícones possuem tooltip |
-| `npm test` | 27 testes em seis arquivos passaram |
+| `npm test` | 30 testes em sete arquivos passaram, incluindo três regressões de hidratação |
 | `npm run test:integration` | 43 testes passaram, com PostgreSQL descartável e migrations reais |
 | `npm run test:e2e:http` | 16 testes passaram com servidor compilado e sessão real no Supabase local |
 | `prisma migrate status` local | Duas migrations aplicadas; schema atualizado |
@@ -120,7 +122,7 @@ O QR do e-mail agora é PNG gerado no servidor, anexado por CID ao Resend. O tes
 
 Os ensaios concorrentes incluem vinte leituras do mesmo ingresso, vinte reenvios da mesma chave, disputa de vinte compradores pela última vaga, último uso do cupom e webhooks/estornos repetidos. **Isso comprova invariantes desses cenários, não capacidade em requisições por segundo.**
 
-Integração chama handlers/serviços com banco real, mas simula Supabase/gateway/e-mail. A suíte E2E HTTP e as jornadas de navegador usam Auth local real e aplicação compilada, com Asaas interceptado e envio externo desabilitado. São 86 testes automatizados, além das verificações de interface. O workflow de CI foi escrito, mas não executado no GitHub. [Evidências, correções de interface, trade-offs e limites](testes-locais.md) detalham a rodada após o adiamento dos MRs.
+Integração chama handlers/serviços com banco real, mas simula Supabase/gateway/e-mail. A suíte E2E HTTP e as jornadas de navegador usam Auth local real e aplicação compilada, com Asaas interceptado e envio externo desabilitado. A rodada inicial executou 86 testes; a correção posterior do tema acrescentou três e repetiu todos os unitários, lint, check de UI e build de produção isolado. Integração e E2E HTTP não foram repetidos para essa mudança de atributos. O workflow de CI será disparado pelo MR; seu resultado remoto deve ser conferido separadamente. [Evidências, capturas e limites](testes-locais.md) distinguem as duas etapas e registram os avisos atuais de dependências, inclusive os de desenvolvimento.
 
 ## Migrations e operação
 
@@ -145,4 +147,4 @@ Não houve auditoria completa de XSS, SQL injection, upload, rate limit ou todas
 - [Design System](design-system.md): jornadas, navegação, tokens, estados, ajuda e acessibilidade.
 - [Guia de agentes](../../AGENTS.md), [banco](../../agent_docs/database.md) e [decisões](../../agent_docs/decisoes.md) no diretório pai, conforme solicitado.
 
-**Recomendação final:** revisão técnica local, sim; aprovação para produção, ainda não. A próxima validação deve ser guiada pelas lacunas acima, preservando o trabalho local e sem publicar alterações sem novo pedido.
+**Recomendação final:** revisão técnica pelo MR, sim; aprovação para produção, ainda não. A abertura do MR não inclui implantação. A próxima validação deve ser guiada pelas lacunas acima, preservando a massa local.
