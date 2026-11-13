@@ -1,4 +1,4 @@
-# Validação local das jornadas — 12/11/2026
+# Validação local das jornadas — 12 e 13/11/2026
 
 Plano da etapa solicitada após adiar os MRs. O servidor normal permanece na porta 3000. Os testes de escrita usam PostgreSQL descartável, contas exclusivas no Auth local e aplicação separada na porta 3101. Asaas é interceptado no processo de teste; envio Resend fica desabilitado. Não usar credenciais ou serviços de produção.
 
@@ -24,8 +24,8 @@ A inspeção visual e os testes HTTP não substituem câmera física, som audív
 |---|---|
 | `npm run lint` | Passou |
 | `npm run check:ui` | 81 controles com ícones possuem tooltip no código |
-| `npm test` | 30 testes, sete arquivos, incluindo três regressões de tema adicionadas após a rodada inicial |
-| `npm run test:integration` | 43 testes com PostgreSQL descartável e migrations reais |
+| `npm test` | 32 testes, oito arquivos; inclui hidratação e falha de consulta do catálogo |
+| `npm run test:integration` | 44 testes com PostgreSQL descartável e migrations reais; inclui filtro de publicações futuras |
 | `npm run test:e2e:http` | 16 testes no servidor Next de produção, com Auth/cookies Supabase reais e Asaas simulado |
 | `NODE_ENV=production npm ci --include=dev` + `npm run build` | Passou em cópia isolada, incluindo `prisma generate` |
 | Runtime após `npm prune --omit=dev --ignore-scripts` | Iniciou e serviu o catálogo; TypeScript, Vitest e ESLint ausentes |
@@ -87,13 +87,33 @@ Um tema escuro salvo produzia atributos diferentes no servidor e no primeiro ren
 
 Foram verificadas recargas com tema escuro salvo, tema claro salvo e preferência escura do sistema sem valor salvo. Nenhuma produziu novo erro de hidratação. O clique alternou para claro e persistiu a escolha; o tooltip manteve o nome acessível.
 
-`npm run lint` e `npm run check:ui` passaram. O build no diretório de desenvolvimento encontrou `EPERM` ao substituir a DLL do Prisma em uso. Uma cópia isolada recebeu `npm ci --include=dev` e executou `NODE_ENV=production npm run build` com sucesso, sem parar a porta 3000 nem gravar `.env` na cópia. Integração (43) e E2E HTTP (16) pertencem à rodada anterior; não foram repetidos para a mudança dos atributos do botão. A suíte contém agora 89 casos.
+`npm run lint` e `npm run check:ui` passaram. O build no diretório de desenvolvimento encontrou `EPERM` ao substituir a DLL do Prisma em uso. Uma cópia isolada recebeu `npm ci --include=dev` e executou `NODE_ENV=production npm run build` com sucesso, sem parar a porta 3000 nem gravar `.env` na cópia. Naquela etapa de atributos do botão, a suíte somava 89 casos; integração e HTTP foram repetidos na atualização do catálogo descrita abaixo.
 
 O audit atual mantém quatro avisos baixos em produção. Incluindo ferramentas de desenvolvimento, são 13 moderados e três altos adicionais (`brace-expansion`, `js-yaml`, `zod`), com correção indicada. Esta correção de interface não atualizou dependências.
 
 | Antes: erro reproduzido | Depois: tooltip e tela sem o erro |
 |---|---|
 | ![Erro de hidratação com tema escuro](evidencias/hidratacao-tema-antes.png) | ![Controle de tema após a correção](evidencias/hidratacao-tema-depois.png) |
+
+## Atualização: catálogo, rodapé e tema escolhido
+
+**Resultado da retomada de 13/11: 92 testes passaram — 32 unitários, 44 de integração e 16 HTTP.** O servidor E2E recompilou o código final com `NODE_ENV=production`. O build completo isolado, lint e checagem de UI também passaram; schema e dependências não mudaram nesta correção.
+
+O banco local continha sete eventos publicados futuros. A página voltou a listá-los ao retomar o front. Não há log preservado para atribuir a imagem original a uma falha específica, mas o teste reproduziu o defeito do serviço: erro de consulta retornava `[]`. Essa falha agora alcança o boundary da rota e não é armazenada como sucesso vazio. [Fluxo e cache](system-design.md#finanças-e-consultas-sob-pico).
+
+O cenário visual usou PostgreSQL vazio descartável em `ticket_engine_catalog_ui`, com outro Next em 3101. Em uma janela de 1600 × 1188, o rodapé terminava em 732,375 px antes da correção; depois, terminou em 1188 px, sem rolagem artificial. As larguras CSS de 320 e 375 px não apresentaram transbordamento horizontal ou sobreposição entre conteúdo e rodapé. Isso verifica responsividade, não um aparelho móvel físico.
+
+A falha de consulta foi provocada somente nesse banco descartável. A página exibiu “Eventos indisponíveis no momento”, sem a mensagem de agenda vazia, preservando navegação e rodapé. Restaurar a tabela e clicar em “Tentar novamente” recuperou o catálogo pelo `retry()` do Next 16.4. A integração também prova que eventos passados, rascunhos e cancelados não aparecem como publicações futuras.
+
+As variantes `dark:` seguiam o sistema operacional, apesar da escolha manual do app. A regra agora segue `.dark`. O navegador confirmou ambos os casos: escolha escura com sistema claro e escolha clara com sistema escuro; os ícones acompanharam a escolha sem alterar os atributos estáveis da hidratação. [Contrato visual](design-system.md#tema).
+
+Durante a limpeza, o Docker Desktop encerrou e o pipe do engine desapareceu. A primeira tentativa da suíte HTTP não iniciou; o front mostrou indisponibilidade real do banco. O Desktop foi aberto novamente, sem reset de volumes. A suíte HTTP passou na retomada, e a limpeza do ambiente visual foi conferida separadamente. O script temporário não integra o código de produção.
+
+| Antes: rodapé no meio da janela | Depois: rodapé na base, no fluxo |
+|---|---|
+| ![Catálogo vazio antes da correção](evidencias/catalogo-vazio-antes.png) | ![Catálogo vazio após a correção](evidencias/catalogo-vazio-depois.png) |
+
+[Captura em largura de celular](evidencias/catalogo-vazio-celular.png). O cenário vazio é uma fixture; os eventos e as contas do usuário não foram removidos ou republicados.
 
 ## Reproduzir sem alterar a massa do usuário
 
@@ -110,7 +130,7 @@ Fontes: [launcher](../test/e2e/local-server.mjs), [cenários HTTP](../test/e2e/h
 
 ## Limites e próxima revisão
 
-Continuam pendentes Asaas sandbox/extrato/splits, e-mail externo, câmera física, áudio audível, navegador móvel real, leitor de tela, zoom, perda física de rede e carga equivalente ao pico esperado. CI foi escrito, mas não executado remotamente. O leitor de terceiros ainda expõe controles em inglês; o editor mantém um campo de planta anunciado como futuro, sem persistência. Esses pontos não receberam funcionalidade nova nesta rodada.
+Continuam pendentes Asaas sandbox/extrato/splits, e-mail externo, câmera física, áudio audível, navegador móvel real, leitor de tela, zoom, perda física de rede e carga equivalente ao pico esperado. O CI do commit anterior `4dfea4e` passou; cada novo push exige conferir seus próprios checks. O leitor de terceiros ainda expõe controles em inglês; o editor mantém um campo de planta anunciado como futuro, sem persistência. Esses pontos não receberam funcionalidade nova nesta rodada.
 
 Os ensaios foram locais e preservaram a massa existente. As portas 3100–3103 foram encerradas e a conferência do Auth encontrou zero identidades exclusivas restantes. O front normal respondeu 200 na porta 3000. A cópia de build temporária permanece fora do Git; a limpeza havia sido bloqueada pela revisão automática, como registrado no relatório.
 

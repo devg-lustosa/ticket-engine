@@ -43,6 +43,10 @@ Fonte visual: [globals.css](../src/app/globals.css). Marca e metadados: [site.ts
 
 Classes compartilhadas: `ui-button`, `ui-input`, `nav-control`, `nav-popover`. Elas cobrem a navegação e as novas superfícies. Não há biblioteca completa de componentes nem Storybook. Só extrair outro componente quando houver reaproveitamento real.
 
+## Estrutura vertical
+
+`body` e `#conteudo` formam colunas flexíveis com altura mínima da janela. O [layout do catálogo](../src/app/eventos/layout.tsx) distribui o espaço entre o conteúdo e o rodapé, que fica fora de `main`. Em uma página curta, o rodapé termina na base da janela; em uma página longa, segue o conteúdo no fluxo normal. Não usar posição fixa nem repetir `min-h-dvh` dentro do espaço que já inclui a navegação. O mesmo layout atende lista, vazio e erro.
+
 ## Tooltips
 
 [TooltipLayer](../src/components/tooltip-layer.tsx) atende controles com `data-tooltip` por uma camada única, sem uma instância por ícone. Mostra descrição por hover e foco, aceita Escape e permite mover o ponteiro ao texto. Renderiza em portal para não cortar o texto em cards com `overflow: hidden`; dentro de diálogo nativo, hospeda o portal no próprio diálogo para permanecer acima do fundo inerte. Ações principais também mantêm texto visível. Ícones decorativos junto de títulos não são controles.
@@ -52,6 +56,8 @@ Classes compartilhadas: `ui-button`, `ui-input`, `nav-control`, `nav-popover`. E
 ## Tema
 
 O [controle de tema](../src/components/theme-toggle.tsx) mantém o nome acessível e o tooltip “Alternar entre tema claro e escuro” em todas as renderizações. O servidor não conhece a preferência salva no navegador; esses atributos não podem depender de `resolvedTheme` no HTML inicial. Os dois ícones já são renderizados juntos e o CSS escolhe qual mostrar; o clique continua alternando a preferência pelo `next-themes`. [Regressão e capturas](testes-locais.md#correção-posterior-hidratação-do-tema).
+
+As variantes `dark:` do Tailwind seguem a classe `.dark` aplicada pelo `next-themes`, conforme `@custom-variant` em [globals.css](../src/app/globals.css). A preferência do sistema só decide o tema quando essa é a opção selecionada; ícones e utilitários não podem ignorar uma escolha manual diferente.
 
 ## Hierarquia e linguagem
 

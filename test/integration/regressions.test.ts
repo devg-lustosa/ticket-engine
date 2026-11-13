@@ -20,6 +20,7 @@ import { confirmPayment } from "@/services/payment.service";
 import { reconcileRefunds } from "@/services/refund.service";
 import { generateTicketHash } from "@/lib/ticket/hash";
 import { salesForEvents } from "@/services/sales.service";
+import { getPublishedEvents } from "@/services/event.service";
 
 const gateway = vi.hoisted(() => ({ refundCharge: vi.fn(), cancelCharge: vi.fn(), getCharge: vi.fn(), createOrFindCustomer: vi.fn(), createPixCharge: vi.fn(), createCreditCardCharge: vi.fn(), getPixQrCode: vi.fn() }));
 const email = vi.hoisted(() => ({ sendTicketEmail: vi.fn() }));
@@ -444,4 +445,15 @@ it('deveRenderizarCatalogoComPrecoDisponivelAposSerializacaoDoCache', async () =
   expect(html).toContain('Evento de Teste');
   expect(html).toContain('A partir de');
   expect(html).toContain('50,00');
+});
+
+it('deveListarSomenteEventosPublicadosFuturosNoCatalogo', async () => {
+  const data = await fixture(0, 0);
+  await prisma.event.createMany({ data: [
+    { slug: 'passado', title: 'Evento passado', venue: 'Local', date: new Date('2026-11-10T12:00:00Z'), status: 'PUBLISHED', organizerId: data.user.id },
+    { slug: 'rascunho', title: 'Rascunho futuro', venue: 'Local', date: new Date('2026-12-12T12:00:00Z'), status: 'DRAFT', organizerId: data.user.id },
+    { slug: 'cancelado', title: 'Evento cancelado', venue: 'Local', date: new Date('2026-12-12T12:00:00Z'), status: 'CANCELLED', organizerId: data.user.id },
+  ] });
+
+  expect((await getPublishedEvents()).map(event => event.id)).toEqual([data.event.id]);
 });

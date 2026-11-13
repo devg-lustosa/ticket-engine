@@ -74,9 +74,13 @@ A decisão final do usuário foi oferecer os dois. `ENABLE_CREDIT_CARD=true` est
 
 **Trade-off:** a base fica consistente e evita três sistemas visuais distintos; parte da navegação carrega o perfil após hidratação. A checagem de 81 controles comprova presença de tooltip no código. Não certifica WCAG, leitura de tela ou ausência de problema visual em todos os modais antigos. Busca navega páginas; não é pesquisa global dos dados.
 
-O teste HTTP encontrou uma falha nova do catálogo ao reutilizar cache: datas viravam strings. Ela foi corrigida com DTO explícito de datas ISO/preços numéricos e reconstrução das datas na página. Uma regressão com PostgreSQL e serialização do cache cobre data e preço disponível. O serviço legado ainda converte falha de consulta em lista vazia; distinguir indisponibilidade e catálogo vazio é um ajuste operacional pendente.
+O teste HTTP encontrou uma falha nova do catálogo ao reutilizar cache: datas viravam strings. Ela foi corrigida com DTO explícito de datas ISO/preços numéricos e reconstrução das datas na página. Uma regressão com PostgreSQL e serialização do cache cobre data e preço disponível. A atualização posterior também removeu a conversão de falha de consulta em lista vazia: [error.tsx](../src/app/eventos/error.tsx) informa indisponibilidade e permite refazer a consulta.
 
 O usuário encontrou depois um aviso de hidratação ao carregar o tema escuro. O rótulo do botão dependia de uma preferência que só o navegador conhece. O controle agora usa uma descrição estável, preservando ícones e alternância. **Trade-off:** a descrição explica a ação, sem anunciar qual tema virá a seguir; evita estado adicional e um render só para liberar o botão. [Contrato](design-system.md#tema), [três regressões e capturas antes/depois](testes-locais.md#correção-posterior-hidratação-do-tema). Esse cenário não estava coberto na rodada inicial.
+
+O rodapé do catálogo ficava no meio da janela quando havia pouco conteúdo. Documento e conteúdo agora usam colunas flexíveis; o [layout da rota](../src/app/eventos/layout.tsx) preserva o rodapé fora de `main` nos estados de lista, vazio e erro. **Trade-off:** altera a base vertical compartilhada, exigindo regressão de páginas e larguras pequenas, mas dispensa posição fixa e cálculos dependentes da altura do menu. As variantes `dark:` também foram alinhadas à classe do tema escolhido, corrigindo ícones e utilitários que antes seguiam apenas o sistema operacional. [Métricas, recuperação real de falha e capturas](testes-locais.md#atualização-catálogo-rodapé-e-tema-escolhido).
+
+O cache de sucesso mantém os 30 segundos. **Trade-off do erro explícito:** uma consulta indisponível mostra recuperação em vez de fingir ausência de eventos; resultados válidos já em cache continuam sujeitos às regras do Next. Não foram removidos filtros de data/publicação nem alterados os eventos do usuário.
 
 ### Dependências, diagnósticos e e-mail
 
@@ -104,12 +108,12 @@ O QR do e-mail agora é PNG gerado no servidor, anexado por CID ao Resend. O tes
 | Instalação limpa `npm ci --include=dev`, com lock final | Passou em cópia isolada |
 | `npm run lint` | Passou |
 | `npm run check:ui` | 81 controles com ícones possuem tooltip |
-| `npm test` | 30 testes em sete arquivos passaram, incluindo três regressões de hidratação |
-| `npm run test:integration` | 43 testes passaram, com PostgreSQL descartável e migrations reais |
+| `npm test` | 32 testes em oito arquivos passaram, incluindo hidratação e falha do catálogo |
+| `npm run test:integration` | 44 testes passaram, com PostgreSQL descartável e migrations reais |
 | `npm run test:e2e:http` | 16 testes passaram com servidor compilado e sessão real no Supabase local |
 | `prisma migrate status` local | Duas migrations aplicadas; schema atualizado |
 | `NODE_ENV=production` com `npm run build` | Passou na cópia isolada |
-| Compilação final com `NODE_ENV=production node node_modules/next/dist/bin/next build` | Passou após o ajuste do DTO; schema/client Prisma não mudaram |
+| Compilação final com `NODE_ENV=production node node_modules/next/dist/bin/next build` | Passou no launcher E2E após os ajustes finais de catálogo, rodapé e tema; schema/client Prisma não mudaram |
 | Runtime após `npm prune --omit=dev --ignore-scripts` | Iniciou na porta 3100, sem TypeScript, Vitest ou ESLint; Prisma e QR disponíveis |
 | Login e início das quatro contas locais | Destinos corretos por perfil |
 | Perfil autenticado por HTTP | 200, com um cabeçalho nas quatro contas |
@@ -122,7 +126,7 @@ O QR do e-mail agora é PNG gerado no servidor, anexado por CID ao Resend. O tes
 
 Os ensaios concorrentes incluem vinte leituras do mesmo ingresso, vinte reenvios da mesma chave, disputa de vinte compradores pela última vaga, último uso do cupom e webhooks/estornos repetidos. **Isso comprova invariantes desses cenários, não capacidade em requisições por segundo.**
 
-Integração chama handlers/serviços com banco real, mas simula Supabase/gateway/e-mail. A suíte E2E HTTP e as jornadas de navegador usam Auth local real e aplicação compilada, com Asaas interceptado e envio externo desabilitado. A rodada inicial executou 86 testes; a correção posterior do tema acrescentou três e repetiu todos os unitários, lint, check de UI e build de produção isolado. Integração e E2E HTTP não foram repetidos para essa mudança de atributos. O workflow de CI será disparado pelo MR; seu resultado remoto deve ser conferido separadamente. [Evidências, capturas e limites](testes-locais.md) distinguem as duas etapas e registram os avisos atuais de dependências, inclusive os de desenvolvimento.
+Integração chama handlers/serviços com banco real, mas simula Supabase/gateway/e-mail. A suíte E2E HTTP e as jornadas de navegador usam Auth local real e aplicação compilada, com Asaas interceptado e envio externo desabilitado. A rodada inicial executou 86 testes; as correções posteriores acrescentaram hidratação, falha do catálogo e filtro de publicações. Na validação de 12–13/11, os 92 casos passaram: 32 unitários, 44 de integração e 16 HTTP. O check remoto `verify` do commit anterior `4dfea4e` também passou; a nova atualização do MR exige conferir seus próprios checks. [Evidências, capturas e limites](testes-locais.md) registram as etapas e os avisos de dependências, inclusive os de desenvolvimento.
 
 ## Migrations e operação
 

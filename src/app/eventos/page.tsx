@@ -2,7 +2,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { Calendar, MapPin, ArrowRight } from "lucide-react";
 import { getPublishedEvents } from "@/services/event.service";
-import { Footer } from "@/components/footer";
 
 export const revalidate = 30;
 export const metadata = { title: "Próximos eventos" };
@@ -11,7 +10,7 @@ const currency = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "
 export default async function EventsPage() {
   const events = await getPublishedEvents();
   const now = new Date();
-  return <main className="min-h-dvh bg-background">
+  return <main className="flex-1 bg-background">
     <div className="mx-auto max-w-6xl px-4 py-8 sm:py-12">
       <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
         <div><p className="mb-2 text-sm font-medium text-muted-fg">Sua próxima saída começa aqui</p><h1 className="text-3xl font-bold tracking-tight sm:text-4xl">Próximos eventos</h1><p className="mt-3 text-muted-fg">Confira a programação, escolha o evento e reserve seus ingressos.</p></div>
@@ -32,6 +31,6 @@ export default async function EventsPage() {
         })}
       </div>}
       <p className="mt-6 text-xs text-muted-fg">A disponibilidade é confirmada ao gerar o pedido. Horários de Brasília.</p>
-    </div><Footer />
+    </div>
   </main>;
 }

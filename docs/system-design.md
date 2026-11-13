@@ -130,6 +130,8 @@ O banco agrega valores sem hidratar todos os ingressos no Node. Um pagamento é 
 
 O painel pagina cinquenta eventos. O catálogo guarda um DTO com datas ISO e preços numéricos, evitando depender de classes Date/Decimal após a serialização do cache. Catálogo e detalhes usam cache público; a raiz que escolhe o perfil é dinâmica. APIs privadas usam `private, no-store`. Publicação/edição invalida o catálogo. Comissão e líquido são estimativas comerciais; ainda não há conciliação contábil completa de taxas, splits e extratos do Asaas.
 
+O catálogo só retorna lista vazia após uma consulta bem-sucedida sem publicações futuras. Falhas da consulta saem do callback do cache e chegam a `src/app/eventos/error.tsx`, com mensagem de indisponibilidade e `retry()` do Next para refazer a requisição. Uma falha não é convertida em sucesso vazio; o cache de resultados válidos e seu prazo de 30 segundos são mantidos. O layout da rota preserva navegação e rodapé durante o erro.
+
 Criação e edição convertem a entrada de Brasília para ISO explícito. O editor reconstrói a hora da casa em vez de tratar UTC como hora local. A conversão compartilhada está em [event-date-time.ts](../src/lib/event-date-time.ts); o contrato atual usa um fuso e precisão de minutos nos campos.
 
 Travas por recurso preservam estoque, cupom, estorno e entrada entre instâncias. Elas também criam espera quando todos disputam o mesmo lote. Escalar processos sem dimensionar conexões pode piorar o pico. Não foi medido limite de requisições por segundo nem p95/p99 em infraestrutura de produção.
