@@ -1,36 +1,20 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Ticket Engine
 
-## Getting Started
+Venda e validação de ingressos com áreas de comprador, organizador e portaria. Next.js 16, React 19, TypeScript, Prisma/PostgreSQL e Supabase. Asaas processa pagamentos; Resend envia ingressos.
 
-First, run the development server:
+## Documentação
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+- [System Design](docs/system-design.md): stack, entidades, chamadas, fluxos, infraestrutura e limites.
+- [Design System](docs/design-system.md): jornadas por perfil, navegação, componentes e acessibilidade.
+- [Relatório da implementação](docs/relatorio-implementacao.md): correções, testes, trade-offs e pendências de produção.
+- [Validação local](docs/testes-locais.md): resultados, jornadas no navegador e comandos E2E com ambiente descartável.
+- [Rodar localmente](../agent_docs/rodar-local.md): Docker, Node, variáveis e contas desta máquina.
+- [Guia para agentes](../AGENTS.md): comandos, convenções e módulos.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+O guia de ambiente e `agent_docs` ficam no diretório pai por solicitação do usuário; não acompanham um clone isolado deste repositório. Os contratos em `docs/` acompanham o código.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Ambiente atual
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Aplicação: <http://localhost:3000>. Supabase Auth, PostgreSQL e Storage rodam localmente no Docker. Next roda no Node 24 do host. Pix e cartão à vista estão habilitados na interface; integração real depende de configurar o gateway. O ambiente não envia e-mail sem chave Resend.
 
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Testes usam banco descartável e provedores simulados. Build aprovado não significa produção homologada. O [relatório](docs/relatorio-implementacao.md) registra o que foi exercitado e o que falta.

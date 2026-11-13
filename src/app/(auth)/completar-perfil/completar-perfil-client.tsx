@@ -181,7 +181,7 @@ export default function CompletarPerfilClient({ user }: { user: any }) {
           <button
             type="submit"
             disabled={loading}
-            className="mt-6 w-full rounded-xl bg-brand py-3.5 text-sm font-bold text-white shadow-lg shadow-brand/25 transition hover:bg-brand-dark active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            className="mt-6 w-full rounded-xl bg-brand py-3.5 text-sm font-bold text-white shadow-lg shadow-brand/25 transition hover:bg-brand-dark active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2" aria-label="Concluir meu cadastro" data-tooltip="Concluir meu cadastro"
           >
             {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Finalizar Cadastro"}
           </button>

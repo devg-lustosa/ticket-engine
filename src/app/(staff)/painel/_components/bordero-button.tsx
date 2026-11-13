@@ -37,6 +37,8 @@ export function BorderoButton({ eventId, eventTitle }: { eventId: string; eventT
       doc.text(`Data do Evento: ${format(new Date(data.eventDate), "dd/MM/yyyy HH:mm")}`, 14, 38);
       doc.text(`Relatório gerado em: ${format(new Date(), "dd/MM/yyyy HH:mm")}`, 14, 43);
       
+      doc.setFontSize(8);
+      doc.text(data.summary.legacyPricingTickets || data.summary.unreconciledCancellations ? "ATENÇÃO: existem pedidos antigos ou estornos que exigem conciliação." : "Comissão e líquido estimados. Concilie taxas e liquidações com o Asaas.", 14, 49);
       doc.setTextColor(0);
 
       // Resumo Financeiro
@@ -48,8 +50,10 @@ export function BorderoButton({ eventId, eventTitle }: { eventId: string; eventT
         head: [["Descrição", "Valor"]],
         body: [
           ["Receita Bruta Total", formatCurrency(data.summary.grossRevenue)],
-          ["Taxa da Plataforma (10%)", `- ${formatCurrency(data.summary.platformFee)}`],
-          ["Lucro Líquido (A Receber)", formatCurrency(data.summary.netRevenue)],
+          ["Estornos concluídos", formatCurrency(data.summary.refundedAmount)],
+          ["Receita após estornos (antes de taxas)", formatCurrency(data.summary.netSales)],
+          ["Comissão estimada (10%)", `- ${formatCurrency(data.summary.platformFee)}`],
+          ["Líquido estimado (não é extrato Asaas)", formatCurrency(data.summary.netRevenue)],
         ],
         theme: "grid",
         headStyles: { fillColor: [41, 128, 185] },
@@ -125,10 +129,10 @@ export function BorderoButton({ eventId, eventTitle }: { eventId: string; eventT
     <button
       onClick={handleDownload}
       disabled={loading}
-      className="p-2 text-muted-fg hover:text-brand hover:bg-muted rounded-lg transition-colors"
-      title="Baixar Borderô (PDF)"
+      className="nav-control text-muted-fg"
+      data-tooltip="Baixar Borderô (PDF)" aria-label="Baixar Borderô (PDF)"
     >
-      {loading ? <Loader2 size={16} className="animate-spin" /> : <FileText size={16} />}
+      {loading ? <Loader2 size={16} className="animate-spin" /> : <FileText size={16} />}<span className="ml-1 text-xs">Borderô</span>
     </button>
   );
 }

@@ -24,12 +24,21 @@ export interface AsaasPixCharge {
   customer: string;
   value: number;
   netValue: number;
+  originalValue?: number;
+  deleted?: boolean;
+  refunds?: AsaasRefund[];
   dueDate: string;
   externalReference?: string;
   pixTransaction?: {
     id: string;
     endToEndIdentifier: string;
   };
+}
+
+export interface AsaasRefund {
+  status: "PENDING" | "CANCELLED" | "DONE";
+  value: number;
+  description?: string;
 }
 
 export interface AsaasSplit {
@@ -78,6 +87,7 @@ export interface AsaasCreditCardChargeInput {
     email: string;
     cpfCnpj: string;
     postalCode: string;
+    address: string;
     addressNumber: string;
     addressComplement: string | null;
     phone: string;

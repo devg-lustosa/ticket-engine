@@ -46,7 +46,7 @@ export function DeleteCouponButton({ couponId, eventId }: { couponId: string; ev
         onClick={handleToggle}
         disabled={loading}
         className="p-2 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition-colors disabled:opacity-50"
-        title="Ativar/Desativar cupom"
+        data-tooltip="Ativar/Desativar cupom" aria-label="Ativar/Desativar cupom"
       >
         {loading ? <Loader2 size={16} className="animate-spin" /> : <Power size={16} />}
       </button>
@@ -54,7 +54,7 @@ export function DeleteCouponButton({ couponId, eventId }: { couponId: string; ev
         onClick={handleDelete}
         disabled={loading}
         className="p-2 text-gray-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors disabled:opacity-50"
-        title="Excluir cupom"
+        data-tooltip="Excluir cupom" aria-label="Excluir cupom"
       >
         {loading ? <Loader2 size={16} className="animate-spin" /> : <Trash2 size={16} />}
       </button>

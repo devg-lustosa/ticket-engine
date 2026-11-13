@@ -16,6 +16,7 @@ interface TicketEmailProps {
   eventDate: string;
   venue: string;
   qrHash: string;
+  qrImageUrl: string;
 }
 
 export const TicketEmail = ({
@@ -24,12 +25,11 @@ export const TicketEmail = ({
   eventDate,
   venue,
   qrHash,
+  qrImageUrl,
 }: TicketEmailProps) => {
-  // Utilizamos a API pública do QR Server para renderizar o QR Code no e-mail
-  const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${qrHash}`;
 
   return (
-    <Html>
+    <Html lang="pt-BR">
       <Head />
       <Body style={{ fontFamily: "sans-serif", backgroundColor: "#f6f9fc", padding: "20px 0" }}>
         <Container style={{ backgroundColor: "#ffffff", border: "1px solid #e6ebf1", borderRadius: "8px", padding: "40px", maxWidth: "600px", margin: "0 auto" }}>
@@ -52,7 +52,7 @@ export const TicketEmail = ({
 
           <Section style={{ textAlign: "center", margin: "30px 0" }}>
             <Text style={{ fontSize: "14px", color: "#888", marginBottom: "10px" }}>Apresente o QR Code abaixo na portaria do evento:</Text>
-            <Img src={qrCodeUrl} width="250" height="250" alt="QR Code do Ingresso" style={{ margin: "0 auto", border: "4px solid #fff", borderRadius: "8px", boxShadow: "0 4px 12px rgba(0,0,0,0.1)" }} />
+            <Img src={qrImageUrl} width="250" height="250" alt="QR Code do Ingresso" style={{ margin: "0 auto", border: "4px solid #fff", borderRadius: "8px", boxShadow: "0 4px 12px rgba(0,0,0,0.1)" }} />
             <Text style={{ fontSize: "12px", color: "#aaa", marginTop: "10px" }}>Código: {qrHash}</Text>
           </Section>
 

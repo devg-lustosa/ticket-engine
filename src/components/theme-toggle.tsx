@@ -5,13 +5,13 @@ import { Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
 
 export function ThemeToggle() {
-  const { theme, setTheme } = useTheme();
+  const { resolvedTheme, setTheme } = useTheme();
 
   return (
     <button
-      onClick={() => setTheme(theme === "light" ? "dark" : "light")}
+      onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
       className="relative inline-flex h-9 w-9 items-center justify-center rounded-full bg-background/90 hover:bg-muted border border-border text-foreground shadow-sm transition-colors"
-      title="Alternar tema"
+      data-tooltip={resolvedTheme === "dark" ? "Ativar tema claro" : "Ativar tema escuro"} aria-label={resolvedTheme === "dark" ? "Ativar tema claro" : "Ativar tema escuro"}
     >
       <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
       <Moon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />

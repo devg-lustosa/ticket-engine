@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { CreditCard, QrCode, User, ShieldCheck, Loader2, ArrowRight, Tag, X } from "lucide-react";
 import Image from "next/image";
+import { discountedTotal, toCents } from "@/lib/money";
 
 interface CheckoutBatch {
   id: string;
@@ -25,16 +26,55 @@ interface Participant {
 interface CheckoutFlowProps {
   batches: CheckoutBatch[];
   totalValue: number;
-  buyer: { name: string; cpf: string };
+  cardEnabled: boolean;
+  buyer: { id: string; name: string; cpf: string };
 }
 
-export function CheckoutFlow({ batches, totalValue, buyer }: CheckoutFlowProps) {
+export function CheckoutFlow({ batches, totalValue, buyer, cardEnabled }: CheckoutFlowProps) {
   const router = useRouter();
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pixData, setPixData] = useState<{ code: string; qrBase64: string } | null>(null);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const [processingPayment, setProcessingPayment] = useState(false);
+  const requestKey = useRef<string | null>(null);
+  const paymentId = useRef<string | null>(null);
+  const attemptKey = `checkout:${buyer.id}:${batches.map(batch => batch.id + ":" + batch.qty).sort().join(",")}`;
+
+  const receivePayment = useCallback((data: { paymentId: string; pending: boolean; status?: string; paymentMethod?: string; pixCode?: string; pixQrBase64?: string }) => {
+    paymentId.current = data.paymentId;
+    sessionStorage.setItem(attemptKey, JSON.stringify({ key: requestKey.current, paymentId: data.paymentId }));
+    if (data.status === "FAILED") {
+      sessionStorage.removeItem(attemptKey); requestKey.current = null; paymentId.current = null;
+      setProcessingPayment(false); setError("Pedido recusado. Você pode iniciar outra tentativa."); return;
+    }
+    if (data.status === "PAID" || data.status === "REFUNDED") {
+      sessionStorage.removeItem(attemptKey); router.push("/meus-ingressos"); return;
+    }
+    if (data.pending) { setProcessingPayment(true); setError("Seu pagamento está em verificação. Consulte este pedido, sem iniciar outra cobrança."); return; }
+    setProcessingPayment(false);
+    if (data.paymentMethod === "PIX" && data.pixCode && data.pixQrBase64) { setPixData({ code: data.pixCode, qrBase64: data.pixQrBase64 }); setStep(3); }
+    else router.push("/meus-ingressos");
+  }, [attemptKey, router]);
+
+  const refreshPayment = useCallback(async () => {
+    if (!paymentId.current) return;
+    const response = await fetch(`/api/payments/${paymentId.current}`, { cache: "no-store" });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || "Não foi possível consultar o pedido.");
+    receivePayment(data);
+  }, [receivePayment]);
+
+  useEffect(() => {
+    const stored = sessionStorage.getItem(attemptKey);
+    if (!stored) return;
+    try {
+      const value = JSON.parse(stored);
+      requestKey.current = value.key; paymentId.current = value.paymentId;
+      if (value.paymentId) void refreshPayment().catch(error => setError(error.message));
+    } catch { sessionStorage.removeItem(attemptKey); }
+  }, [attemptKey, refreshPayment]);
 
   // Coupon state
   const [couponCode, setCouponCode] = useState("");
@@ -68,7 +108,8 @@ export function CheckoutFlow({ batches, totalValue, buyer }: CheckoutFlowProps) 
     expiryMonth: "",
     expiryYear: "",
     ccv: "",
-    installmentCount: "1"
+    installmentCount: "1",
+    holderCpf: buyer.cpf, postalCode: "", address: "", addressNumber: "", phone: ""
   });
 
   function handleParticipantChange(idx: number, field: "name" | "cpf", value: string) {
@@ -88,20 +129,11 @@ export function CheckoutFlow({ batches, totalValue, buyer }: CheckoutFlowProps) 
 
   function validateStep2() {
     if (paymentMethod === "PIX") return true;
-    const { holderName, number, expiryMonth, expiryYear, ccv } = cardInfo;
-    return holderName && number.length >= 15 && expiryMonth && expiryYear && ccv.length >= 3;
+    const { holderName, number, expiryMonth, expiryYear, ccv, holderCpf, postalCode, address, addressNumber, phone } = cardInfo;
+    return holderName && number.length >= 13 && expiryMonth && expiryYear && ccv.length >= 3 && holderCpf && postalCode && address && addressNumber && phone;
   }
 
-  // Calculate final value with coupon
-  let finalValue = totalValue;
-  if (appliedCoupon) {
-    if (appliedCoupon.discountType === "PERCENTAGE") {
-      finalValue = totalValue - (totalValue * (appliedCoupon.discountValue / 100));
-    } else {
-      finalValue = totalValue - appliedCoupon.discountValue;
-    }
-    if (finalValue < 0) finalValue = 0;
-  }
+  const finalValue = (appliedCoupon ? discountedTotal(toCents(totalValue.toFixed(2)), appliedCoupon.discountType as "PERCENTAGE" | "FIXED", appliedCoupon.discountValue) : toCents(totalValue.toFixed(2))) / 100;
 
   async function handleApplyCoupon() {
     if (!couponCode.trim()) return;
@@ -132,9 +164,12 @@ export function CheckoutFlow({ batches, totalValue, buyer }: CheckoutFlowProps) 
     setLoading(true);
 
     try {
+      if (paymentId.current) { await refreshPayment(); return; }
+      requestKey.current ??= crypto.randomUUID();
+      sessionStorage.setItem(attemptKey, JSON.stringify({ key: requestKey.current }));
       const res = await fetch("/api/checkout", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "Idempotency-Key": requestKey.current },
         body: JSON.stringify({
           tickets: participants.map(p => ({
             batchId: p.batchId,
@@ -154,30 +189,23 @@ export function CheckoutFlow({ batches, totalValue, buyer }: CheckoutFlowProps) 
       const data = await res.json();
 
       if (!res.ok) {
+        if (data.code === "CHARGE_REJECTED" || res.status === 400) { requestKey.current = null; sessionStorage.removeItem(attemptKey); }
         throw new Error(data.error || "Erro ao processar pagamento");
       }
-
-      console.log("Checkout API Response:", data);
-
-      // If PIX, we show the QR Code directly on screen.
-      if (paymentMethod === "PIX" && data.pixCode && data.pixQrBase64) {
-        setPixData({
-          code: data.pixCode,
-          qrBase64: data.pixQrBase64
-        });
-        setStep(3);
-      } else {
-        router.push(`/meus-ingressos`);
-      }
+      receivePayment(data);
 
     } catch (err: any) {
       setError(err.message);
+      setLoading(false);
+    } finally {
       setLoading(false);
     }
   }
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    <div className="space-y-4">
+    {processingPayment && <div role="status" className="rounded-lg border border-border p-4"><p>Pagamento em verificação. Aguarde ou consulte o mesmo pedido.</p><button className="mt-2 underline" onClick={handleSubmit} disabled={loading}>Consultar pedido</button></div>}
+    <fieldset disabled={loading || processingPayment} className="grid min-w-0 grid-cols-1 gap-8 border-0 p-0 lg:grid-cols-3">
       {/* Form Area */}
       <div className="lg:col-span-2 space-y-6">
         
@@ -206,8 +234,9 @@ export function CheckoutFlow({ batches, totalValue, buyer }: CheckoutFlowProps) 
                   
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-xs font-medium text-[var(--muted-fg)] mb-1">Nome Completo</label>
+                      <label htmlFor={"participant-name-" + p.id} className="block text-xs font-medium text-[var(--muted-fg)] mb-1">Nome Completo</label>
                       <input 
+                        id={"participant-name-" + p.id}
                         className="w-full bg-[var(--background)] border border-[var(--border)] rounded-lg px-3 py-2 text-sm text-[var(--foreground)] focus:outline-none focus:border-[var(--brand-500)]"
                         placeholder="Nome de quem vai usar"
                         value={p.name}
@@ -215,8 +244,9 @@ export function CheckoutFlow({ batches, totalValue, buyer }: CheckoutFlowProps) 
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-medium text-[var(--muted-fg)] mb-1">CPF</label>
+                      <label htmlFor={"participant-cpf-" + p.id} className="block text-xs font-medium text-[var(--muted-fg)] mb-1">CPF</label>
                       <input 
+                        id={"participant-cpf-" + p.id}
                         className="w-full bg-[var(--background)] border border-[var(--border)] rounded-lg px-3 py-2 text-sm text-[var(--foreground)] focus:outline-none focus:border-[var(--brand-500)]"
                         placeholder="000.000.000-00"
                         value={p.cpf}
@@ -231,7 +261,7 @@ export function CheckoutFlow({ batches, totalValue, buyer }: CheckoutFlowProps) 
               <button
                 onClick={() => setStep(2)}
                 disabled={!validateStep1()}
-                className="w-full sm:w-auto ml-auto flex items-center justify-center gap-2 bg-[var(--brand-500)] text-white px-6 py-2.5 rounded-xl font-bold disabled:opacity-50 transition-all hover:bg-[var(--brand-600)]"
+                className="w-full sm:w-auto ml-auto flex items-center justify-center gap-2 bg-[var(--brand-500)] text-white px-6 py-2.5 rounded-xl font-bold disabled:opacity-50 transition-all hover:bg-[var(--brand-600)]" data-tooltip="Ir para o Pagamento"
               >
                 Ir para o Pagamento <ArrowRight size={16} />
               </button>
@@ -259,25 +289,28 @@ export function CheckoutFlow({ batches, totalValue, buyer }: CheckoutFlowProps) 
               <div className="flex gap-4 mb-6">
                 <button
                   onClick={() => setPaymentMethod("PIX")}
-                  className={`flex-1 flex flex-col items-center justify-center gap-2 py-4 rounded-xl border-2 transition-colors ${paymentMethod === "PIX" ? 'border-[#32bcad] bg-[#32bcad]/10 text-[#32bcad]' : 'border-[var(--border)] bg-[var(--muted)] text-[var(--muted-fg)] hover:border-gray-300 dark:hover:border-gray-700'}`}
+                  aria-pressed={paymentMethod === "PIX"}
+                  className={`flex-1 flex flex-col items-center justify-center gap-2 py-4 rounded-xl border-2 transition-colors ${paymentMethod === "PIX" ? 'border-[var(--success)] bg-[var(--success)]/10 text-[var(--success)]' : 'border-[var(--border)] bg-[var(--muted)] text-[var(--muted-fg)] hover:border-gray-300 dark:hover:border-gray-700'}`} data-tooltip="Pix"
                 >
                   <QrCode size={24} />
                   <span className="font-bold">Pix</span>
                 </button>
-                <button
+                {cardEnabled && <button
                   onClick={() => setPaymentMethod("CREDIT_CARD")}
-                  className={`flex-1 flex flex-col items-center justify-center gap-2 py-4 rounded-xl border-2 transition-colors ${paymentMethod === "CREDIT_CARD" ? 'border-[var(--brand-500)] bg-[var(--brand-500)]/10 text-[var(--brand-500)]' : 'border-[var(--border)] bg-[var(--muted)] text-[var(--muted-fg)] hover:border-gray-300 dark:hover:border-gray-700'}`}
+                  aria-pressed={paymentMethod === "CREDIT_CARD"}
+                  className={`flex-1 flex flex-col items-center justify-center gap-2 py-4 rounded-xl border-2 transition-colors ${paymentMethod === "CREDIT_CARD" ? 'border-[var(--brand-500)] bg-[var(--brand-500)]/10 text-[var(--brand-500)]' : 'border-[var(--border)] bg-[var(--muted)] text-[var(--muted-fg)] hover:border-gray-300 dark:hover:border-gray-700'}`} data-tooltip="Cartão de Crédito · à vista"
                 >
                   <CreditCard size={24} />
-                  <span className="font-bold">Cartão de Crédito</span>
-                </button>
+                  <span className="font-bold">Cartão de Crédito · à vista</span>
+                </button>}
               </div>
 
               {paymentMethod === "CREDIT_CARD" && (
                 <div className="space-y-4 animate-in fade-in slide-in-from-top-4 duration-300">
                   <div>
-                    <label className="block text-xs font-medium text-[var(--muted-fg)] mb-1">Nome no Cartão</label>
+                    <label htmlFor="card-holder-name" className="block text-xs font-medium text-[var(--muted-fg)] mb-1">Nome no Cartão</label>
                     <input 
+                      id="card-holder-name"
                       className="w-full bg-[var(--background)] border border-[var(--border)] rounded-lg px-3 py-2.5 text-sm text-[var(--foreground)] focus:outline-none focus:border-[var(--brand-500)]"
                       placeholder="Igual impresso no cartão"
                       value={cardInfo.holderName}
@@ -285,18 +318,20 @@ export function CheckoutFlow({ batches, totalValue, buyer }: CheckoutFlowProps) 
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-[var(--muted-fg)] mb-1">Número do Cartão</label>
+                    <label htmlFor="card-number" className="block text-xs font-medium text-[var(--muted-fg)] mb-1">Número do Cartão</label>
                     <input 
+                      id="card-number" inputMode="numeric" autoComplete="cc-number"
                       className="w-full bg-[var(--background)] border border-[var(--border)] rounded-lg px-3 py-2.5 text-sm text-[var(--foreground)] focus:outline-none focus:border-[var(--brand-500)] tracking-widest"
                       placeholder="0000 0000 0000 0000"
                       value={cardInfo.number}
-                      onChange={(e) => setCardInfo({...cardInfo, number: e.target.value.replace(/\D/g, '').slice(0, 16)})}
+                      onChange={(e) => setCardInfo({...cardInfo, number: e.target.value.replace(/\D/g, '').slice(0, 19)})}
                     />
                   </div>
                   <div className="grid grid-cols-3 gap-4">
                     <div>
-                      <label className="block text-xs font-medium text-[var(--muted-fg)] mb-1">Mês (MM)</label>
+                      <label htmlFor="card-expiry-month" className="block text-xs font-medium text-[var(--muted-fg)] mb-1">Mês (MM)</label>
                       <input 
+                        id="card-expiry-month" inputMode="numeric" autoComplete="cc-exp-month"
                         className="w-full bg-[var(--background)] border border-[var(--border)] rounded-lg px-3 py-2.5 text-sm text-[var(--foreground)] focus:outline-none focus:border-[var(--brand-500)] text-center"
                         placeholder="MM"
                         value={cardInfo.expiryMonth}
@@ -304,8 +339,9 @@ export function CheckoutFlow({ batches, totalValue, buyer }: CheckoutFlowProps) 
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-medium text-[var(--muted-fg)] mb-1">Ano (AAAA)</label>
+                      <label htmlFor="card-expiry-year" className="block text-xs font-medium text-[var(--muted-fg)] mb-1">Ano (AAAA)</label>
                       <input 
+                        id="card-expiry-year" inputMode="numeric" autoComplete="cc-exp-year"
                         className="w-full bg-[var(--background)] border border-[var(--border)] rounded-lg px-3 py-2.5 text-sm text-[var(--foreground)] focus:outline-none focus:border-[var(--brand-500)] text-center"
                         placeholder="AAAA"
                         value={cardInfo.expiryYear}
@@ -313,8 +349,9 @@ export function CheckoutFlow({ batches, totalValue, buyer }: CheckoutFlowProps) 
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-medium text-[var(--muted-fg)] mb-1">CVV</label>
+                      <label htmlFor="card-cvv" className="block text-xs font-medium text-[var(--muted-fg)] mb-1">CVV</label>
                       <input 
+                        id="card-cvv" inputMode="numeric" autoComplete="cc-csc"
                         type="password"
                         className="w-full bg-[var(--background)] border border-[var(--border)] rounded-lg px-3 py-2.5 text-sm text-[var(--foreground)] focus:outline-none focus:border-[var(--brand-500)] text-center tracking-widest"
                         placeholder="***"
@@ -323,34 +360,25 @@ export function CheckoutFlow({ batches, totalValue, buyer }: CheckoutFlowProps) 
                       />
                     </div>
                   </div>
-                  <div>
-                    <label className="block text-xs font-medium text-[var(--muted-fg)] mb-1">Parcelamento</label>
-                    <select 
-                      className="w-full bg-[var(--background)] border border-[var(--border)] rounded-lg px-3 py-2.5 text-sm text-[var(--foreground)] focus:outline-none focus:border-[var(--brand-500)]"
-                      value={cardInfo.installmentCount}
-                      onChange={(e) => setCardInfo({...cardInfo, installmentCount: e.target.value})}
-                    >
-                      {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(num => {
-                        const val = finalValue / num;
-                        return (
-                          <option key={num} value={num.toString()}>
-                            {num}x de R$ {val.toFixed(2).replace(".", ",")} {num === 1 ? "sem juros" : ""}
-                          </option>
-                        );
-                      })}
-                    </select>
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    {([["holderCpf", "CPF do titular"], ["postalCode", "CEP da cobrança"], ["address", "Logradouro (rua/avenida)"], ["addressNumber", "Número do endereço"], ["phone", "Telefone do titular"]] as const).map(([key, label]) => <div key={key}>
+                      <label htmlFor={"card-" + key} className="block text-xs font-medium text-[var(--muted-fg)] mb-1">{label}</label>
+                      <input id={"card-" + key} className="w-full rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2.5 text-sm" value={cardInfo[key]} maxLength={key === "address" ? 120 : 20}
+                        onChange={event => setCardInfo({ ...cardInfo, [key]: key === "addressNumber" || key === "address" ? event.target.value : event.target.value.replace(/\D/g, "") })} />
+                    </div>)}
                   </div>
+                  <p className="text-sm text-muted-fg">Cartão à vista. Informe os dados reais do titular para análise da cobrança.</p>
                 </div>
               )}
 
               {paymentMethod === "PIX" && (
-                <div className="bg-[#32bcad]/10 border border-[#32bcad]/30 rounded-xl p-4 flex items-start gap-4 animate-in fade-in slide-in-from-top-4 duration-300">
-                  <div className="bg-[#32bcad]/20 p-2 rounded-lg">
-                    <QrCode size={24} className="text-[#32bcad]" />
+                <div className="bg-[var(--success)]/10 border border-[var(--success)]/30 rounded-xl p-4 flex items-start gap-4 animate-in fade-in slide-in-from-top-4 duration-300">
+                  <div className="bg-[var(--success)]/20 p-2 rounded-lg">
+                    <QrCode size={24} className="text-[var(--success)]" />
                   </div>
-                  <div className="text-sm text-[#32bcad]/80">
-                    <p className="font-bold text-[#32bcad] mb-1">Pagamento Rápido e Seguro</p>
-                    <p>O QR Code Pix será gerado na próxima tela. O pagamento é aprovado na hora.</p>
+                  <div className="text-sm text-[var(--success)]">
+                    <p className="font-bold mb-1">Pagamento por Pix</p>
+                    <p>O QR Code será gerado na próxima tela. O ingresso será liberado após a confirmação do pagamento.</p>
                   </div>
                 </div>
               )}
@@ -374,12 +402,12 @@ export function CheckoutFlow({ batches, totalValue, buyer }: CheckoutFlowProps) 
               <button
                 onClick={handleSubmit}
                 disabled={loading || !validateStep2()}
-                className="w-full mt-6 flex items-center justify-center gap-2 bg-[var(--brand-500)] text-white px-6 py-4 rounded-xl font-extrabold text-lg shadow-[0_4px_14px_0_var(--brand-500)] hover:shadow-[0_6px_20px_var(--brand-500)] hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:shadow-none disabled:transform-none"
+                className="w-full mt-6 flex items-center justify-center gap-2 bg-[var(--brand-500)] text-white px-6 py-4 rounded-xl font-extrabold text-lg shadow-[0_4px_14px_0_var(--brand-500)] hover:shadow-[0_6px_20px_var(--brand-500)] hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:shadow-none disabled:transform-none" aria-label="Gerar o pagamento deste pedido" data-tooltip="Gerar o pagamento deste pedido"
               >
                 {loading ? <Loader2 className="animate-spin" /> : "Finalizar Compra"}
               </button>
 
-              <div className="mt-6 flex items-center justify-center gap-2 text-xs text-gray-500">
+              <div className="mt-6 flex items-center justify-center gap-2 text-xs text-muted-fg">
                 <ShieldCheck size={14} />
                 Transação processada com segurança pelo Asaas.
               </div>
@@ -395,11 +423,11 @@ export function CheckoutFlow({ batches, totalValue, buyer }: CheckoutFlowProps) 
             </div>
             
             <div className="p-8 flex flex-col items-center justify-center">
-              <div className="bg-white p-4 rounded-xl shadow-lg mb-6">
+              <div className="max-w-full bg-white p-4 rounded-xl shadow-lg mb-6">
                 <img 
                   src={`data:image/png;base64,${pixData.qrBase64}`} 
                   alt="QR Code Pix" 
-                  className="w-48 h-48"
+                  className="w-48 max-w-full h-auto aspect-square"
                 />
               </div>
               
@@ -408,12 +436,13 @@ export function CheckoutFlow({ batches, totalValue, buyer }: CheckoutFlowProps) 
               </p>
               
               <div className="w-full">
-                <label className="block text-xs font-medium text-[var(--muted-fg)] mb-2">Ou copie o código (Pix Copia e Cola)</label>
+                <label htmlFor="pix-code" className="block text-xs font-medium text-[var(--muted-fg)] mb-2">Ou copie o código (Pix Copia e Cola)</label>
                 <div className="flex bg-[var(--background)] border border-[var(--border)] rounded-lg overflow-hidden">
                   <input 
+                    id="pix-code"
                     readOnly
                     value={pixData.code}
-                    className="flex-1 bg-transparent px-4 py-3 text-xs text-[var(--foreground)] focus:outline-none"
+                    className="min-w-0 flex-1 bg-transparent px-4 py-3 text-xs text-[var(--foreground)] focus:outline-none"
                   />
                   <button 
                     onClick={() => {
@@ -428,11 +457,18 @@ export function CheckoutFlow({ batches, totalValue, buyer }: CheckoutFlowProps) 
               </div>
 
               <button
-                onClick={() => router.push("/meus-ingressos")}
+                disabled={loading}
+                onClick={async () => {
+                  setLoading(true); setError(null);
+                  try { await refreshPayment(); router.push("/meus-ingressos"); }
+                  catch (error) { setError(error instanceof Error ? error.message : "Não foi possível consultar o pedido."); }
+                  finally { setLoading(false); }
+                }}
                 className="w-full mt-8 bg-gray-200 text-gray-900 hover:bg-gray-300 dark:bg-gray-800 dark:text-white dark:hover:bg-gray-700 px-6 py-4 rounded-xl font-bold transition-colors"
               >
                 Já paguei, ir para Meus Ingressos
               </button>
+              {error && <p role="alert" className="mt-4 text-sm text-error">{error}</p>}
             </div>
           </div>
         )}
@@ -459,9 +495,10 @@ export function CheckoutFlow({ batches, totalValue, buyer }: CheckoutFlowProps) 
           <div className="border-t border-[var(--border)] pt-4 mb-4">
             {!appliedCoupon ? (
               <div>
-                <label className="block text-xs font-medium text-[var(--muted-fg)] mb-2">Cupom de Desconto</label>
+                <label htmlFor="coupon-code" className="block text-xs font-medium text-[var(--muted-fg)] mb-2">Cupom de Desconto</label>
                 <div className="flex gap-2">
                   <input 
+                    id="coupon-code"
                     className="flex-1 min-w-0 bg-[var(--background)] border border-[var(--border)] rounded-lg px-3 py-2 text-sm text-[var(--foreground)] focus:outline-none focus:border-[var(--brand-500)] uppercase"
                     placeholder="Código"
                     value={couponCode}
@@ -470,7 +507,7 @@ export function CheckoutFlow({ batches, totalValue, buyer }: CheckoutFlowProps) 
                   <button 
                     onClick={handleApplyCoupon}
                     disabled={couponLoading || !couponCode.trim()}
-                    className="bg-[var(--brand-500)] hover:bg-[var(--brand-600)] text-white disabled:bg-[var(--muted)] disabled:text-[var(--muted-fg)] px-3 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-100 flex items-center justify-center min-w-[80px]"
+                    className="bg-[var(--brand-500)] hover:bg-[var(--brand-600)] text-white disabled:bg-[var(--muted)] disabled:text-[var(--muted-fg)] px-3 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-100 flex items-center justify-center min-w-[80px]" aria-label="Aplicar cupom de desconto" data-tooltip="Aplicar cupom de desconto"
                   >
                     {couponLoading ? <Loader2 size={16} className="animate-spin" /> : "Aplicar"}
                   </button>
@@ -485,7 +522,7 @@ export function CheckoutFlow({ batches, totalValue, buyer }: CheckoutFlowProps) 
                 </div>
                 <button 
                   onClick={() => { setAppliedCoupon(null); setCouponCode(""); }}
-                  className="text-gray-400 hover:text-white"
+                  className="text-gray-400 hover:text-white" aria-label="Remover cupom de desconto" data-tooltip="Remover cupom de desconto"
                 >
                   <X size={16} />
                 </button>
@@ -511,6 +548,7 @@ export function CheckoutFlow({ batches, totalValue, buyer }: CheckoutFlowProps) 
           </div>
         </div>
       </div>
+    </fieldset>
     </div>
   );
 }

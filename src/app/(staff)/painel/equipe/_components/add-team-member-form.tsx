@@ -85,7 +85,7 @@ export function AddTeamMemberForm() {
       <button
         type="submit"
         disabled={loading}
-        className="w-full bg-brand text-white font-medium rounded-lg px-4 py-2.5 hover:bg-brand/90 transition-colors disabled:opacity-50 flex items-center justify-center gap-2 mt-2"
+        className="w-full bg-brand text-white font-medium rounded-lg px-4 py-2.5 hover:bg-brand/90 transition-colors disabled:opacity-50 flex items-center justify-center gap-2 mt-2" data-tooltip="Adicionar à Equipe"
       >
         {loading ? <Loader2 size={18} className="animate-spin" /> : <Plus size={18} />}
         Adicionar à Equipe

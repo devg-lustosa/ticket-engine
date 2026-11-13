@@ -54,6 +54,21 @@ enum PaymentMethod {
   FREE
 }
 
+enum CheckoutState {
+  CREATING
+  READY
+  UNKNOWN
+  FAILED
+}
+
+enum RefundStatus {
+  STARTED
+  PENDING
+  DONE
+  FAILED
+  UNKNOWN
+}
+
 // ─── Models ───────────────────────────────────────────────────────
 
 /// Usuário da plataforma (Comprador, Organizador ou Staff)
@@ -142,6 +157,8 @@ model Ticket {
   participantCpf  String @map("participant_cpf")
   isParticipantEdited Boolean @default(false) @map("is_participant_edited")
   status    TicketStatus @default(PENDING)
+  unitPrice Decimal? @db.Decimal(10, 2) @map("unit_price")
+  paidAmount Decimal? @db.Decimal(10, 2) @map("paid_amount")
   /// SHA-256 hash: ticket_id + event_id + user_id + SECRET_HASH
   qrHash    String       @unique @map("qr_hash")
   usedAt    DateTime?    @map("used_at")
@@ -153,11 +170,13 @@ model Ticket {
   batch   Batch    @relation(fields: [batchId], references: [id])
   user    User     @relation(fields: [userId], references: [id])
   payment Payment? @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+  refund Refund?
 
   @@index([userId])
   @@index([batchId])
   @@index([paymentId])
   @@index([qrHash])
+  @@index([batchId, status])
   @@map("tickets")
 }
 
@@ -171,6 +190,13 @@ model Payment {
   status      PaymentStatus @default(PENDING)
   /// Valor em reais
   amount      Decimal       @db.Decimal(10, 2)
+  gatewayNetAmount Decimal? @db.Decimal(10, 2) @map("gateway_net_amount")
+  checkoutKey String? @unique @map("checkout_key")
+  requestHash String? @map("request_hash")
+  checkoutState CheckoutState? @map("checkout_state")
+  stockReserved Boolean @default(false) @map("stock_reserved")
+  couponReserved Boolean @default(false) @map("coupon_reserved")
+  platformFeeBps Int? @map("platform_fee_bps")
   /// Código Pix Copia e Cola
   pixCode     String?       @db.Text @map("pix_code")
   /// URL do QR Code Pix gerado pelo Asaas
@@ -186,9 +212,11 @@ model Payment {
   // Relations
   tickets     Ticket[]
   coupon      Coupon?       @relation(fields: [couponId], references: [id])
+  refunds Refund[]
 
   @@index([gatewayId])
   @@index([couponId])
+  @@index([status, createdAt])
   @@map("payments")
 }
 
@@ -201,6 +229,7 @@ model Coupon {
   discountValue Decimal     @db.Decimal(10, 2) @map("discount_value")
   maxUses      Int?         @map("max_uses")
   usedCount    Int          @default(0) @map("used_count")
+  reservedCount Int         @default(0) @map("reserved_count")
   validUntil   DateTime?    @map("valid_until")
   active       Boolean      @default(true)
   createdAt    DateTime     @default(now()) @map("created_at")
@@ -213,4 +242,20 @@ model Coupon {
   @@unique([eventId, code])
   @@index([eventId])
   @@map("coupons")
+}
+
+model Refund {
+  id String @id @default(uuid())
+  ticketId String @unique @map("ticket_id")
+  paymentId String @map("payment_id")
+  amount Decimal @db.Decimal(10, 2)
+  status RefundStatus @default(STARTED)
+  attempts Int @default(1)
+  requestedAt DateTime @default(now()) @map("requested_at")
+  completedAt DateTime? @map("completed_at")
+  ticket Ticket @relation(fields: [ticketId], references: [id], onDelete: Restrict)
+  payment Payment @relation(fields: [paymentId], references: [id], onDelete: Restrict)
+
+  @@index([paymentId, status])
+  @@map("refunds")
 }

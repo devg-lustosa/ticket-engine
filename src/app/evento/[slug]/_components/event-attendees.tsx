@@ -65,7 +65,7 @@ export function EventAttendees({ attendees }: { attendees: Attendee[] }) {
             
             <button 
               onClick={() => setShowAll(true)}
-              className="w-full sm:w-auto bg-[var(--brand-600)] text-white font-medium py-3 px-6 rounded-xl hover:bg-[var(--brand-700)] transition-colors inline-flex items-center justify-center gap-2"
+              className="w-full sm:w-auto bg-[var(--brand-600)] text-white font-medium py-3 px-6 rounded-xl hover:bg-[var(--brand-700)] transition-colors inline-flex items-center justify-center gap-2" data-tooltip="Ver todos os participantes"
             >
               <Users size={18} />
               Ver todos os participantes
@@ -89,7 +89,7 @@ export function EventAttendees({ attendees }: { attendees: Attendee[] }) {
               </h3>
               <button 
                 onClick={() => setShowAll(false)}
-                className="p-2 rounded-full hover:bg-[var(--muted)] text-[var(--muted-fg)] hover:text-[var(--foreground)] transition-colors"
+                className="p-2 rounded-full hover:bg-[var(--muted)] text-[var(--muted-fg)] hover:text-[var(--foreground)] transition-colors" aria-label="Fechar janela" data-tooltip="Fechar janela"
               >
                 <X size={24} />
               </button>

@@ -3,7 +3,6 @@ import { createClient } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { ArrowLeft, User as UserIcon } from "lucide-react";
-import { ThemeToggle } from "@/components/theme-toggle";
 import { MinhaContaClient } from "./_components/minha-conta-client";
 
 export default async function MinhaContaPage() {
@@ -17,20 +16,6 @@ export default async function MinhaContaPage() {
 
   return (
     <main className="min-h-dvh bg-background flex flex-col">
-      {/* Header */}
-      <header className="border-b border-border bg-card/80 backdrop-blur-sm sticky top-0 z-10">
-        <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
-          <Link
-            href="/"
-            className="flex items-center gap-2 text-sm text-muted-fg hover:text-foreground transition-colors"
-          >
-            <ArrowLeft size={15} />
-            Voltar à loja
-          </Link>
-          <ThemeToggle />
-        </div>
-      </header>
-
       {/* Conteúdo */}
       <div className="max-w-2xl mx-auto w-full px-4 py-8 flex-1">
         {/* Título */}

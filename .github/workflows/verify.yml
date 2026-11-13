@@ -1,0 +1,55 @@
+name: Verificar aplicação
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:17.11-alpine3.24
+        env:
+          POSTGRES_USER: ticket
+          POSTGRES_PASSWORD: ci-local-password
+          POSTGRES_DB: ticket_engine_build
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql://ticket:ci-local-password@127.0.0.1:5432/ticket_engine_build
+      DIRECT_URL: postgresql://ticket:ci-local-password@127.0.0.1:5432/ticket_engine_build
+      NEXT_PUBLIC_SUPABASE_URL: http://127.0.0.1:54321
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ci-placeholder-not-a-production-key
+      NEXT_PUBLIC_SITE_URL: http://localhost:3000
+      TICKET_SECRET_HASH: ci-synthetic-ticket-secret
+      ASAAS_WEBHOOK_SECRET: ci-synthetic-webhook-secret
+      ASAAS_ENV: sandbox
+      ENABLE_CREDIT_CARD: "true"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci --include=dev
+      - run: npx prisma generate
+      - run: npm run lint
+      - run: npm run check:ui
+      - run: npm test
+      - run: npm run test:integration
+      - run: npx prisma migrate deploy
+      - run: npm run build
+        env:
+          NODE_ENV: production
+      - run: npm prune --omit=dev --ignore-scripts
+      - run: node -e 'const {PrismaClient}=require("@prisma/client"); const client=new PrismaClient(); client.$disconnect()'

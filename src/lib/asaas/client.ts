@@ -1,4 +1,5 @@
 import axios from "axios";
+import { toCents } from "@/lib/money";
 import type {
   AsaasCustomer,
   AsaasCustomerInput,
@@ -11,7 +12,7 @@ import type {
 const ASAAS_BASE_URL =
   process.env.ASAAS_ENV === "production"
     ? "https://api.asaas.com/v3"
-    : "https://sandbox.asaas.com/api/v3";
+    : "https://api-sandbox.asaas.com/v3";
 
 const asaas = axios.create({
   baseURL: ASAAS_BASE_URL,
@@ -23,7 +24,6 @@ const asaas = axios.create({
 
 asaas.interceptors.request.use((config) => {
   const token = process.env.ASAAS_API_KEY;
-  console.log("[asaas client] Interceptor rodando. API_KEY carregada:", !!token);
   if (token) {
     // Remove aspas simples se o dotenv tiver mantido (bug comum)
     config.headers["access_token"] = token.replace(/^'|'$/g, '');
@@ -85,6 +85,11 @@ export async function getCharge(chargeId: string): Promise<AsaasPixCharge> {
   return data;
 }
 
+export async function cancelCharge(chargeId: string): Promise<{ id: string; deleted: boolean }> {
+  const { data } = await asaas.delete<{ id: string; deleted: boolean }>(`/payments/${chargeId}`);
+  return data;
+}
+
 /**
  * Cria uma cobrança com Cartão de Crédito no Asaas.
  */
@@ -97,15 +102,16 @@ export async function createCreditCardCharge(
 
 /**
  * Realiza o estorno (parcial ou total) de uma cobrança.
- * Se `value` não for informado, estorna o valor total.
+ * O valor explícito impede um estorno integral por omissão.
  */
 export async function refundCharge(
   chargeId: string,
-  value?: number,
+  value: number,
   description?: string
 ): Promise<any> {
   const payload: any = {};
-  if (value) payload.value = value;
+  if (!Number.isFinite(value) || toCents(value) <= 0) throw new Error("Valor de estorno inválido.");
+  payload.value = value;
   if (description) payload.description = description;
 
   const { data } = await asaas.post(`/payments/${chargeId}/refund`, payload);
