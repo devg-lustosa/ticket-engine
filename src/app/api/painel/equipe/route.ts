@@ -1,9 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
+import { apiError, assertSameOrigin, jsonBody, uuid } from "@/lib/api";
+import { changeTeamRole } from "@/services/team.service";
 
 export async function POST(request: NextRequest) {
   try {
+    assertSameOrigin(request);
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
@@ -16,10 +19,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Acesso negado" }, { status: 403 });
     }
 
-    const { email: rawEmail, role } = await request.json();
-    const email = rawEmail?.trim().toLowerCase();
+    const { email: rawEmail, role } = await jsonBody(request);
+    const email = typeof rawEmail === "string" ? rawEmail.trim().toLowerCase() : "";
 
-    if (!email || !role || (role !== "STAFF" && role !== "ORGANIZER")) {
+    if (!email || email.length > 254 || (role !== "STAFF" && role !== "ORGANIZER")) {
       return NextResponse.json({ error: "Dados inválidos" }, { status: 400 });
     }
 
@@ -33,20 +36,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "O usuário já possui este cargo." }, { status: 400 });
     }
 
-    await prisma.user.update({
-      where: { email },
-      data: { role: role as any }
-    });
+    await changeTeamRole(dbUser.id, targetUser.id, role);
 
     return NextResponse.json({ success: true });
-  } catch (error: any) {
-    console.error("Erro ao adicionar equipe:", error);
-    return NextResponse.json({ error: "Erro interno" }, { status: 500 });
-  }
+  } catch (error) { return apiError(error); }
 }
 
 export async function DELETE(request: NextRequest) {
   try {
+    assertSameOrigin(request);
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
@@ -60,24 +58,14 @@ export async function DELETE(request: NextRequest) {
     }
 
     const { searchParams } = new URL(request.url);
-    const targetUserId = searchParams.get("userId");
-
-    if (!targetUserId) {
-      return NextResponse.json({ error: "ID do usuário não fornecido" }, { status: 400 });
-    }
+    const targetUserId = uuid(searchParams.get("userId"), "Usuário");
 
     if (targetUserId === dbUser.id) {
       return NextResponse.json({ error: "Você não pode remover a si mesmo." }, { status: 400 });
     }
 
-    await prisma.user.update({
-      where: { id: targetUserId },
-      data: { role: "BUYER" }
-    });
+    await changeTeamRole(dbUser.id, targetUserId, "BUYER");
 
     return NextResponse.json({ success: true });
-  } catch (error: any) {
-    console.error("Erro ao remover equipe:", error);
-    return NextResponse.json({ error: "Erro interno" }, { status: 500 });
-  }
+  } catch (error) { return apiError(error); }
 }

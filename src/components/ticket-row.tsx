@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { format, isBefore, subHours } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { QRCodeSVG } from "qrcode.react";
@@ -20,6 +20,8 @@ import { useRouter } from "next/navigation";
 interface TicketRowProps {
   ticket: {
     id: string;
+    paidAmount?: number | null;
+    refund?: { status: string } | null;
     qrHash: string;
     status: "PENDING" | "ACTIVE" | "USED" | "CANCELLED";
     participantName: string;
@@ -46,8 +48,7 @@ export function TicketRow({ ticket }: TicketRowProps) {
 
   const limitDate = subHours(eventDateObj, 24);
   const isBeforeLimit = isBefore(new Date(), limitDate);
-  // Temporariamente ignorando a regra de 24h para facilitar os testes
-  const canEdit = !ticket.isParticipantEdited && ticket.status === "ACTIVE";
+  const canEdit = isBeforeLimit && !ticket.isParticipantEdited && ticket.status === "ACTIVE";
 
   const [open, setOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -60,6 +61,15 @@ export function TicketRow({ ticket }: TicketRowProps) {
   const [isRefundModalOpen, setIsRefundModalOpen] = useState(false);
   const [isRefunding, setIsRefunding] = useState(false);
   const [refundError, setRefundError] = useState("");
+  const dialogRef = useRef<HTMLDialogElement>(null);
+
+  useEffect(() => {
+    if (!isModalOpen && !isRefundModalOpen) return;
+    const dialog = dialogRef.current;
+    const trigger = document.activeElement as HTMLElement | null;
+    dialog?.showModal();
+    return () => { dialog?.close(); trigger?.focus(); };
+  }, [isModalOpen, isRefundModalOpen]);
 
   const handleEdit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -103,7 +113,8 @@ export function TicketRow({ ticket }: TicketRowProps) {
     }
   };
 
-  const statusMeta = {
+  const refundPending = ticket.refund && ["STARTED", "PENDING", "UNKNOWN"].includes(ticket.refund.status);
+  const statusMeta = refundPending ? { label: "Estorno em análise", dot: "bg-warning" } : {
     ACTIVE: { label: "Ativo", dot: "bg-success" },
     USED: { label: "Utilizado", dot: "bg-muted-fg" },
     CANCELLED: { label: "Cancelado", dot: "bg-error" },
@@ -116,7 +127,7 @@ export function TicketRow({ ticket }: TicketRowProps) {
         {/* Linha principal — clicável */}
         <button
           onClick={() => setOpen((v) => !v)}
-          className="w-full flex items-center gap-4 px-5 py-4 text-left"
+          className="w-full flex items-center gap-4 px-5 py-4 text-left" aria-expanded={open} aria-controls={"ticket-details-" + ticket.id} aria-label={"Ver ingresso de " + ticket.participantName + " para " + ticket.batch.event.title} data-tooltip="Ver detalhes e QR Code do ingresso"
         >
           {/* Ícone de status */}
           <div className={`w-2 h-2 rounded-full shrink-0 ${statusMeta.dot}`} />
@@ -155,7 +166,7 @@ export function TicketRow({ ticket }: TicketRowProps) {
 
         {/* Painel expandido */}
         {open && (
-          <div className="border-t border-border px-5 py-5 animate-fade-in">
+          <div id={"ticket-details-" + ticket.id} className="border-t border-border px-5 py-5 animate-fade-in">
             <div className="flex flex-col sm:flex-row gap-6 items-start">
 
               {/* QR Code / Status */}
@@ -164,6 +175,7 @@ export function TicketRow({ ticket }: TicketRowProps) {
                   <>
                     <div className="p-2.5 border-2 border-brand rounded-xl bg-white shadow-sm">
                       <QRCodeSVG
+                        title={"QR Code do ingresso de " + ticket.participantName}
                         value={ticket.qrHash}
                         size={140}
                         level="H"
@@ -235,11 +247,11 @@ export function TicketRow({ ticket }: TicketRowProps) {
                     <p className="text-[11px] text-warning mt-2 font-medium">Titular já foi editado (limite atingido).</p>
                   )}
 
-                  <div className="flex gap-2 mt-3">
+                  <div className="flex flex-wrap gap-2 mt-3">
                     {canEdit && (
                       <button
                         onClick={(e) => { e.stopPropagation(); setIsModalOpen(true); }}
-                        className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-background border border-border px-4 py-2 text-sm font-medium text-foreground hover:bg-muted/80 transition-colors"
+                        className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-background border border-border px-4 py-2 text-sm font-medium text-foreground hover:bg-muted/80 transition-colors" data-tooltip="Transferir Ingresso"
                       >
                         <Edit2 size={15} className="text-brand" />
                         Transferir Ingresso
@@ -248,7 +260,7 @@ export function TicketRow({ ticket }: TicketRowProps) {
                     {ticket.status === "ACTIVE" && (
                       <button
                         onClick={(e) => { e.stopPropagation(); setIsRefundModalOpen(true); }}
-                        className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-background border border-border px-4 py-2 text-sm font-medium text-error hover:bg-error/10 transition-colors"
+                        className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-background border border-border px-4 py-2 text-sm font-medium text-error hover:bg-error/10 transition-colors" data-tooltip="Cancelar Ingresso"
                       >
                         <XCircle size={15} />
                         Cancelar Ingresso
@@ -265,12 +277,11 @@ export function TicketRow({ ticket }: TicketRowProps) {
 
       {/* Modal editar titular */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in">
-
-          <div className="bg-card border border-card-border w-full max-w-md rounded-2xl shadow-xl overflow-hidden">
+        <dialog ref={dialogRef} aria-labelledby={"transfer-title-" + ticket.id} onCancel={() => setIsModalOpen(false)} className="fixed inset-0 m-auto max-h-[calc(100dvh-32px)] w-[calc(100%-32px)] max-w-md overflow-y-auto rounded-2xl border border-card-border bg-card text-foreground shadow-xl backdrop:bg-black/60 backdrop:backdrop-blur-sm">
+          <div>
             <div className="flex items-center justify-between p-4 border-b border-border">
-              <h3 className="font-semibold text-foreground">Transferir Ingresso</h3>
-              <button onClick={() => setIsModalOpen(false)} className="text-muted-fg hover:text-foreground transition-colors">
+              <h3 id={"transfer-title-" + ticket.id} className="font-semibold text-foreground">Transferir Ingresso</h3>
+              <button onClick={() => setIsModalOpen(false)} className="text-muted-fg hover:text-foreground transition-colors" aria-label="Fechar janela" data-tooltip="Fechar janela">
                 <X size={20} />
               </button>
             </div>
@@ -279,25 +290,25 @@ export function TicketRow({ ticket }: TicketRowProps) {
                 <strong>Atenção:</strong> Você só pode transferir o ingresso <strong>1 única vez</strong>. O QR Code atual será invalidado e o novo será enviado para o e-mail do novo dono.
               </div>
               <div>
-                <label className="block text-sm font-medium text-foreground mb-1">E-mail do Novo Dono</label>
+                <label htmlFor={"transfer-email-" + ticket.id} className="block text-sm font-medium text-foreground mb-1">E-mail do Novo Dono</label>
                 <input
-                  type="email" required value={email}
+                  id={"transfer-email-" + ticket.id} type="email" required value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="w-full rounded-xl border border-border bg-muted px-4 py-2 text-sm text-foreground placeholder:text-muted-fg focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-foreground mb-1">Nome Completo</label>
+                <label htmlFor={"transfer-name-" + ticket.id} className="block text-sm font-medium text-foreground mb-1">Nome Completo</label>
                 <input
-                  type="text" required value={name}
+                  id={"transfer-name-" + ticket.id} type="text" required value={name}
                   onChange={(e) => setName(e.target.value)}
                   className="w-full rounded-xl border border-border bg-muted px-4 py-2 text-sm text-foreground placeholder:text-muted-fg focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-foreground mb-1">CPF</label>
+                <label htmlFor={"transfer-cpf-" + ticket.id} className="block text-sm font-medium text-foreground mb-1">CPF</label>
                 <input
-                  type="text" required value={cpf} maxLength={14}
+                  id={"transfer-cpf-" + ticket.id} type="text" required value={cpf} maxLength={14}
                   onChange={(e) => {
                     const val = e.target.value.replace(/\D/g, "");
                     let f = val;
@@ -319,30 +330,30 @@ export function TicketRow({ ticket }: TicketRowProps) {
                 </button>
                 <button
                   type="submit" disabled={isLoading}
-                  className="flex-1 rounded-xl bg-brand px-4 py-2 text-sm font-semibold text-white hover:bg-brand-dark transition-colors disabled:opacity-50 flex justify-center items-center"
+                  className="flex-1 rounded-xl bg-brand px-4 py-2 text-sm font-semibold text-white hover:bg-brand-dark transition-colors disabled:opacity-50 flex justify-center items-center" aria-label="Confirmar transferência do ingresso" data-tooltip="Confirmar transferência do ingresso"
                 >
                   {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Transferir"}
                 </button>
               </div>
             </form>
           </div>
-        </div>
+        </dialog>
       )}
 
       {/* Modal Reembolso */}
       {isRefundModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in">
-          <div className="bg-card border border-card-border w-full max-w-md rounded-2xl shadow-xl overflow-hidden">
+        <dialog ref={dialogRef} aria-labelledby={"refund-title-" + ticket.id} onCancel={() => setIsRefundModalOpen(false)} className="fixed inset-0 m-auto max-h-[calc(100dvh-32px)] w-[calc(100%-32px)] max-w-md overflow-y-auto rounded-2xl border border-card-border bg-card text-foreground shadow-xl backdrop:bg-black/60 backdrop:backdrop-blur-sm">
+          <div>
             <div className="flex items-center justify-between p-4 border-b border-border">
-              <h3 className="font-semibold text-error">Cancelar Ingresso</h3>
-              <button onClick={() => setIsRefundModalOpen(false)} className="text-muted-fg hover:text-foreground transition-colors">
+              <h3 id={"refund-title-" + ticket.id} className="font-semibold text-error">Cancelar Ingresso</h3>
+              <button onClick={() => setIsRefundModalOpen(false)} className="text-muted-fg hover:text-foreground transition-colors" aria-label="Fechar janela" data-tooltip="Fechar janela">
                 <X size={20} />
               </button>
             </div>
             <div className="p-5 space-y-4">
               <div className="bg-error/10 border border-error/20 text-error p-4 rounded-xl text-sm leading-relaxed">
                 Você tem certeza que deseja cancelar este ingresso e solicitar o reembolso?
-                Esta ação <strong>não pode ser desfeita</strong>. O valor será estornado na mesma forma de pagamento utilizada.
+                O ingresso ficará indisponível enquanto o estorno é analisado. {ticket.paidAmount != null && <>Valor solicitado: <strong>{new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(ticket.paidAmount)}</strong>, considerando o desconto da compra.</>} A devolução depende da confirmação do gateway.
               </div>
               
               {refundError && <p className="text-sm text-error">{refundError}</p>}
@@ -356,14 +367,14 @@ export function TicketRow({ ticket }: TicketRowProps) {
                 </button>
                 <button
                   type="button" onClick={handleRefund} disabled={isRefunding}
-                  className="flex-1 rounded-xl bg-error px-4 py-2 text-sm font-semibold text-white hover:bg-error/90 transition-colors disabled:opacity-50 flex justify-center items-center gap-2"
+                  className="flex-1 rounded-xl bg-error px-4 py-2 text-sm font-semibold text-white hover:bg-error/90 transition-colors disabled:opacity-50 flex justify-center items-center gap-2" aria-label="Confirmar solicitação de reembolso" data-tooltip="Confirmar solicitação de reembolso"
                 >
                   {isRefunding ? <Loader2 className="w-4 h-4 animate-spin" /> : "Confirmar Cancelamento"}
                 </button>
               </div>
             </div>
           </div>
-        </div>
+        </dialog>
       )}
     </>
   );

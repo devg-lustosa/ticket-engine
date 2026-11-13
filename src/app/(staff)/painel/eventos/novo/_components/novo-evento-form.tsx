@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { Children, cloneElement, isValidElement, useId, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
+import { eventDateTimeToIso } from "@/lib/event-date-time";
 import {
   Calendar,
   MapPin,
@@ -97,30 +98,34 @@ function Field({
   label,
   required,
   hint,
+  htmlFor,
   children,
 }: {
   label: string;
   required?: boolean;
   hint?: string;
+  htmlFor?: string;
   children: React.ReactNode;
 }) {
+  const generatedId = useId();
+  const controlId = htmlFor ?? generatedId;
   return (
     <div className="flex flex-col gap-1.5">
-      <label className="text-sm font-medium text-gray-300">
+      <label htmlFor={controlId} className="text-sm font-medium text-foreground">
         {label}
         {required && <span className="text-red-400 ml-0.5">*</span>}
       </label>
-      {children}
-      {hint && <p className="text-xs text-gray-500">{hint}</p>}
+      {Children.map(children, child => isValidElement<{ id?: string }>(child) && ["input", "select", "textarea"].includes(String(child.type)) ? cloneElement(child, { id: controlId }) : child)}
+      {hint && <p className="text-xs text-muted-fg">{hint}</p>}
     </div>
   );
 }
 
 const inputCls =
-  "w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2.5 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand transition-colors";
+  "w-full bg-muted border border-border rounded-lg px-3 py-2.5 text-sm text-foreground placeholder:text-muted-fg focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand transition-colors";
 
 const textareaCls =
-  "w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2.5 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand transition-colors resize-y min-h-[120px]";
+  "w-full bg-muted border border-border rounded-lg px-3 py-2.5 text-sm text-foreground placeholder:text-muted-fg focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand transition-colors resize-y min-h-[120px]";
 
 // ─── Main Component ───────────────────────────────────────────
 
@@ -207,8 +212,8 @@ export function NovoEventoForm({ organizerId }: { organizerId: string }) {
           organizerId,
           title: form.title,
           slug: form.slug,
-          date: form.dateStart,
-          doorsOpen: form.doorsOpen || null,
+          date: eventDateTimeToIso(form.dateStart),
+          doorsOpen: form.doorsOpen ? eventDateTimeToIso(form.doorsOpen) : null,
           venue: form.venueName,
           address,
           city: form.city,
@@ -219,7 +224,7 @@ export function NovoEventoForm({ organizerId }: { organizerId: string }) {
             name: b.name,
             price: parseFloat(b.price.replace(",", ".")) || 0,
             totalQty: parseInt(b.totalQty) || 0,
-            endAt: b.endAt || null,
+            endAt: b.endAt ? eventDateTimeToIso(b.endAt) : null,
             sortOrder: i,
           })),
         }),
@@ -258,26 +263,26 @@ export function NovoEventoForm({ organizerId }: { organizerId: string }) {
   // ── Render ─────────────────────────────────────────────────
 
   return (
-    <main className="min-h-screen bg-gray-950 text-white">
+    <main className="min-h-screen bg-background text-foreground">
       {/* Header */}
-      <header className="border-b border-gray-800 bg-gray-900/80 backdrop-blur-sm sticky top-0 z-10">
+      <header className="border-b border-border bg-card/80 backdrop-blur-sm relative">
         <div className="max-w-3xl mx-auto px-4 py-4 flex items-center justify-between">
           <button
             onClick={() => router.push("/painel")}
-            className="flex items-center gap-2 text-sm text-gray-400 hover:text-white transition-colors"
+            className="flex items-center gap-2 text-sm text-muted-fg hover:text-foreground transition-colors" data-tooltip="Voltar"
           >
             <ArrowLeft size={16} />
             Voltar
           </button>
           <h1 className="text-base font-semibold">Novo Evento</h1>
-          <div className="text-xs text-gray-500">
+          <div className="text-xs text-muted-fg">
             {step + 1} / {STEPS.length}
           </div>
         </div>
       </header>
 
       {/* Progress */}
-      <div className="bg-gray-900/50 border-b border-gray-800">
+      <div className="bg-card/50 border-b border-border">
         <div className="max-w-3xl mx-auto px-4">
           <div className="flex overflow-x-auto">
             {STEPS.map((s, i) => {
@@ -289,7 +294,7 @@ export function NovoEventoForm({ organizerId }: { organizerId: string }) {
                   key={s.id}
                   onClick={() => i < step && setStep(i)}
                   className={`flex items-center gap-2 px-4 py-3 text-xs font-medium border-b-2 whitespace-nowrap transition-colors
-                    ${active ? "border-brand text-white" : done ? "border-transparent text-green-400 cursor-pointer hover:text-green-300" : "border-transparent text-gray-500 cursor-default"}`}
+                    ${active ? "border-brand text-foreground" : done ? "border-transparent text-success cursor-pointer hover:text-success" : "border-transparent text-muted-fg cursor-default"}`} data-tooltip="Selecionar etapa do formulário"
                 >
                   {done ? <CheckCircle2 size={14} /> : <Icon size={14} />}
                   {s.label}
@@ -306,7 +311,7 @@ export function NovoEventoForm({ organizerId }: { organizerId: string }) {
           <div className="flex items-center gap-2 bg-red-900/30 border border-red-800 rounded-lg px-4 py-3 mb-6 text-sm text-red-300">
             <AlertCircle size={16} className="shrink-0" />
             {error}
-            <button onClick={() => setError(null)} className="ml-auto">
+            <button onClick={() => setError(null)} className="ml-auto" aria-label="Remover imagem de capa" data-tooltip="Remover imagem de capa">
               <X size={14} />
             </button>
           </div>
@@ -317,7 +322,7 @@ export function NovoEventoForm({ organizerId }: { organizerId: string }) {
           <div className="space-y-6">
             <div>
               <h2 className="text-xl font-bold mb-1">Informações do Evento</h2>
-              <p className="text-sm text-gray-400">Dados principais do seu evento</p>
+              <p className="text-sm text-muted-fg">Dados principais do seu evento</p>
             </div>
 
             <Field label="Nome do Evento" required>
@@ -342,7 +347,7 @@ export function NovoEventoForm({ organizerId }: { organizerId: string }) {
             </Field>
 
             <div className="grid grid-cols-2 gap-4">
-              <Field label="Data e Hora de Início" required>
+                <Field label="Data e Hora de Início (Brasília)" required>
                 <input
                   type="datetime-local"
                   className={inputCls}
@@ -350,7 +355,7 @@ export function NovoEventoForm({ organizerId }: { organizerId: string }) {
                   onChange={(e) => setField("dateStart", e.target.value)}
                 />
               </Field>
-              <Field label="Horário de Término">
+                <Field label="Abertura das portas">
                 <input
                   type="datetime-local"
                   className={inputCls}
@@ -367,7 +372,7 @@ export function NovoEventoForm({ organizerId }: { organizerId: string }) {
           <div className="space-y-6">
             <div>
               <h2 className="text-xl font-bold mb-1">Endereço do Local</h2>
-              <p className="text-sm text-gray-400">Detalhes do local para os participantes</p>
+              <p className="text-sm text-muted-fg">Detalhes do local para os participantes</p>
             </div>
 
             <Field label="Nome da Casa / Espaço" required>
@@ -445,11 +450,11 @@ export function NovoEventoForm({ organizerId }: { organizerId: string }) {
                 href={mapsUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-2 px-4 py-2.5 bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded-lg text-sm text-gray-300 hover:text-white transition-colors w-fit"
+                className="flex items-center gap-2 px-4 py-2.5 bg-muted hover:bg-muted border border-border rounded-lg text-sm text-foreground hover:text-foreground transition-colors w-fit" data-tooltip="Ver no Google Maps"
               >
                 <MapPin size={15} />
                 Ver no Google Maps
-                <ExternalLink size={13} className="text-gray-500" />
+                <ExternalLink size={13} className="text-muted-fg" />
               </a>
             )}
           </div>
@@ -460,12 +465,12 @@ export function NovoEventoForm({ organizerId }: { organizerId: string }) {
           <div className="space-y-6">
             <div>
               <h2 className="text-xl font-bold mb-1">Banner de Capa</h2>
-              <p className="text-sm text-gray-400">Imagem principal que aparece na listagem do evento</p>
+              <p className="text-sm text-muted-fg">Imagem principal que aparece na listagem do evento</p>
             </div>
 
             {/* Preview */}
             <div
-              className="relative w-full aspect-video rounded-xl bg-gray-800 border-2 border-dashed border-gray-700 overflow-hidden flex items-center justify-center cursor-pointer hover:border-brand/50 transition-colors group"
+              className="relative w-full aspect-video rounded-xl bg-muted border-2 border-dashed border-border overflow-hidden flex items-center justify-center cursor-pointer hover:border-brand/50 transition-colors group"
               onClick={() => fileInputRef.current?.click()}
             >
               {form.coverImagePreview ? (
@@ -481,11 +486,11 @@ export function NovoEventoForm({ organizerId }: { organizerId: string }) {
                 </>
               ) : (
                 <div className="text-center px-4">
-                  <Upload size={32} className="text-gray-600 mx-auto mb-3" />
-                  <p className="text-sm text-gray-400">
+                  <Upload size={32} className="text-muted-fg mx-auto mb-3" />
+                  <p className="text-sm text-muted-fg">
                     Clique para fazer upload
                   </p>
-                  <p className="text-xs text-gray-600 mt-1">PNG, JPG, WEBP — Recomendado 16:9</p>
+                  <p className="text-xs text-muted-fg mt-1">PNG, JPG, WEBP — Recomendado 16:9</p>
                 </div>
               )}
             </div>
@@ -499,9 +504,9 @@ export function NovoEventoForm({ organizerId }: { organizerId: string }) {
             />
 
             <div className="flex items-center gap-3">
-              <div className="flex-1 h-px bg-gray-800" />
-              <span className="text-xs text-gray-600">ou use uma URL</span>
-              <div className="flex-1 h-px bg-gray-800" />
+              <div className="flex-1 h-px bg-muted" />
+              <span className="text-xs text-muted-fg">ou use uma URL</span>
+              <div className="flex-1 h-px bg-muted" />
             </div>
 
             <Field label="URL da imagem">
@@ -523,7 +528,7 @@ export function NovoEventoForm({ organizerId }: { organizerId: string }) {
           <div className="space-y-6">
             <div>
               <h2 className="text-xl font-bold mb-1">Descrição do Evento</h2>
-              <p className="text-sm text-gray-400">Conte mais sobre o evento para os participantes</p>
+              <p className="text-sm text-muted-fg">Conte mais sobre o evento para os participantes</p>
             </div>
 
             <Field label="Descrição" hint="Suporta parágrafos e formatação básica">
@@ -559,7 +564,7 @@ export function NovoEventoForm({ organizerId }: { organizerId: string }) {
           <div className="space-y-6">
             <div>
               <h2 className="text-xl font-bold mb-1">Ingressos</h2>
-              <p className="text-sm text-gray-400">
+              <p className="text-sm text-muted-fg">
                 Configure os lotes e categorias de ingressos
               </p>
             </div>
@@ -568,7 +573,7 @@ export function NovoEventoForm({ organizerId }: { organizerId: string }) {
               {batches.map((batch, idx) => (
                 <div
                   key={batch._key}
-                  className="bg-gray-900 border border-gray-800 rounded-xl p-5 space-y-4"
+                  className="bg-card border border-border rounded-xl p-5 space-y-4"
                 >
                   {/* Header do lote */}
                   <div className="flex items-center justify-between">
@@ -578,8 +583,8 @@ export function NovoEventoForm({ organizerId }: { organizerId: string }) {
                     {batches.length > 1 && (
                       <button
                         onClick={() => removeBatch(batch._key)}
-                        className="p-1 text-gray-600 hover:text-red-400 transition-colors"
-                        title="Remover lote"
+                        className="p-1 text-muted-fg hover:text-red-400 transition-colors"
+                        data-tooltip="Remover lote" aria-label="Remover lote"
                       >
                         <Trash2 size={14} />
                       </button>
@@ -600,13 +605,14 @@ export function NovoEventoForm({ organizerId }: { organizerId: string }) {
 
                   {/* Preço + Qtd */}
                   <div className="grid grid-cols-2 gap-4">
-                    <Field label="Preço (R$)" required>
+                    <Field label="Preço (R$)" required htmlFor={"batch-price-" + batch._key}>
                       <div className="relative">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-fg text-sm">
                           R$
                         </span>
                         <input
                           type="number"
+                          id={"batch-price-" + batch._key}
                           min="0"
                           step="0.01"
                           className={inputCls + " pl-9"}
@@ -652,7 +658,7 @@ export function NovoEventoForm({ organizerId }: { organizerId: string }) {
 
             <button
               onClick={addBatch}
-              className="flex items-center gap-2 w-full px-4 py-3 border-2 border-dashed border-gray-700 rounded-xl text-sm text-gray-400 hover:border-brand/50 hover:text-brand transition-colors"
+              className="flex items-center gap-2 w-full px-4 py-3 border-2 border-dashed border-border rounded-xl text-sm text-muted-fg hover:border-brand/50 hover:text-brand transition-colors" data-tooltip="Adicionar outro lote / categoria"
             >
               <Plus size={16} />
               Adicionar outro lote / categoria
@@ -661,11 +667,11 @@ export function NovoEventoForm({ organizerId }: { organizerId: string }) {
         )}
 
         {/* ── Navigation ─────────────────────────────────────── */}
-        <div className="flex items-center justify-between mt-10 pt-6 border-t border-gray-800">
+        <div className="flex items-center justify-between mt-10 pt-6 border-t border-border">
           <button
             onClick={() => setStep((s) => s - 1)}
             disabled={step === 0}
-            className="flex items-center gap-2 px-4 py-2.5 text-sm text-gray-400 hover:text-white transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+            className="flex items-center gap-2 px-4 py-2.5 text-sm text-muted-fg hover:text-foreground transition-colors disabled:opacity-30 disabled:cursor-not-allowed" data-tooltip="Anterior"
           >
             <ArrowLeft size={16} />
             Anterior
@@ -675,7 +681,7 @@ export function NovoEventoForm({ organizerId }: { organizerId: string }) {
             <button
               onClick={handleSubmit}
               disabled={isLoading}
-              className="flex items-center gap-2 px-6 py-2.5 bg-brand hover:bg-brand/90 text-white text-sm font-semibold rounded-lg transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+              className="flex items-center gap-2 px-6 py-2.5 bg-brand hover:bg-brand/90 text-white text-sm font-semibold rounded-lg transition-colors disabled:opacity-60 disabled:cursor-not-allowed" aria-label="Criar evento" data-tooltip="Criar evento"
             >
               {isLoading ? (
                 <span className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full" />
@@ -688,7 +694,7 @@ export function NovoEventoForm({ organizerId }: { organizerId: string }) {
             <button
               onClick={() => setStep((s) => s + 1)}
               disabled={!canProceed()}
-              className="flex items-center gap-2 px-6 py-2.5 bg-brand hover:bg-brand/90 text-white text-sm font-semibold rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex items-center gap-2 px-6 py-2.5 bg-brand hover:bg-brand/90 text-white text-sm font-semibold rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed" data-tooltip="Próximo"
             >
               Próximo
               <ArrowRight size={16} />

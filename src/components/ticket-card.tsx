@@ -121,7 +121,7 @@ export function TicketCard({ ticket }: TicketCardProps) {
                   <button
                     onClick={() => setIsModalOpen(true)}
                     className="p-1.5 text-slate-400 hover:text-[var(--brand-500)] transition-colors rounded-md hover:bg-white"
-                    title="Editar titular"
+                    data-tooltip="Editar titular" aria-label="Editar titular"
                   >
                     <Edit2 size={16} />
                   </button>
@@ -188,7 +188,7 @@ export function TicketCard({ ticket }: TicketCardProps) {
               <h3 className="font-semibold text-lg text-[var(--foreground)]">Editar Titular</h3>
               <button
                 onClick={() => setIsModalOpen(false)}
-                className="text-[var(--muted-fg)] hover:text-[var(--foreground)] transition-colors"
+                className="text-[var(--muted-fg)] hover:text-[var(--foreground)] transition-colors" aria-label="Fechar janela" data-tooltip="Fechar janela"
               >
                 <X size={20} />
               </button>
@@ -250,7 +250,7 @@ export function TicketCard({ ticket }: TicketCardProps) {
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="flex-1 rounded-xl bg-[var(--brand-500)] px-4 py-2 text-sm font-semibold text-white hover:bg-[var(--brand-600)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center"
+                  className="flex-1 rounded-xl bg-[var(--brand-500)] px-4 py-2 text-sm font-semibold text-white hover:bg-[var(--brand-600)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center" aria-label="Confirmar transferência do ingresso" data-tooltip="Confirmar transferência do ingresso"
                 >
                   {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Salvar Titular"}
                 </button>

@@ -1,98 +1,33 @@
-import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { randomUUID } from "node:crypto";
+import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { isBefore, subHours, format } from "date-fns";
-import { ptBR } from "date-fns/locale";
+import { ApiError, apiError, assertSameOrigin, jsonBody, requireActor, uuid } from "@/lib/api";
+import { isValidCPF } from "@/lib/cpf";
 import { generateTicketHash } from "@/lib/ticket/hash";
 import { sendTicketEmail } from "@/services/email.service";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: Promise<{ ticketId: string }> }
-) {
+export async function PATCH(request: Request, { params }: { params: Promise<{ ticketId: string }> }) {
   try {
-    const { ticketId } = await params;
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-
-    if (!user) {
-      return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
-    }
-
-    const body = await request.json();
-    const participantName = body.participantName as string;
-    const participantCpf = body.participantCpf as string;
-    const participantEmail = body.participantEmail as string;
-
-    if (!participantName || !participantCpf || !participantEmail) {
-      return NextResponse.json({ error: "Nome, CPF e E-mail são obrigatórios" }, { status: 400 });
-    }
-
-    const ticket = await prisma.ticket.findUnique({
-      where: { id: ticketId },
-      include: {
-        batch: { include: { event: true } },
-        user: true,
-      },
-    });
-
-    if (!ticket) {
-      return NextResponse.json({ error: "Ingresso não encontrado" }, { status: 404 });
-    }
-
-    if (ticket.user.authId !== user.id) {
-      return NextResponse.json({ error: "Você não tem permissão para editar este ingresso" }, { status: 403 });
-    }
-
-    if (ticket.isParticipantEdited) {
-      return NextResponse.json({ error: "Este ingresso já foi editado. Só é permitida 1 transferência por ingresso." }, { status: 403 });
-    }
-
-    // Verifica antecedência de 24 horas
-    const eventDate = ticket.batch.event.date;
-    const limitDate = subHours(eventDate, 24);
-    const now = new Date();
-
-    if (isBefore(limitDate, now)) {
-      return NextResponse.json({ error: "A transferência só é permitida até 24 horas antes do início do evento." }, { status: 403 });
-    }
-
-    // Gerar um novo hash (o salt extra invalida a leitura do QR antigo na portaria)
-    const newQrHash = generateTicketHash(`${ticket.id}-transfer-${Date.now()}`, ticket.batch.eventId, ticket.userId);
-
-    // Realiza a alteração
-    const updatedTicket = await prisma.ticket.update({
-      where: { id: ticket.id },
-      data: {
-        participantName,
-        participantCpf,
-        qrHash: newQrHash,
-        isParticipantEdited: true,
-      },
-    });
-
-    // Enviar e-mail para o novo dono
-    const formattedDate = format(
-      new Date(ticket.batch.event.date),
-      "dd 'de' MMMM 'de' yyyy 'às' HH:mm",
-      { locale: ptBR }
-    );
-
-    try {
-      await sendTicketEmail(participantEmail, {
-        participantName,
-        eventName: ticket.batch.event.title,
-        eventDate: formattedDate,
-        venue: ticket.batch.event.venue,
-        qrHash: newQrHash,
-      });
-    } catch (err) {
-      console.error(`Erro ao enviar ingresso transferido para ${participantEmail}:`, err);
-    }
-
-    return NextResponse.json({ success: true, ticket: updatedTicket });
-  } catch (error: any) {
-    console.error("[PATCH /api/tickets/participant]", error);
-    return NextResponse.json({ error: "Erro interno do servidor" }, { status: 500 });
-  }
+    assertSameOrigin(request);
+    const actor = await requireActor();
+    const ticketId = uuid((await params).ticketId);
+    const body = await jsonBody(request);
+    const participantName = typeof body.participantName === "string" ? body.participantName.trim() : "";
+    const participantCpf = typeof body.participantCpf === "string" ? body.participantCpf.replace(/\D/g, "") : "";
+    const participantEmail = typeof body.participantEmail === "string" ? body.participantEmail.trim() : "";
+    if (participantName.length < 3 || participantName.length > 160 || !isValidCPF(participantCpf) || participantEmail.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(participantEmail)) throw new ApiError(400, "Informe nome, CPF válido e e-mail do participante.");
+    const ticket = await prisma.ticket.findFirst({ where: { id: ticketId, userId: actor.id }, include: { batch: { include: { event: true } } } });
+    if (!ticket) throw new ApiError(404, "Ingresso não encontrado.");
+    if (ticket.status !== "ACTIVE") throw new ApiError(409, "Somente um ingresso ativo pode ser transferido.");
+    if (ticket.isParticipantEdited) throw new ApiError(409, "Este ingresso já foi transferido uma vez.");
+    if (ticket.batch.event.date.getTime() - Date.now() < 24 * 60 * 60 * 1000) throw new ApiError(403, "A transferência só é permitida até 24 horas antes do evento.");
+    const qrHash = generateTicketHash(ticket.id + "-transfer-" + randomUUID(), ticket.batch.eventId, actor.id);
+    const updated = await prisma.ticket.updateMany({ where: { id: ticket.id, userId: actor.id, status: "ACTIVE", isParticipantEdited: false }, data: { participantName, participantCpf, qrHash, isParticipantEdited: true } });
+    if (!updated.count) throw new ApiError(409, "O ingresso foi utilizado, transferido ou cancelado durante a solicitação.");
+    await sendTicketEmail(participantEmail, { participantName, eventName: ticket.batch.event.title,
+      eventDate: format(ticket.batch.event.date, "dd 'de' MMMM 'de' yyyy 'às' HH:mm", { locale: ptBR }), venue: ticket.batch.event.venue, qrHash });
+    return NextResponse.json({ success: true });
+  } catch (error) { return apiError(error); }
 }

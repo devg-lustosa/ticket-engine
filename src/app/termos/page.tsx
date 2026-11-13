@@ -1,7 +1,6 @@
 import { ArrowLeft, FileText, Shield } from "lucide-react";
 import Link from "next/link";
 import { siteConfig } from "@/config/site";
-import { ThemeToggle } from "@/components/theme-toggle";
 
 export const metadata = {
   title: "Termos de Uso e Política de Privacidade",
@@ -12,17 +11,16 @@ export default function TermosPage() {
   return (
     <main className="min-h-dvh bg-[var(--background)] flex flex-col">
       {/* Header */}
-      <header className="border-b border-[var(--border)] bg-[var(--card)] sticky top-0 z-10">
+      <header className="border-b border-[var(--border)] bg-[var(--card)] relative">
         <div className="mx-auto flex max-w-4xl items-center justify-between px-4 py-4">
           <Link
             href="/"
-            className="flex items-center gap-2 text-sm font-medium text-[var(--muted-fg)] hover:text-[var(--foreground)] transition-colors"
+            className="flex items-center gap-2 text-sm font-medium text-[var(--muted-fg)] hover:text-[var(--foreground)] transition-colors" data-tooltip="Voltar para a Home"
           >
             <ArrowLeft size={16} />
             Voltar para a Home
           </Link>
           <div className="flex items-center gap-3">
-            <ThemeToggle />
           </div>
         </div>
       </header>

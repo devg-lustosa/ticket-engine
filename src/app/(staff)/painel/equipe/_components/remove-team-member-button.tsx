@@ -30,7 +30,7 @@ export function RemoveTeamMemberButton({ userId }: { userId: string }) {
       onClick={handleRemove}
       disabled={loading}
       className="p-2 text-gray-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors disabled:opacity-50"
-      title="Remover da equipe"
+      data-tooltip="Remover da equipe" aria-label="Remover da equipe"
     >
       {loading ? <Loader2 size={16} className="animate-spin" /> : <Trash2 size={16} />}
     </button>

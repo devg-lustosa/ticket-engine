@@ -1,59 +1,24 @@
-import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { NextResponse } from "next/server";
+import { apiError, requireActor, uuid } from "@/lib/api";
 import { prisma } from "@/lib/prisma";
+import { gateEvent } from "@/services/gate.service";
 
-export async function GET(request: NextRequest) {
+export async function GET(request: Request) {
   try {
-    const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      return NextResponse.json({ error: "Não autenticado." }, { status: 401 });
-    }
-
-    const dbUser = await prisma.user.findUnique({ where: { authId: user.id } });
-    if (!dbUser || (dbUser.role !== "STAFF" && dbUser.role !== "ORGANIZER")) {
-      return NextResponse.json({ error: "Acesso negado." }, { status: 403 });
-    }
-
-    // Busca ingressos ATIVOS ou USADOS
+    const actor = await requireActor(["STAFF", "ORGANIZER"]);
+    const params = new URL(request.url).searchParams;
+    const eventId = uuid(params.get("eventId"), "Evento");
+    const cursor = params.get("cursor");
+    if (cursor) uuid(cursor, "Cursor");
+    const event = await gateEvent(actor, eventId);
     const tickets = await prisma.ticket.findMany({
-      where: {
-        status: { in: ["ACTIVE", "USED"] },
-        ...(dbUser.role === "ORGANIZER"
-          ? { batch: { event: { organizerId: dbUser.id } } }
-          : {}),
-      },
-      select: {
-        id: true,
-        qrHash: true,
-        status: true,
-        participantName: true,
-        participantCpf: true,
-        usedAt: true,
-        batch: {
-          select: {
-            name: true,
-            event: { select: { title: true } },
-          },
-        },
-        user: {
-          select: { name: true },
-        },
-      },
-      orderBy: {
-        participantName: 'asc'
-      }
+      where: { batch: { eventId }, status: { in: ["ACTIVE", "USED"] }, ...(cursor ? { id: { gt: cursor } } : {}) },
+      select: { id: true, qrHash: true, status: true, participantName: true, participantCpf: true, usedAt: true,
+        batch: { select: { name: true, event: { select: { id: true, title: true } } } }, user: { select: { name: true } } },
+      orderBy: { id: "asc" }, take: 1001,
     });
-
-    return NextResponse.json({ success: true, tickets });
-  } catch (error) {
-    console.error("[api/portaria/sync] Erro:", error);
-    return NextResponse.json(
-      { error: "Erro interno no servidor." },
-      { status: 500 }
-    );
-  }
+    const hasMore = tickets.length > 1000;
+    const page = tickets.slice(0, 1000);
+    return NextResponse.json({ success: true, actorId: actor.id, event, tickets: page, nextCursor: hasMore ? page[page.length - 1].id : null }, { headers: { "Cache-Control": "private, no-store" } });
+  } catch (error) { return apiError(error); }
 }

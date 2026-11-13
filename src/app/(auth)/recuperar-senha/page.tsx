@@ -11,7 +11,7 @@ export default function RecuperarSenhaPage() {
   return (
     <main className="min-h-dvh bg-background flex flex-col">
       <header className="flex items-center justify-between px-6 py-4 border-b border-border">
-        <Link href="/" className="flex items-center gap-2 font-bold text-foreground hover:opacity-80 transition-opacity">
+        <Link href="/" className="flex items-center gap-2 font-bold text-foreground hover:opacity-80 transition-opacity" data-tooltip="Ticket Engine">
           <div className="bg-gradient-to-br from-brand to-purple-600 p-1.5 rounded-lg shadow-sm shadow-brand/20">
             <Ticket className="h-4 w-4 text-white" />
           </div>
@@ -23,7 +23,7 @@ export default function RecuperarSenhaPage() {
       <div className="flex flex-1 items-center justify-center px-4 py-12">
         <div className="w-full max-w-sm animate-fade-in">
           <div className="mb-6">
-            <Link href="/login" className="inline-flex items-center gap-2 text-sm text-muted-fg hover:text-foreground transition-colors mb-4">
+            <Link href="/login" className="inline-flex items-center gap-2 text-sm text-muted-fg hover:text-foreground transition-colors mb-4" data-tooltip="Voltar">
               <ArrowLeft size={16} /> Voltar
             </Link>
             <h1 className="text-2xl font-bold text-foreground tracking-tight">Recuperar senha</h1>

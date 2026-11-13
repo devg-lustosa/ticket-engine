@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
+import { emptySales, salesForEvents } from "@/services/sales.service";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { format } from "date-fns";
@@ -26,7 +27,6 @@ import { PublishButton } from "./_components/publish-button";
 import { DeleteButton } from "./_components/delete-button";
 import { CortesiaButton } from "./_components/cortesia-button";
 import { BorderoButton } from "./_components/bordero-button";
-import { ThemeToggle } from "@/components/theme-toggle";
 import { NicknameModal } from "@/components/nickname-modal";
 
 const STATUS_LABELS: Record<string, { label: string; color: string }> = {
@@ -36,7 +36,7 @@ const STATUS_LABELS: Record<string, { label: string; color: string }> = {
   FINISHED: { label: "Encerrado", color: "bg-warning/15 text-warning" },
 };
 
-export default async function StaffDashboardPage() {
+export default async function StaffDashboardPage({ searchParams }: { searchParams: Promise<{ cursor?: string }> }) {
   const supabase = await createClient();
   const {
     data: { user },
@@ -49,65 +49,26 @@ export default async function StaffDashboardPage() {
     redirect("/meus-ingressos");
   }
 
-  const events = await prisma.event.findMany({
-    where: dbUser.role === "ORGANIZER" ? { organizerId: dbUser.id } : undefined,
-    orderBy: { date: "desc" },
-    include: {
-      batches: {
-        include: {
-          tickets: {
-            include: { payment: true },
-          },
-        },
-      },
-    },
+  if (dbUser.role === "STAFF") redirect("/portaria");
+  const { cursor } = await searchParams;
+  const owner = dbUser.role === "ORGANIZER" ? { organizerId: dbUser.id } : {};
+  const last = cursor ? await prisma.event.findFirst({ where: { id: cursor, ...owner }, select: { date: true, id: true } }) : null;
+  if (cursor && !last) redirect("/painel");
+  const fetched = await prisma.event.findMany({
+    where: { ...owner, ...(last ? { OR: [{ date: { lt: last.date } }, { date: last.date, id: { lt: last.id } }] } : {}) },
+    orderBy: [{ date: "desc" }, { id: "desc" }], take: 51,
+    include: { batches: { select: { id: true, name: true, price: true, totalQty: true, soldQty: true } } },
   });
-
-
+  const events = fetched.slice(0, 50);
+  const sales = await salesForEvents(events.map(event => event.id));
 
   return (
     <main className="min-h-screen bg-background text-foreground">
       <NicknameModal hasNickname={!!dbUser.nickname} />
       
-      {/* Header */}
-      <header className="border-b border-border bg-card/80 backdrop-blur-sm sticky top-0 z-10">
-        <div className="max-w-6xl mx-auto px-4 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-brand/20 flex items-center justify-center shrink-0">
-              <LayoutDashboard size={16} className="text-brand" />
-            </div>
-            <div>
-              <h1 className="text-base font-semibold text-foreground leading-tight sm:leading-normal">
-                Dashboard de Eventos
-              </h1>
-              <p className="text-xs text-muted-fg">
-                {dbUser.role === "ORGANIZER" ? "Organizador" : "Colaborador"}
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center gap-3 sm:gap-4 w-full sm:w-auto justify-between sm:justify-end">
-            <div className="flex items-center gap-2 sm:gap-3">
-              <ThemeToggle />
-              <Link
-                href="/"
-                className="px-2 py-1.5 text-sm text-muted-fg hover:text-foreground transition-colors whitespace-nowrap"
-              >
-                ← Voltar
-              </Link>
-            </div>
-            {/* Botão de novo evento — apenas para Organizer */}
-            {dbUser.role === "ORGANIZER" && (
-              <Link
-                href="/painel/eventos/novo"
-                className="flex items-center justify-center gap-1.5 px-4 py-2 bg-brand text-white text-sm font-medium rounded-lg hover:bg-brand/90 transition-colors whitespace-nowrap shrink-0"
-              >
-                <Plus size={15} />
-                <span className="hidden sm:inline">Novo Evento</span>
-                <span className="sm:hidden">Novo</span>
-              </Link>
-            )}
-          </div>
-        </div>
+      <header className="mx-auto max-w-6xl px-4 pt-8 flex flex-wrap items-end justify-between gap-4">
+        <div><p className="text-sm text-muted-fg">Área do organizador</p><h1 className="mt-1 text-3xl font-bold">Seus eventos</h1><p className="mt-2 text-muted-fg">Acompanhe as vendas e abra a operação de cada evento.</p></div>
+        <div className="flex flex-wrap gap-2"><Link href="/portaria" className="nav-control border border-border">Abrir portaria</Link><Link href="/painel/eventos/novo" className="ui-button" data-tooltip="Criar evento"><Plus size={17} />Criar evento</Link></div>
       </header>
 
       {/* Conteúdo */}
@@ -132,6 +93,7 @@ export default async function StaffDashboardPage() {
           <h2 className="text-lg font-semibold mb-4">Seus Eventos</h2>
         )}
         
+        {[...sales.events.values()].some(value => value.legacyPricingTickets || value.unreconciledCancellations) && <p role="status" className="mb-4 text-sm text-warning">Há pedidos antigos sem rateio histórico ou estornos sem conciliação. Confira o borderô antes do fechamento.</p>}
         {events.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-24 text-center">
             <Calendar size={48} className="text-muted-fg mb-4 opacity-50" />
@@ -144,7 +106,7 @@ export default async function StaffDashboardPage() {
             {dbUser.role === "ORGANIZER" && (
               <Link
                 href="/painel/eventos/novo"
-                className="flex items-center gap-2 px-5 py-2.5 bg-brand text-white text-sm font-medium rounded-lg hover:bg-brand/90 transition-colors"
+                className="flex items-center gap-2 px-5 py-2.5 bg-brand text-white text-sm font-medium rounded-lg hover:bg-brand/90 transition-colors" data-tooltip="Criar Evento"
               >
                 <Plus size={16} />
                 Criar Evento
@@ -161,39 +123,19 @@ export default async function StaffDashboardPage() {
                 { locale: ptBR }
               );
 
-              let eventTicketsSold = 0;
-              let eventTotalRevenue = 0;
-              let eventCheckins = 0;
-              
-              if (dbUser.role === "ORGANIZER") {
-                event.batches.forEach((batch) => {
-                  batch.tickets.forEach((ticket) => {
-                    if (ticket.status === "ACTIVE" || ticket.status === "USED") {
-                      eventTicketsSold++;
-                      if (ticket.status === "USED") {
-                        eventCheckins++;
-                      }
-                      if (ticket.payment && ticket.payment.status === "PAID") {
-                         eventTotalRevenue += Number(ticket.payment.amount);
-                      }
-                    }
-                  });
-                });
-              } else {
-                 event.batches.forEach((batch) => {
-                   eventTicketsSold += batch.tickets.length;
-                 });
-              }
-              
-              const eventPlatformFee = eventTotalRevenue * 0.05;
-              const eventNetRevenue = eventTotalRevenue - eventPlatformFee;
+              const summary = sales.events.get(event.id) ?? emptySales();
+              const eventTicketsSold = summary.totalTicketsValid;
+              const eventTotalRevenue = summary.grossRevenue;
+              const eventCheckins = summary.totalCheckins;
+              const eventPlatformFee = summary.platformFee;
+              const eventNetRevenue = summary.netRevenue;
 
               return (
                 <div
                   key={event.id}
                   className="bg-card border border-card-border rounded-xl overflow-hidden hover:border-border/80 transition-colors shadow-sm"
                 >
-                  <div className="flex items-center gap-4 p-4">
+                  <div className="flex flex-wrap items-center gap-4 p-4">
                     {/* Capa */}
                     <div className="w-16 h-16 rounded-lg bg-muted overflow-hidden shrink-0">
                       {event.coverImage ? (
@@ -234,35 +176,35 @@ export default async function StaffDashboardPage() {
                     </div>
 
                     {/* Ações */}
-                    <div className="flex items-center gap-1 shrink-0">
+                    <div className="flex flex-wrap items-center gap-1">
                       <Link
                         href={`/evento/${event.slug}`}
                         target="_blank"
-                        className="p-2 text-muted-fg hover:text-foreground hover:bg-muted rounded-lg transition-colors"
-                        title="Visualizar página"
+                        className="nav-control text-muted-fg"
+                        data-tooltip="Visualizar página" aria-label={"Visualizar " + event.title}
                       >
                         {event.status === "PUBLISHED" ? (
                           <Eye size={16} />
                         ) : (
                           <EyeOff size={16} />
-                        )}
+                        )}<span className="ml-1 text-xs">Ver página</span>
                       </Link>
 
                       {dbUser.role === "ORGANIZER" && (
                         <>
                           <Link
                             href={`/painel/eventos/${event.id}/cupons`}
-                            className="p-2 text-muted-fg hover:text-foreground hover:bg-muted rounded-lg transition-colors"
-                            title="Gerenciar cupons"
+                            className="nav-control text-muted-fg"
+                            data-tooltip="Gerenciar cupons" aria-label={"Cupons de " + event.title}
                           >
-                            <Tag size={16} />
+                            <Tag size={16} /><span className="ml-1 text-xs">Cupons</span>
                           </Link>
                           <Link
                             href={`/painel/eventos/${event.id}/editar`}
-                            className="p-2 text-muted-fg hover:text-foreground hover:bg-muted rounded-lg transition-colors"
-                            title="Editar evento"
+                            className="nav-control text-muted-fg"
+                            data-tooltip="Editar evento" aria-label={"Editar " + event.title}
                           >
-                            <Pencil size={16} />
+                            <Pencil size={16} /><span className="ml-1 text-xs">Editar</span>
                           </Link>
                           <CortesiaButton eventId={event.id} eventTitle={event.title} batches={event.batches.map(b => ({id: b.id, name: b.name}))} />
                           <BorderoButton eventId={event.id} eventTitle={event.title} />
@@ -287,13 +229,13 @@ export default async function StaffDashboardPage() {
                           </p>
                         </div>
                         <div>
-                          <p className="text-xs text-muted-fg mb-1 flex items-center gap-1 text-error/70"><Percent size={12}/> Taxa (5%)</p>
+                          <p className="text-xs text-muted-fg mb-1 flex items-center gap-1 text-error/70"><Percent size={12}/> Comissão estimada ({summary.platformFeePercentage}%)</p>
                           <p className="text-lg font-bold text-error">
                             {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(eventPlatformFee)}
                           </p>
                         </div>
                         <div>
-                          <p className="text-xs text-muted-fg mb-1 flex items-center gap-1 text-success/70"><Wallet size={12}/> Receita</p>
+                          <p className="text-xs text-success mb-1 flex items-center gap-1"><Wallet size={12}/> Líquido estimado</p>
                           <p className="text-lg font-bold text-success">
                             {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(eventNetRevenue)}
                           </p>
@@ -319,6 +261,7 @@ export default async function StaffDashboardPage() {
             })}
           </div>
         )}
+        <nav className="mt-6 flex justify-between text-sm" aria-label="Páginas de eventos">{cursor ? <Link href="/painel">Primeira página</Link> : <span />}{fetched.length > 50 && <Link href={"/painel?cursor=" + events[events.length - 1].id}>Próximos eventos →</Link>}</nav>
       </div>
     </main>
   );

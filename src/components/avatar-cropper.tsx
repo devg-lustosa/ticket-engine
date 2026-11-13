@@ -70,7 +70,7 @@ export function AvatarCropper({ imageSrc, onCancel, onUploadSuccess }: { imageSr
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
       <div className="bg-card w-full max-w-md rounded-3xl p-6 shadow-2xl relative">
-        <button onClick={onCancel} className="absolute top-4 right-4 p-2 bg-muted rounded-full text-muted-fg hover:text-foreground">
+        <button onClick={onCancel} className="absolute top-4 right-4 p-2 bg-muted rounded-full text-muted-fg hover:text-foreground" aria-label="Fechar recorte da foto" data-tooltip="Fechar recorte da foto">
           <X size={18} />
         </button>
         <h2 className="text-xl font-bold text-foreground mb-4">Recorte sua Foto</h2>
@@ -109,7 +109,7 @@ export function AvatarCropper({ imageSrc, onCancel, onUploadSuccess }: { imageSr
           <button 
             onClick={handleSave} 
             disabled={loading}
-            className="px-6 py-2 bg-brand text-white font-medium rounded-xl hover:bg-brand/90 transition-colors flex items-center gap-2"
+            className="px-6 py-2 bg-brand text-white font-medium rounded-xl hover:bg-brand/90 transition-colors flex items-center gap-2" data-tooltip="Salvar Foto"
           >
             {loading && <Loader2 className="w-4 h-4 animate-spin"/>}
             Salvar Foto

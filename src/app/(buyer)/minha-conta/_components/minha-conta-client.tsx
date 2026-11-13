@@ -148,7 +148,7 @@ export function MinhaContaClient({ user }: { user: any }) {
                   <button type="button" onClick={() => setIsEditing(false)} className="px-4 py-2 bg-muted text-foreground font-medium rounded-lg hover:bg-muted/80 text-sm">
                     Cancelar
                   </button>
-                  <button type="submit" disabled={loading} className="px-4 py-2 bg-brand text-white font-medium rounded-lg hover:bg-brand/90 text-sm flex items-center gap-2">
+                  <button type="submit" disabled={loading} className="px-4 py-2 bg-brand text-white font-medium rounded-lg hover:bg-brand/90 text-sm flex items-center gap-2" data-tooltip="Salvar Dados">
                     {loading && <Loader2 className="w-4 h-4 animate-spin"/>} Salvar Dados
                   </button>
                 </div>

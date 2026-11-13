@@ -22,7 +22,7 @@ export default function CadastroPage() {
     <main className="min-h-dvh bg-background flex flex-col">
       {/* Topo */}
       <header className="flex items-center justify-between px-6 py-4 border-b border-border">
-        <Link href="/" className="flex items-center gap-2 font-bold text-foreground hover:opacity-80 transition-opacity">
+        <Link href="/" className="flex items-center gap-2 font-bold text-foreground hover:opacity-80 transition-opacity" data-tooltip="Ticket Engine">
           <div className="bg-gradient-to-br from-brand to-purple-600 p-1.5 rounded-lg shadow-sm shadow-brand/20">
             <Ticket className="h-4 w-4 text-white" />
           </div>
@@ -57,7 +57,7 @@ export default function CadastroPage() {
 
             {/* Login Social */}
             <form action="/api/auth/google" method="POST" className="mb-6">
-              <button
+              <button data-tooltip="Continuar com sua conta Google"
                 type="submit"
                 className="w-full flex items-center justify-center gap-3 rounded-xl border border-border bg-card px-4 py-2.5 text-sm font-semibold text-foreground hover:bg-muted transition-colors active:scale-[0.98]"
               >

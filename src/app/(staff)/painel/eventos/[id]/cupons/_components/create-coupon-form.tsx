@@ -46,81 +46,86 @@ export function CreateCouponForm({ eventId }: { eventId: string }) {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       {error && (
-        <div className="p-3 bg-red-500/10 border border-red-500/20 text-red-400 text-sm rounded-lg">
+        <div className="p-3 bg-red-500/10 border border-red-500/20 text-error text-sm rounded-lg">
           {error}
         </div>
       )}
 
       <div>
-        <label className="block text-sm font-medium text-gray-300 mb-1">
+        <label htmlFor="coupon-admin-code" className="block text-sm font-medium text-foreground mb-1">
           Código do Cupom
         </label>
         <input
           type="text"
           name="code"
+          id="coupon-admin-code"
           required
           placeholder="Ex: VIP20"
-          className="w-full bg-gray-950 border border-gray-800 rounded-lg px-4 py-2.5 text-white focus:border-brand focus:ring-1 focus:ring-brand outline-none uppercase font-mono"
+          className="w-full bg-background border border-border rounded-lg px-4 py-2.5 text-foreground focus:border-brand focus:ring-1 focus:ring-brand outline-none uppercase font-mono"
         />
       </div>
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-gray-300 mb-1">
+          <label htmlFor="coupon-admin-type" className="block text-sm font-medium text-foreground mb-1">
             Tipo
           </label>
           <select
             name="discountType"
-            className="w-full bg-gray-950 border border-gray-800 rounded-lg px-4 py-2.5 text-white focus:border-brand focus:ring-1 focus:ring-brand outline-none"
+            id="coupon-admin-type"
+            className="w-full bg-background border border-border rounded-lg px-4 py-2.5 text-foreground focus:border-brand focus:ring-1 focus:ring-brand outline-none"
           >
             <option value="PERCENTAGE">Porcentagem (%)</option>
             <option value="FIXED">Valor Fixo (R$)</option>
           </select>
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-300 mb-1">
+          <label htmlFor="coupon-admin-value" className="block text-sm font-medium text-foreground mb-1">
             Valor
           </label>
           <input
             type="number"
             name="discountValue"
+            id="coupon-admin-value"
             step="0.01"
             min="0"
             required
             placeholder="Ex: 20"
-            className="w-full bg-gray-950 border border-gray-800 rounded-lg px-4 py-2.5 text-white focus:border-brand focus:ring-1 focus:ring-brand outline-none"
+            className="w-full bg-background border border-border rounded-lg px-4 py-2.5 text-foreground focus:border-brand focus:ring-1 focus:ring-brand outline-none"
           />
         </div>
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-300 mb-1">
-          Limite de Usos <span className="text-gray-500 font-normal">(Opcional)</span>
+        <label htmlFor="coupon-admin-limit" className="block text-sm font-medium text-foreground mb-1">
+          Limite de Usos <span className="text-muted-fg font-normal">(Opcional)</span>
         </label>
         <input
           type="number"
           name="maxUses"
+          id="coupon-admin-limit"
           min="1"
           placeholder="Ex: 50"
-          className="w-full bg-gray-950 border border-gray-800 rounded-lg px-4 py-2.5 text-white focus:border-brand focus:ring-1 focus:ring-brand outline-none"
+          className="w-full bg-background border border-border rounded-lg px-4 py-2.5 text-foreground focus:border-brand focus:ring-1 focus:ring-brand outline-none"
         />
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-300 mb-1">
-          Válido até <span className="text-gray-500 font-normal">(Opcional)</span>
+        <label htmlFor="coupon-admin-expiry" className="block text-sm font-medium text-foreground mb-1">
+          Válido até <span className="text-muted-fg font-normal">(Opcional)</span>
         </label>
         <input
           type="datetime-local"
           name="validUntil"
-          className="w-full bg-gray-950 border border-gray-800 rounded-lg px-4 py-2.5 text-gray-300 focus:text-white focus:border-brand focus:ring-1 focus:ring-brand outline-none [color-scheme:dark]"
+          id="coupon-admin-expiry"
+          className="w-full bg-background border border-border rounded-lg px-4 py-2.5 text-foreground focus:text-foreground focus:border-brand focus:ring-1 focus:ring-brand outline-none [color-scheme:light_dark]"
         />
       </div>
 
       <button
         type="submit"
         disabled={loading}
-        className="w-full bg-brand text-white font-medium rounded-lg px-4 py-2.5 hover:bg-brand/90 transition-colors disabled:opacity-50 flex items-center justify-center gap-2 mt-2"
+        className="w-full bg-brand text-white font-medium rounded-lg px-4 py-2.5 hover:bg-brand/90 transition-colors disabled:opacity-50 flex items-center justify-center gap-2 mt-2" data-tooltip="Criar Cupom"
       >
         {loading ? <Loader2 size={18} className="animate-spin" /> : <Plus size={18} />}
         Criar Cupom
