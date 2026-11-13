@@ -53,3 +53,30 @@ jobs:
           NODE_ENV: production
       - run: npm prune --omit=dev --ignore-scripts
       - run: node -e 'const {PrismaClient}=require("@prisma/client"); const client=new PrismaClient(); client.$disconnect()'
+
+  browser:
+    needs: verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci --include=dev
+      - run: npx playwright install --with-deps chromium
+      - run: node test/e2e/setup-ci.mjs
+      - run: npx prisma generate
+      - run: npm run test:browser
+      - if: always()
+        run: node test/e2e/setup-ci.mjs --stop
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: navegador-chromium
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 7
+          if-no-files-found: ignore

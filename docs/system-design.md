@@ -140,6 +140,8 @@ Travas por recurso preservam estoque, cupom, estorno e entrada entre instâncias
 
 Desenvolvimento: Supabase CLI 3.1.0 no Docker, PostgreSQL local `54322`, Auth/API `54321`, Studio `54323`; Next no Node do host, porta `3000`. Testes criam outro PostgreSQL descartável. Nunca usar seed destrutivo para testar concorrência.
 
+O [gerenciador local](desenvolvimento-local.md) mantém o front independente do terminal. A suíte de navegador reutiliza o ambiente E2E, com Auth real, PostgreSQL descartável e Asaas simulado; o job `browser` prepara a mesma infraestrutura no CI.
+
 Produção: build instala também ferramentas de compilação, gera Prisma e executa Next com `NODE_ENV=production`. Runtime precisa de `@prisma/client` em `dependencies`; a CLI pode ser removida depois do build. Conexão de runtime pode usar pool; migrations precisam da conexão direta. Hospedagem efetiva, limites do plano, região, backups, recuperação e configuração de segredos não foram inspecionados.
 
 Migrations são aditivas. Banco vazio recebe baseline e expansão por `migrate deploy`. Banco existente precisa ser comparado ao baseline antes de marcar a baseline como aplicada. Não executar `migrate reset` em banco com dados. Não apagar colunas ou histórico de estornos para voltar uma versão.

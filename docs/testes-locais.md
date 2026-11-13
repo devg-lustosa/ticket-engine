@@ -1,5 +1,17 @@
 # Validação local das jornadas — 12 e 13/11/2026
 
+## Rodada atual: revisão, ambiente e navegador automatizado
+
+Em 13/11, **141 testes passaram**: 46 unitários, 51 de integração com PostgreSQL descartável, 22 HTTP com Auth real e 22 Playwright. A execução do navegador passou em 27 segundos após a compilação, com um worker e zero retries. Os totais históricos abaixo descrevem rodadas anteriores.
+
+Playwright cobre os três perfis, navegação por teclado/tooltip, tema salvo diferente do sistema, vazio/erro/retentativa do catálogo, adição de equipe, compra Pix e evento errado na portaria. São onze cenários em Chromium, repetidos em 1440×900 e 375×812. As seis regressões HTTP e sete de integração da equipe conferem permissão/origem, autorrebaixamento e remoções simultâneas.
+
+O comando aguardou o encerramento da aplicação, a exclusão do PostgreSQL descartável e das identidades exclusivas. O ciclo do ambiente normal preservou os dados e o `.env`. Procedimento e trade-offs: [desenvolvimento local](desenvolvimento-local.md). Achados, causas e capturas: [revisão técnica](revisao-tecnica.md).
+
+`NODE_ENV=production npm ci --include=dev` e `NODE_ENV=production npm run build` passaram no diretório principal, após parar somente o front gerenciado. Lint e checagem dos 81 controles com ícones passaram. O audit mantém quatro avisos baixos em produção; o total com ferramentas de desenvolvimento continua em 20 (quatro baixos, treze moderados e três altos), sem atualização automática de dependências fora do escopo.
+
+### Histórico das rodadas anteriores
+
 Plano da etapa solicitada após adiar os MRs. O servidor normal permanece na porta 3000. Os testes de escrita usam PostgreSQL descartável, contas exclusivas no Auth local e aplicação separada na porta 3101. Asaas é interceptado no processo de teste; envio Resend fica desabilitado. Não usar credenciais ou serviços de produção.
 
 ## Matriz

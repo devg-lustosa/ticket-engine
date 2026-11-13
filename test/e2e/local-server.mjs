@@ -12,6 +12,7 @@ import { createClient } from "@supabase/supabase-js";
 process.loadEnvFile(".env");
 if (process.argv.includes("--stop")) {
   const owned = JSON.parse(fs.readFileSync("supabase/.temp/e2e-state.json", "utf8"));
+  if (owned.phase === "encerrado") { console.log("Ambiente E2E já encerrado."); process.exit(0); }
   if (owned.controlUrl !== "http://127.0.0.1:3102" || new URL(owned.databaseUrl).pathname !== "/ticket_engine_e2e") throw new Error("Estado E2E inválido.");
   const response = await fetch(owned.controlUrl + "/stop", { method: "POST", headers: { "x-e2e-control": owned.token } });
   if (!response.ok) throw new Error("Não foi possível encerrar o ambiente E2E.");
@@ -20,11 +21,12 @@ if (process.argv.includes("--stop")) {
 }
 if (!["127.0.0.1", "localhost"].includes(new URL(process.env.NEXT_PUBLIC_SUPABASE_URL).hostname)) throw new Error("Auth deve ser local.");
 const require = createRequire(import.meta.url);
-const runId = randomUUID().slice(0, 8), token = randomUUID(), password = "Local-E2E-Only!2026";
+const runId = process.env.TICKET_ENGINE_E2E_RUN_ID || randomUUID().slice(0, 8), token = randomUUID(), password = "Local-E2E-Only!2026";
+if (!/^[a-f0-9]{8}$/i.test(runId)) throw new Error("Identificador E2E inválido.");
 const appUrl = "http://localhost:3101", gatewayUrl = "http://127.0.0.1:3103";
 const admin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false } });
 const stateFile = path.resolve("supabase/.temp/e2e-state.json");
-let phase = "preparando", database, prisma, app, fixture;
+let phase = "preparando", database, prisma, app, fixture, catalogFault = false;
 const actors = [], authIds = [];
 const log = fs.openSync("supabase/.temp/e2e-app.log", "w");
 const runtimeEnv = { ...process.env, TICKET_ENGINE_E2E: "1", NODE_ENV: "production", NEXT_PUBLIC_SITE_URL: appUrl,
@@ -37,6 +39,7 @@ function cpf(index) {
   digits.push(next(digits)); digits.push(next(digits)); return digits.join("");
 }
 function publicState() { return { runId, phase, appUrl, controlUrl: "http://127.0.0.1:3102", gatewayUrl, token, password, databaseUrl: database?.getConnectionUri(), actors, fixture }; }
+function writeState(value = publicState()) { const temp = stateFile + ".tmp"; fs.writeFileSync(temp, JSON.stringify(value, null, 2), { mode: 0o600 }); fs.renameSync(temp, stateFile); }
 async function gateway(action = "", data) {
   const response = await fetch(gatewayUrl + action, { method: data ? "POST" : "GET", headers: { "Content-Type": "application/json", "x-e2e-control": token }, ...(data ? { body: JSON.stringify(data) } : {}) });
   if (!response.ok) throw new Error("Simulador recusou comando.");
@@ -44,15 +47,31 @@ async function gateway(action = "", data) {
 }
 async function cleanup() {
   phase = "encerrando";
-  if (app && app.exitCode === null && !app.killed) { const exited = new Promise(resolve => app.once("exit", resolve)); app.kill(); await exited; }
-  if (prisma) await prisma.$disconnect();
+  const issues = [];
+  async function attempt(label, action) { try { await action(); } catch { issues.push(label); } }
+  await attempt("servidor", async () => {
+    if (app && app.exitCode === null) {
+      const exited = new Promise(resolve => app.once("exit", resolve));
+      app.kill();
+      let timer;
+      await Promise.race([exited, new Promise((_, reject) => { timer = setTimeout(() => { app.kill("SIGKILL"); reject(new Error("Next não encerrou.")); }, 10000); })]).finally(() => clearTimeout(timer));
+    }
+  });
+  if (prisma) await attempt("client SQL", () => prisma.$disconnect());
   for (const id of authIds) {
-    const { data } = await admin.auth.admin.getUserById(id);
-    if (data.user?.user_metadata?.localE2eRun === runId) await admin.auth.admin.deleteUser(id);
+    await attempt("identidade de teste", async () => {
+      const { data, error } = await admin.auth.admin.getUserById(id);
+      if (error && error.status !== 404) throw new Error("Auth indisponível.");
+      if (data.user?.user_metadata?.localE2eRun === runId) {
+        const removed = await admin.auth.admin.deleteUser(id);
+        if (removed.error) throw new Error("Auth não confirmou exclusão.");
+      }
+    });
   }
-  if (database) await database.stop();
+  if (database) await attempt("container SQL", () => database.stop());
+  if (issues.length) { phase = "cleanup_failed"; writeState(); throw new Error("Limpeza E2E incompleta: " + issues.join(", ")); }
   phase = "encerrado";
-  fs.writeFileSync(stateFile, JSON.stringify({ runId, phase, appUrl }, null, 2));
+  writeState({ runId, phase, appUrl });
   console.log("E2E encerrado; banco descartável e identidades exclusivas removidos.");
 }
 
@@ -68,6 +87,16 @@ const control = http.createServer(async (request, response) => {
     const chunks = []; for await (const chunk of request) chunks.push(chunk);
     const body = chunks.length ? JSON.parse(Buffer.concat(chunks).toString()) : {};
     if (request.url === "/state") { response.end(JSON.stringify(publicState())); return; }
+    if (request.url === "/catalog" && request.method === "POST") {
+      if (!["empty", "restore", "fault"].includes(body.mode) || new URL(runtimeEnv.DATABASE_URL).pathname !== "/ticket_engine_e2e") throw new Error("Cenário de catálogo inválido.");
+      if (body.mode === "fault") {
+        if (!catalogFault) { await prisma.$executeRawUnsafe('ALTER TABLE events RENAME TO events_e2e_unavailable'); catalogFault = true; }
+      } else {
+        if (catalogFault) { await prisma.$executeRawUnsafe('ALTER TABLE events_e2e_unavailable RENAME TO events'); catalogFault = false; }
+        await prisma.event.updateMany({ where: { id: { in: [fixture.event.id, fixture.otherEvent.id] } }, data: { status: body.mode === "empty" ? "DRAFT" : "PUBLISHED" } });
+      }
+      response.end(JSON.stringify({ mode: body.mode })); return;
+    }
     if (request.url === "/gateway" || request.url === "/mode") { response.end(JSON.stringify(await gateway(request.url === "/mode" ? "/mode" : "", request.url === "/mode" ? body : undefined))); return; }
     if (request.url === "/webhook") {
       const changed = await gateway("/settle", body), payment = changed.payments.find(item => item.id === body.id);
@@ -80,13 +109,16 @@ const control = http.createServer(async (request, response) => {
     if (request.url === "/cancel-ticket") {
       await prisma.ticket.update({ where: { id: body.ticketId }, data: { status: "CANCELLED" } }); response.end("{}"); return;
     }
-    if (request.url === "/stop") { response.end("{}"); await cleanup(); control.close(); fs.closeSync(log); return; }
+    if (request.url === "/stop" && request.method === "POST") { await cleanup(); response.end("{}"); control.close(); fs.closeSync(log); return; }
     response.writeHead(404); response.end("{}");
-  } catch (error) { response.writeHead(500); response.end(JSON.stringify({ error: error.message })); }
+  } catch (error) {
+    if (!response.headersSent) { response.writeHead(500); response.end(JSON.stringify({ error: error.message })); }
+    if (request.url === "/stop") { control.close(); process.exitCode = 1; }
+  }
 });
-control.listen(3102, "127.0.0.1");
 
 try {
+  await new Promise((resolve, reject) => { control.once("error", reject); control.listen(3102, "127.0.0.1", resolve); });
   database = await new PostgreSqlContainer("postgres:17.11-alpine3.24").withDatabase("ticket_engine_e2e").start();
   runtimeEnv.DATABASE_URL = database.getConnectionUri(); runtimeEnv.DIRECT_URL = runtimeEnv.DATABASE_URL;
   if (new URL(runtimeEnv.DATABASE_URL).pathname !== "/ticket_engine_e2e") throw new Error("Banco E2E obrigatório.");
@@ -107,7 +139,7 @@ try {
   await prisma.coupon.create({ data: { eventId: event.id, code: "QA20", discountType: "PERCENTAGE", discountValue: 20, maxUses: 20 } });
   await prisma.coupon.create({ data: { eventId: event.id, code: "QAGRATIS", discountType: "PERCENTAGE", discountValue: 100, maxUses: 20 } });
   fixture = { event, otherEvent, batch, otherBatch };
-  phase = "compilando"; fs.writeFileSync(stateFile, JSON.stringify(publicState(), null, 2));
+  phase = "compilando"; writeState();
   await new Promise((resolve, reject) => { const build = spawn(process.execPath, ["node_modules/next/dist/bin/next", "build"], { env: runtimeEnv, stdio: ["ignore", log, log] }); build.once("exit", code => code === 0 ? resolve() : reject(new Error("Build E2E falhou; consulte e2e-app.log."))); });
   phase = "iniciando";
   const options = [process.env.NODE_OPTIONS, "--import=" + pathToFileURL(path.resolve("test/e2e/gateway-preload.mjs")).href].filter(Boolean).join(" ");
@@ -118,8 +150,10 @@ try {
     await new Promise(resolve => setTimeout(resolve, 500));
   }
   if (phase !== "pronto") throw new Error("Servidor E2E não ficou pronto.");
-  fs.writeFileSync(stateFile, JSON.stringify(publicState(), null, 2));
+  writeState();
   console.log("E2E pronto na porta 3101. Banco descartável e Asaas simulado; controle local na porta 3102.");
 } catch (error) {
-  console.error(error.message); await cleanup(); control.close(); process.exitCode = 1;
+  console.error(error.message);
+  try { await cleanup(); } catch (cleanupError) { console.error(cleanupError.message); }
+  control.close(); process.exitCode = 1;
 }

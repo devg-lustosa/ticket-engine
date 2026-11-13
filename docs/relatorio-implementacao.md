@@ -6,6 +6,10 @@ Implementação e validação local em 12/11/2026. O usuário autorizou commit, 
 
 **Pode seguir para revisão técnica pelo MR. Não considero liberado para produção.** As correções têm regressões e build aprovado; gateway real, conciliação de extrato, operação com aparelhos e capacidade de pico ainda não foram comprovados.
 
+A [revisão técnica de 13/11](revisao-tecnica.md) registra as falhas adicionais de gestão da equipe, suas regressões, impacto e trade-offs.
+
+O [guia de desenvolvimento local](desenvolvimento-local.md) documenta a execução independente do terminal e a suíte Chromium com Auth/banco reais. A [rodada atual de validação](testes-locais.md#rodada-atual-revisão-ambiente-e-navegador-automatizado) reúne os resultados desta etapa; as contagens posteriores deste relatório são históricas.
+
 O diff reúne dinheiro/portaria, navegação e documentação. A entrega usa a branch `refactor/refatoracao-geral`, com o conjunto integrado que passou pelos testes. Em uma revisão futura, avaliar esses blocos separadamente ajuda a conferir permissões, migrations e comportamento visual. A massa local e as contas existentes foram preservadas; testes destrutivos usam outro banco. O seed preparado separadamente e a documentação de agentes no diretório pai ficam fora deste commit.
 
 ## O que cada correção significa

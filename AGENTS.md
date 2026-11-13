@@ -16,6 +16,8 @@ Contratos que acompanham este repositório: [Design System](docs/design-system.m
 
 Node 24. Instalação: `npm ci --include=dev`. Desenvolvimento: `npm run dev`. Verificação: `npm run lint`, `npm run check:ui`, `npm test`, `npm run test:integration`, `npm run build`. Integração exige Docker e usa PostgreSQL descartável; não use os seeds como suíte.
 
+Ambiente gerenciado: `npm run local:up`, `npm run local:status`, `npm run local:down`. Jornadas Chromium: `npm run test:browser`. Leia [ambiente local e isolamento dos testes](docs/desenvolvimento-local.md).
+
 E2E HTTP com Auth real: `npm run test:e2e:server` → aguardar pronto → `npm run test:e2e:http` → `npm run test:e2e:stop`. Exige Supabase local; usa outro PostgreSQL e identidades exclusivas. Consulte [evidências e limites](docs/testes-locais.md).
 
 No Windows, se Testcontainers não encontrar o Docker Desktop: `$env:DOCKER_HOST='npipe:////./pipe/dockerDesktopLinuxEngine'`. Não use o banco local do usuário para testes destrutivos. Não altere serviços Docker de outros projetos.

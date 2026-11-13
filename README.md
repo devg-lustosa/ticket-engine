@@ -8,6 +8,8 @@ Venda e validação de ingressos com áreas de comprador, organizador e portaria
 - [Design System](docs/design-system.md): jornadas por perfil, navegação, componentes e acessibilidade.
 - [Relatório da implementação](docs/relatorio-implementacao.md): correções, testes, trade-offs e pendências de produção.
 - [Validação local](docs/testes-locais.md): resultados, jornadas no navegador e comandos E2E com ambiente descartável.
+- [Desenvolvimento local](docs/desenvolvimento-local.md): comandos para subir/parar sem depender do terminal e executar Playwright.
+- [Revisão técnica](docs/revisao-tecnica.md): achados corrigidos, evidências e limites para produção.
 - [Rodar localmente](../agent_docs/rodar-local.md): Docker, Node, variáveis e contas desta máquina.
 - [Guia para agentes](../AGENTS.md): comandos, convenções e módulos.
 
