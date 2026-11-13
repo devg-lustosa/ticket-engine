@@ -51,6 +51,8 @@ Classes compartilhadas: `ui-button`, `ui-input`, `nav-control`, `nav-popover`. E
 
 [TooltipLayer](../src/components/tooltip-layer.tsx) atende controles com `data-tooltip` por uma camada única, sem uma instância por ícone. Mostra descrição por hover e foco, aceita Escape e permite mover o ponteiro ao texto. Renderiza em portal para não cortar o texto em cards com `overflow: hidden`; dentro de diálogo nativo, hospeda o portal no próprio diálogo para permanecer acima do fundo inerte. Ações principais também mantêm texto visível. Ícones decorativos junto de títulos não são controles.
 
+Ativar um controle fecha sua legenda para liberar o menu ou diálogo aberto. Escape também limpa a legenda após o retorno de foco do menu; o foco restaurado não deve recriar um tooltip sobre o próximo controle.
+
 `npm run check:ui` confere botões e links com Lucide/SVG; foram identificados 81 controles. A checagem comprova presença da descrição no código. A [rodada de navegador](testes-locais.md) verificou tooltips e estados selecionados; isso não garante a qualidade de toda legenda.
 
 ## Tema

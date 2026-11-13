@@ -11,6 +11,7 @@ export function TooltipLayer() {
   const target = useRef<HTMLElement | null>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
+    let escapeFrame: number | null = null;
     function clear() {
       if (timer.current) clearTimeout(timer.current);
       if (target.current) {
@@ -35,19 +36,28 @@ export function TooltipLayer() {
       if (next instanceof Element && (target.current?.contains(next) || next.closest(".app-tooltip"))) return;
       timer.current = setTimeout(clear, 100);
     }
-    function escape(event: KeyboardEvent) { if (event.key === "Escape") clear(); }
+    function escape(event: KeyboardEvent) {
+      if (event.key !== "Escape") return;
+      clear();
+      if (escapeFrame !== null) cancelAnimationFrame(escapeFrame);
+      // O menu restaura foco no mesmo Escape; esse foco não deve reabrir a legenda.
+      escapeFrame = requestAnimationFrame(() => { escapeFrame = null; clear(); });
+    }
     document.addEventListener("pointerover", show);
     document.addEventListener("focusin", show);
     document.addEventListener("pointerout", leave);
     document.addEventListener("focusout", leave);
     document.addEventListener("keydown", escape);
+    document.addEventListener("click", clear);
     window.addEventListener("scroll", clear, true);
     window.addEventListener("resize", clear);
     return () => {
       if (timer.current) clearTimeout(timer.current);
+      if (escapeFrame !== null) cancelAnimationFrame(escapeFrame);
       document.removeEventListener("pointerover", show); document.removeEventListener("focusin", show);
       document.removeEventListener("pointerout", leave); document.removeEventListener("focusout", leave);
       document.removeEventListener("keydown", escape); window.removeEventListener("scroll", clear, true); window.removeEventListener("resize", clear);
+      document.removeEventListener("click", clear);
     };
   }, [id]);
   if (!tip) return null;

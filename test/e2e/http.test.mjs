@@ -222,3 +222,48 @@ test("deveRecusarReembolsoDeOutraOrigemEWebhookSemToken", async () => {
   assert.equal((await control()).refunds, before.refunds);
   assert.equal((await api(null, "/api/webhooks/asaas", "POST", { event: "PAYMENT_RECEIVED", payment: { id: payment.gatewayId, value: 50 } })).status, 401);
 });
+
+test("deveAdicionarERemoverMembroComSessaoEOrigemLegitimas", async () => {
+  try {
+    assert.equal((await api(organizer, "/api/painel/equipe", "POST", { email: buyer.email, role: "STAFF" })).status, 200);
+    assert.equal((await prisma.user.findUniqueOrThrow({ where: { id: buyer.id } })).role, "STAFF");
+    assert.equal((await api(organizer, "/api/painel/equipe?userId=" + buyer.id, "DELETE")).status, 200);
+    assert.equal((await prisma.user.findUniqueOrThrow({ where: { id: buyer.id } })).role, "BUYER");
+  } finally { await prisma.user.update({ where: { id: buyer.id }, data: { role: "BUYER" } }); }
+});
+
+for (const [method, body, initialRole] of [
+  ["POST", { email: buyer.email, role: "STAFF" }, "BUYER"],
+  ["DELETE", { userId: buyer.id }, "STAFF"],
+]) {
+  test("deveRecusarAlteracaoDeEquipeDeOutraOrigemPor_" + method, async () => {
+    try {
+      await prisma.user.update({ where: { id: buyer.id }, data: { role: initialRole } });
+      const response = await api(organizer, "/api/painel/equipe?userId=" + buyer.id, method, body, { Origin: "http://outro.localhost:3101", "Sec-Fetch-Site": "same-site", "Content-Type": "text/plain" });
+      assert.equal(response.status, 403);
+      assert.equal((await prisma.user.findUniqueOrThrow({ where: { id: buyer.id } })).role, initialRole);
+    } finally { await prisma.user.update({ where: { id: buyer.id }, data: { role: "BUYER" } }); }
+  });
+}
+
+test("deveImpedirQueOrganizadorRebaixeOProprioCargo", async () => {
+  assert.equal((await api(organizer, "/api/painel/equipe", "POST", { email: organizer.email, role: "STAFF" })).status, 400);
+  assert.equal((await prisma.user.findUniqueOrThrow({ where: { id: organizer.id } })).role, "ORGANIZER");
+});
+
+test("deveNegarGestaoDeEquipeACompradorEPortaria", async () => {
+  assert.equal((await api(buyer, "/api/painel/equipe", "POST", { email: otherOrganizer.email, role: "STAFF" })).status, 403);
+  assert.equal((await api(staff, "/api/painel/equipe?userId=" + otherOrganizer.id, "DELETE")).status, 403);
+  assert.equal((await prisma.user.findUniqueOrThrow({ where: { id: otherOrganizer.id } })).role, "ORGANIZER");
+});
+
+test("devePreservarUmOrganizadorEmRemocoesHttpSimultaneas", async () => {
+  try {
+    const responses = await Promise.all([
+      api(organizer, "/api/painel/equipe?userId=" + otherOrganizer.id, "DELETE"),
+      api(otherOrganizer, "/api/painel/equipe?userId=" + organizer.id, "DELETE"),
+    ]);
+    assert.deepEqual(responses.map(response => response.status).sort(), [200, 403]);
+    assert.equal(await prisma.user.count({ where: { id: { in: [organizer.id, otherOrganizer.id] }, role: "ORGANIZER" } }), 1);
+  } finally { await prisma.user.updateMany({ where: { id: { in: [organizer.id, otherOrganizer.id] } }, data: { role: "ORGANIZER" } }); }
+});

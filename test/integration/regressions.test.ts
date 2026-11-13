@@ -21,6 +21,7 @@ import { reconcileRefunds } from "@/services/refund.service";
 import { generateTicketHash } from "@/lib/ticket/hash";
 import { salesForEvents } from "@/services/sales.service";
 import { getPublishedEvents } from "@/services/event.service";
+import { POST as addTeamMember, DELETE as removeTeamMember } from "@/app/api/painel/equipe/route";
 
 const gateway = vi.hoisted(() => ({ refundCharge: vi.fn(), cancelCharge: vi.fn(), getCharge: vi.fn(), createOrFindCustomer: vi.fn(), createPixCharge: vi.fn(), createCreditCardCharge: vi.fn(), getPixQrCode: vi.fn() }));
 const email = vi.hoisted(() => ({ sendTicketEmail: vi.fn() }));
@@ -456,4 +457,73 @@ it('deveListarSomenteEventosPublicadosFuturosNoCatalogo', async () => {
   ] });
 
   expect((await getPublishedEvents()).map(event => event.id)).toEqual([data.event.id]);
+});
+
+describe('fronteira da gestão de equipe', () => {
+  it.each([
+    { method: 'POST', handler: addTeamMember, initial: 'BUYER', expected: 'STAFF' },
+    { method: 'DELETE', handler: removeTeamMember, initial: 'STAFF', expected: 'BUYER' },
+  ] as const)('devePermitirGestaoDeEquipeComOrigemValida_$method', async ({ method, handler, initial, expected }) => {
+    await fixture(0, 0);
+    const target = await buyer(1);
+    await prisma.user.update({ where: { id: target.id }, data: { role: initial } });
+    const request = new NextRequest('http://localhost/api/painel/equipe?userId=' + target.id, {
+      method, headers: { Origin: 'http://localhost', 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: target.email, role: 'STAFF' }),
+    });
+
+    expect((await handler(request)).status).toBe(200);
+    expect((await prisma.user.findUniqueOrThrow({ where: { id: target.id } })).role).toBe(expected);
+  });
+
+  it.each([
+    { method: 'POST', handler: addTeamMember },
+    { method: 'DELETE', handler: removeTeamMember },
+  ] as const)('deveRecusarOrigemExternaSemAlterarEquipe_$method', async ({ method, handler }) => {
+    await fixture(0, 0);
+    const target = await buyer(1);
+    await prisma.user.update({ where: { id: target.id }, data: { role: 'STAFF' } });
+    const request = new NextRequest('http://app.example.test/api/painel/equipe?userId=' + target.id, {
+      method, headers: { Origin: 'http://outro.example.test', 'Sec-Fetch-Site': 'same-site', 'Content-Type': 'text/plain' },
+      body: JSON.stringify({ email: target.email, role: 'ORGANIZER' }),
+    });
+
+    expect((await handler(request)).status).toBe(403);
+    expect((await prisma.user.findUniqueOrThrow({ where: { id: target.id } })).role).toBe('STAFF');
+  });
+
+  it('deveRecusarRebaixamentoDoProprioCargo', async () => {
+    const { user } = await fixture(0, 0);
+    const request = new NextRequest('http://localhost/api/painel/equipe', {
+      method: 'POST', headers: { Origin: 'http://localhost', 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: user.email, role: 'STAFF' }),
+    });
+
+    expect((await addTeamMember(request)).status).toBe(400);
+    expect((await prisma.user.findUniqueOrThrow({ where: { id: user.id } })).role).toBe('ORGANIZER');
+  });
+
+  it('deveRevalidarCargoRevogadoAntesDeAlterarOutroUsuario', async () => {
+    const { user } = await fixture(0, 0);
+    const target = await buyer(1);
+    await prisma.user.update({ where: { id: user.id }, data: { role: 'BUYER' } });
+    const { changeTeamRole } = await import('@/services/team.service');
+
+    await expect(changeTeamRole(user.id, target.id, 'STAFF')).rejects.toMatchObject({ status: 403 });
+    expect((await prisma.user.findUniqueOrThrow({ where: { id: target.id } })).role).toBe('BUYER');
+  });
+
+  it('deveManterOrganizadorQuandoDuasRemocoesDisputamOsMesmosUsuarios', async () => {
+    const { user } = await fixture(0, 0);
+    const other = await buyer(1);
+    await prisma.user.update({ where: { id: other.id }, data: { role: 'ORGANIZER' } });
+    const { changeTeamRole } = await import('@/services/team.service');
+
+    await Promise.allSettled([
+      changeTeamRole(user.id, other.id, 'BUYER'),
+      changeTeamRole(other.id, user.id, 'BUYER'),
+    ]);
+
+    expect(await prisma.user.count({ where: { role: 'ORGANIZER' } })).toBe(1);
+  });
 });
