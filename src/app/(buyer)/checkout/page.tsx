@@ -1,3 +1,4 @@
+import { creditCardEnabled } from "@/lib/payment-methods";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { createClient } from "@/lib/supabase/server";
@@ -5,7 +6,6 @@ import { CheckoutFlow } from "./_components/checkout-flow";
 import { siteConfig } from "@/config/site";
 import Link from "next/link";
 import { Ticket } from "lucide-react";
-import { ThemeToggle } from "@/components/theme-toggle";
 
 interface CheckoutPageProps {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
@@ -23,12 +23,14 @@ export default async function CheckoutPage({ searchParams }: CheckoutPageProps) 
     }))
     .filter(e => e.qty > 0 && !isNaN(e.qty));
 
+  if (batchEntries.length > 10 || batchEntries.some(entry => entry.qty > 10) || batchEntries.reduce((sum, entry) => sum + entry.qty, 0) > 10) notFound();
+
   if (batchEntries.length === 0) {
     return (
       <main className="min-h-dvh flex items-center justify-center bg-[var(--background)]">
         <div className="text-center">
           <h1 className="text-2xl font-bold mb-4">Nenhum ingresso selecionado</h1>
-          <Link href="/" className="text-[var(--brand-500)] hover:underline">Voltar para os eventos</Link>
+          <Link href="/eventos" className="text-[var(--brand-500)] hover:underline">Voltar para os eventos</Link>
         </div>
       </main>
     );
@@ -79,17 +81,6 @@ export default async function CheckoutPage({ searchParams }: CheckoutPageProps) 
 
   return (
     <main className="min-h-dvh bg-[var(--background)] flex flex-col">
-      {/* Header simples */}
-      <div className="bg-[var(--card)] border-b border-[var(--border)] py-4">
-        <div className="mx-auto max-w-4xl px-4 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2 font-bold text-[var(--foreground)] hover:opacity-90">
-            <Ticket className="h-6 w-6 text-[var(--brand-500)]" />
-            <span>{siteConfig.name}</span>
-          </Link>
-          <ThemeToggle />
-        </div>
-      </div>
-
       <div className="flex-1 mx-auto max-w-4xl w-full px-4 py-8">
         <div className="mb-8">
           <h1 className="text-2xl font-extrabold text-[var(--foreground)]">Finalizar Compra</h1>
@@ -99,7 +90,8 @@ export default async function CheckoutPage({ searchParams }: CheckoutPageProps) 
         <CheckoutFlow 
           batches={selectedBatches} 
           totalValue={totalValue}
-          buyer={{ name: dbUser?.name || user.user_metadata?.name || "", cpf: dbUser?.cpf || user.user_metadata?.cpf || "" }}
+          cardEnabled={creditCardEnabled()}
+          buyer={{ id: dbUser?.id || user.id, name: dbUser?.name || user.user_metadata?.name || "", cpf: dbUser?.cpf || user.user_metadata?.cpf || "" }}
         />
       </div>
     </main>

@@ -79,7 +79,7 @@ export function ConfigForm({ initialWalletId }: ConfigFormProps) {
         <button
           type="submit"
           disabled={isSubmitting}
-          className="flex items-center justify-center gap-2 px-5 py-2.5 bg-brand text-white text-sm font-medium rounded-lg hover:bg-brand/90 transition-colors disabled:opacity-50"
+          className="flex items-center justify-center gap-2 px-5 py-2.5 bg-brand text-white text-sm font-medium rounded-lg hover:bg-brand/90 transition-colors disabled:opacity-50" data-tooltip="Salvando..."
         >
           {isSubmitting ? (
             <>

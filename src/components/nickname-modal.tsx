@@ -71,7 +71,7 @@ export function NicknameModal({ hasNickname }: { hasNickname: boolean }) {
           <button 
             type="submit"
             disabled={loading || nickname.length < 3}
-            className="w-full py-3 bg-brand text-white font-semibold rounded-xl hover:bg-brand/90 transition-colors disabled:opacity-50 flex items-center justify-center"
+            className="w-full py-3 bg-brand text-white font-semibold rounded-xl hover:bg-brand/90 transition-colors disabled:opacity-50 flex items-center justify-center" aria-label="Salvar nome público" data-tooltip="Salvar nome público"
           >
             {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Confirmar Nickname"}
           </button>

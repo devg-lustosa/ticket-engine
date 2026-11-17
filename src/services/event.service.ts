@@ -4,18 +4,17 @@ import { unstable_cache } from "next/cache";
 // Separação de Backend: Função que busca eventos com cache do Next.js
 export const getPublishedEvents = unstable_cache(
   async () => {
-    try {
-      const events = await prisma.event.findMany({
-        where: { status: "PUBLISHED" },
-        orderBy: { date: "asc" },
-      });
-      return events;
-    } catch (error) {
-      console.error("Error fetching published events:", error);
-      return [];
-    }
+    const events = await prisma.event.findMany({
+      where: { status: "PUBLISHED", date: { gte: new Date() } },
+      orderBy: { date: "asc" },
+      select: { id: true, slug: true, title: true, venue: true, city: true, date: true, coverImage: true,
+        batches: { select: { price: true, soldQty: true, totalQty: true, startAt: true, endAt: true } } },
+    });
+    return events.map(event => ({ ...event, date: event.date.toISOString(), batches: event.batches.map(batch => ({ ...batch,
+      price: Number(batch.price), startAt: batch.startAt?.toISOString() ?? null, endAt: batch.endAt?.toISOString() ?? null,
+    })) }));
   },
-  ["published-events"], // Cache key
+  ["published-events-v2"],
   { revalidate: 30, tags: ["events"] } // Revalida a cada 30 segundos
 );
 

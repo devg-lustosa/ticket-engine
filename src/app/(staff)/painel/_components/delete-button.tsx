@@ -34,10 +34,10 @@ export function DeleteButton({ eventId }: DeleteButtonProps) {
       <button
         onClick={() => setShowModal(true)}
         disabled={loading}
-        className="p-2 text-gray-400 hover:text-red-400 hover:bg-red-900/20 rounded-lg transition-colors disabled:opacity-50"
-        title="Remover evento"
+        className="nav-control text-error disabled:opacity-50"
+        data-tooltip="Excluir evento" aria-label="Excluir evento"
       >
-        {loading ? <Loader2 size={16} className="animate-spin" /> : <Trash2 size={16} />}
+        {loading ? <Loader2 size={16} className="animate-spin" /> : <Trash2 size={16} />}<span className="ml-1 text-xs">Excluir</span>
       </button>
 
       {showModal && (
@@ -54,7 +54,7 @@ export function DeleteButton({ eventId }: DeleteButtonProps) {
                 <button
                   onClick={() => setShowModal(false)}
                   disabled={loading}
-                  className="text-muted-fg hover:text-foreground transition-colors disabled:opacity-50"
+                  className="text-muted-fg hover:text-foreground transition-colors disabled:opacity-50" aria-label="Fechar janela" data-tooltip="Fechar janela"
                 >
                   <X size={20} />
                 </button>
@@ -75,7 +75,7 @@ export function DeleteButton({ eventId }: DeleteButtonProps) {
                 <button
                   onClick={handleDelete}
                   disabled={loading}
-                  className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-70"
+                  className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-70" data-tooltip="Confirmar exclusão do evento"
                 >
                   {loading && <Loader2 size={14} className="animate-spin" />}
                   {loading ? "Excluindo..." : "Sim, excluir evento"}

@@ -2,6 +2,7 @@
 
 import { prisma } from "@/lib/prisma";
 import { createClient } from "@/lib/supabase/server";
+import { unstable_rethrow } from "next/navigation";
 
 export async function getCurrentUser() {
   try {
@@ -20,12 +21,14 @@ export async function getCurrentUser() {
         name: authUser.user_metadata?.name || authUser.email?.split("@")[0] || "Usuário",
         email: authUser.email || "",
         role: "USER",
+        nickname: null,
         hideFromAttendees: false
       };
     }
 
     return dbUser;
   } catch (error) {
+    unstable_rethrow(error);
     console.error("Error fetching current user:", error);
     return null;
   }

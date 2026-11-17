@@ -11,7 +11,7 @@ export default function AtualizarSenhaPage() {
   return (
     <main className="min-h-dvh bg-background flex flex-col">
       <header className="flex items-center justify-between px-6 py-4 border-b border-border">
-        <Link href="/" className="flex items-center gap-2 font-bold text-foreground hover:opacity-80 transition-opacity">
+        <Link href="/" className="flex items-center gap-2 font-bold text-foreground hover:opacity-80 transition-opacity" data-tooltip="Ticket Engine">
           <div className="bg-gradient-to-br from-brand to-purple-600 p-1.5 rounded-lg shadow-sm shadow-brand/20">
             <Ticket className="h-4 w-4 text-white" />
           </div>

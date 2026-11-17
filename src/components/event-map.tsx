@@ -11,13 +11,12 @@ interface EventMapProps {
 
 export function EventMap({ address }: EventMapProps) {
   const [coordinates, setCoordinates] = useState<{ lng: number; lat: number } | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(Boolean(process.env.NEXT_PUBLIC_MAPBOX_TOKEN));
   
   const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
 
   useEffect(() => {
     if (!token) {
-      setLoading(false);
       return;
     }
 
@@ -43,7 +42,7 @@ export function EventMap({ address }: EventMapProps) {
       <div className="w-full h-[300px] bg-muted rounded-xl border border-border flex flex-col items-center justify-center p-6 text-center">
         <MapPin className="text-[var(--brand-500)] mb-2" size={24} />
         <p className="text-sm font-medium text-foreground">Mapa Indisponível</p>
-        <p className="text-xs text-muted-fg mt-1">Configure o NEXT_PUBLIC_MAPBOX_TOKEN no .env</p>
+        <p className="text-xs text-muted-fg mt-1">Consulte o endereço do evento acima para planejar sua chegada.</p>
       </div>
     );
   }

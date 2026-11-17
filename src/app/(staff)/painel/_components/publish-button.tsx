@@ -34,12 +34,12 @@ export function PublishButton({ eventId, status }: PublishButtonProps) {
     <button
       onClick={toggle}
       disabled={loading}
-      title={isPublished ? "Despublicar evento" : "Publicar evento"}
+      data-tooltip={isPublished ? "Despublicar evento" : "Publicar evento"}
       className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors disabled:opacity-60 disabled:cursor-not-allowed
         ${isPublished
           ? "bg-success/15 text-success hover:bg-error/15 hover:text-error border border-success/30 hover:border-error/30"
           : "bg-muted text-muted-fg hover:bg-success/15 hover:text-success border border-border hover:border-success/30"
-        }`}
+        }`} aria-label={isPublished ? "Despublicar evento" : "Publicar evento"}
     >
       {loading ? (
         <Loader2 size={13} className="animate-spin" />

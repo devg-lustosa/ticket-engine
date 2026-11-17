@@ -36,7 +36,7 @@ export const siteConfig = {
    * Used for server-side metadata and any inline styles.
    */
   colors: {
-    primary: "#6366f1",   // --brand-500
+    primary: "#4f46e5",   // --brand-500
     accent:  "#8b5cf6",   // --accent-500
     dark:    "#0d0d14",   // --background (dark)
   },

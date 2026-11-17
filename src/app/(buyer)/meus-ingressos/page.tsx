@@ -4,7 +4,6 @@ import { prisma } from "@/lib/prisma";
 import { TicketRow } from "@/components/ticket-row";
 import Link from "next/link";
 import { ArrowLeft, Ticket } from "lucide-react";
-import { ThemeToggle } from "@/components/theme-toggle";
 import { NicknameModal } from "@/components/nickname-modal";
 
 export default async function MeusIngressosPage() {
@@ -24,6 +23,7 @@ export default async function MeusIngressosPage() {
     include: {
       batch: { include: { event: true } },
       user: true,
+      refund: { select: { status: true } },
     },
     orderBy: { createdAt: "desc" },
   });
@@ -32,20 +32,6 @@ export default async function MeusIngressosPage() {
     <main className="min-h-dvh bg-background flex flex-col">
       <NicknameModal hasNickname={!!dbUser.nickname} />
       
-      {/* Header */}
-      <header className="border-b border-border bg-card/80 backdrop-blur-sm sticky top-0 z-10">
-        <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
-          <Link
-            href="/"
-            className="flex items-center gap-2 text-sm text-muted-fg hover:text-foreground transition-colors"
-          >
-            <ArrowLeft size={15} />
-            Voltar à loja
-          </Link>
-          <ThemeToggle />
-        </div>
-      </header>
-
       {/* Conteúdo */}
       <div className="max-w-2xl mx-auto w-full px-4 py-8 flex-1">
         {/* Título */}
@@ -71,6 +57,8 @@ export default async function MeusIngressosPage() {
             {tickets.map((ticket) => {
               const serializableTicket = {
                 ...ticket,
+                unitPrice: ticket.unitPrice?.toNumber() ?? null,
+                paidAmount: ticket.paidAmount?.toNumber() ?? null,
                 batch: {
                   ...ticket.batch,
                   price: ticket.batch.price.toNumber(),

@@ -1,142 +1,20 @@
 import Link from "next/link";
-import { siteConfig } from "@/config/site";
-import { Ticket, HelpCircle, ShieldCheck, CreditCard, RefreshCw, Edit2 } from "lucide-react";
-import { UserNav } from "@/components/user-nav";
-import { Footer } from "@/components/footer";
-import { ThemeToggle } from "@/components/theme-toggle";
 
-export const metadata = {
-  title: "Central de Ajuda",
-  description: "Tire suas dúvidas, veja como comprar, formas de pagamento e políticas de cancelamento.",
-};
+export const metadata = { title: "Central de ajuda" };
 
-export default function AjudaPage() {
+const topics = [
+  { id: "comprador", title: "Comprar e acessar ingressos", steps: ["Abra Próximos eventos, escolha o evento e selecione lote e quantidade.", "Informe nome e CPF de cada participante. Confira o total e o desconto antes de pagar.", "Após a confirmação do pagamento, abra Meus ingressos para apresentar o QR Code.", "Se o pagamento estiver em verificação, consulte o mesmo pedido. Evite gerar outra cobrança."] },
+  { id: "organizador", title: "Administrar um evento", steps: ["Sua tela inicial é Meus eventos. Crie o evento e prepare os lotes antes de publicar.", "Em cada evento, acesse edição, cupons, cortesias e o borderô. Cortesias também consomem capacidade.", "O borderô separa vendas e estornos. Comissão e líquido estimados não substituem o extrato do Asaas.", "Use o menu Operação para abrir a portaria do evento escolhido."] },
+  { id: "portaria", title: "Operar a portaria", steps: ["Selecione o evento do dia antes de iniciar a câmera. Confira nome e data.", "Uma entrada confirmada mostra mensagem de sucesso. Uma recusa explica o motivo e emite som de erro quando o aparelho permite.", "Antes de perder a conexão, baixe os ingressos deste evento neste aparelho e mantenha a página aberta.", "Offline, a entrada fica pendente de sincronização. Aparelhos desconectados não compartilham os registros: use uma única fila de contingência para evitar entradas duplicadas.", "Ao reconectar, confira as pendências. Conflitos exigem revisão; não são descartados automaticamente."] },
+  { id: "reembolso", title: "Transferir participante ou pedir reembolso", steps: ["Abra Meus ingressos. A transferência é permitida uma vez, em ingresso ativo, até 24 horas antes do evento.", "O pedido de reembolso segue a janela informada na compra: menos de sete dias desde a compra e pelo menos 48 horas antes do evento.", "O valor de reembolso considera o desconto da compra. O ingresso fica indisponível durante a análise do estorno.", "Um estorno em análise ainda depende da confirmação do gateway. Pedidos antigos sem valor individual comprovado precisam de conciliação."] },
+  { id: "acessibilidade", title: "Navegar com acessibilidade", steps: ["Use Tab e Shift+Tab para percorrer os controles. Enter ou Espaço abre os menus; Escape fecha o menu e devolve o foco.", "O primeiro link permite pular a navegação e ir ao conteúdo. O menu Buscar também abre com Control+K ou Command+K.", "Alterne o tema pelo botão de sol/lua. A preferência de reduzir movimento do seu sistema é respeitada.", "As confirmações usam texto além de cor e som. O código do ingresso pode ser digitado quando a câmera não estiver disponível."] },
+];
 
-  return (
-    <main className="min-h-dvh bg-[var(--background)] flex flex-col">
-      {/* Header / Hero */}
-      <header className="relative overflow-hidden bg-[var(--brand-600)] pb-12 text-white shrink-0">
-        <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]" />
-        
-        {/* Top Navbar */}
-        <div className="relative z-20 mx-auto flex max-w-5xl items-center justify-between px-4 py-4 mb-8">
-          <Link href="/" className="flex items-center gap-2 font-bold hover:opacity-90 transition-opacity">
-            <Ticket className="h-6 w-6" />
-            <span className="hidden sm:inline-block">{siteConfig.name}</span>
-          </Link>
-          <div className="flex items-center gap-4">
-            <ThemeToggle />
-            <UserNav />
-          </div>
-        </div>
-
-        <div className="relative mx-auto max-w-5xl px-4 text-center animate-fade-in mt-4">
-          <h1 className="mb-4 flex items-center justify-center gap-3 text-3xl font-extrabold tracking-tight sm:text-4xl">
-            <HelpCircle className="h-8 w-8 sm:h-10 sm:w-10" />
-            Central de Ajuda
-          </h1>
-          <p className="mx-auto mt-4 max-w-2xl text-lg text-white/80">
-            Tudo o que você precisa saber sobre compras, pagamentos e políticas do {siteConfig.name}.
-          </p>
-        </div>
-      </header>
-
-      {/* Main Content */}
-      <div className="mx-auto max-w-4xl px-4 py-12 flex-1 w-full space-y-12">
-
-        {/* Como Comprar */}
-        <section id="como-comprar" className="scroll-mt-8 animate-fade-in">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="bg-[var(--brand-100)] dark:bg-[var(--brand-900)] p-3 rounded-xl">
-              <Ticket className="text-[var(--brand-600)] dark:text-[var(--brand-400)] h-6 w-6" />
-            </div>
-            <h2 className="text-2xl font-bold text-[var(--foreground)]">Como Comprar Ingressos</h2>
-          </div>
-          <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-6 md:p-8 shadow-sm">
-            <ol className="list-decimal list-inside space-y-4 text-[var(--muted-fg)] leading-relaxed">
-              <li><strong>Escolha o evento:</strong> Navegue pela nossa página inicial e clique no evento desejado.</li>
-              <li><strong>Selecione os ingressos:</strong> Na página do evento, escolha o lote e a quantidade de ingressos (você pode comprar múltiplos ingressos de uma só vez).</li>
-              <li><strong>Identifique os participantes:</strong> No checkout, preencha o Nome Completo e o CPF de cada pessoa que irá utilizar os ingressos.</li>
-              <li><strong>Pagamento Segurto:</strong> Escolha entre Pix (aprovação imediata) ou Cartão de Crédito e finalize a compra.</li>
-              <li><strong>Acesse seus ingressos:</strong> Após a aprovação, seus ingressos estarão disponíveis na aba <Link href="/meus-ingressos" className="text-[var(--brand-500)] hover:underline font-medium">Meus Ingressos</Link>.</li>
-            </ol>
-          </div>
-        </section>
-
-        {/* Formas de Pagamento */}
-        <section id="formas-de-pagamento" className="scroll-mt-8 animate-fade-in">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="bg-[var(--brand-100)] dark:bg-[var(--brand-900)] p-3 rounded-xl">
-              <CreditCard className="text-[var(--brand-600)] dark:text-[var(--brand-400)] h-6 w-6" />
-            </div>
-            <h2 className="text-2xl font-bold text-[var(--foreground)]">Formas de Pagamento Seguras</h2>
-          </div>
-          <div className="grid md:grid-cols-2 gap-6">
-            <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-6 shadow-sm">
-              <h3 className="font-bold text-[var(--foreground)] text-lg mb-2">Pix</h3>
-              <p className="text-[var(--muted-fg)] text-sm mb-4">Aprovação imediata. Escaneie o QR Code ou utilize o recurso Copia e Cola no aplicativo do seu banco.</p>
-              <div className="bg-[var(--muted)] px-3 py-1.5 rounded text-xs font-mono inline-block text-[var(--muted-fg)]">
-                Recomendado
-              </div>
-            </div>
-            <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-6 shadow-sm">
-              <h3 className="font-bold text-[var(--foreground)] text-lg mb-2">Cartão de Crédito</h3>
-              <p className="text-[var(--muted-fg)] text-sm mb-4">Parcele suas compras de forma segura. Aceitamos as principais bandeiras do mercado.</p>
-              <div className="flex items-center gap-2 text-xs font-semibold text-[var(--success)]">
-                <ShieldCheck size={16} /> Compra Protegida
-              </div>
-            </div>
-          </div>
-          <p className="text-sm text-[var(--muted-fg)] mt-4 text-center">
-            Todos os pagamentos são processados pela plataforma <a href="https://www.asaas.com" target="_blank" rel="noreferrer" className="text-[var(--brand-500)] hover:underline font-medium">Asaas</a>, garantindo total segurança e criptografia de ponta a ponta.
-          </p>
-        </section>
-
-        {/* Política de Cancelamento e Edição */}
-        <section id="politicas" className="scroll-mt-8 animate-fade-in">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="bg-[var(--brand-100)] dark:bg-[var(--brand-900)] p-3 rounded-xl">
-              <RefreshCw className="text-[var(--brand-600)] dark:text-[var(--brand-400)] h-6 w-6" />
-            </div>
-            <h2 className="text-2xl font-bold text-[var(--foreground)]">Políticas da Plataforma</h2>
-          </div>
-          <div className="space-y-6">
-            
-            <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-6 md:p-8 shadow-sm">
-              <div className="flex items-center gap-2 mb-3">
-                <RefreshCw size={20} className="text-[var(--brand-500)]" />
-                <h3 className="font-bold text-[var(--foreground)] text-lg">Cancelamento e Reembolso</h3>
-              </div>
-              <p className="text-[var(--muted-fg)] leading-relaxed">
-                De acordo com as nossas políticas e o Código de Defesa do Consumidor:
-              </p>
-              <ul className="list-disc list-inside mt-3 space-y-2 text-[var(--muted-fg)]">
-                <li>Cancelamentos de pedidos pagos serão aceitos em até <strong>7 dias</strong> após a compra.</li>
-                <li>A solicitação de cancelamento deve ser enviada até <strong>48 horas antes</strong> do início do evento.</li>
-                <li>O estorno do valor será realizado através da mesma forma de pagamento utilizada (Pix ou estorno na fatura do Cartão).</li>
-              </ul>
-            </div>
-
-            <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-6 md:p-8 shadow-sm">
-              <div className="flex items-center gap-2 mb-3">
-                <Edit2 size={20} className="text-[var(--brand-500)]" />
-                <h3 className="font-bold text-[var(--foreground)] text-lg">Edição de Participante (Titularidade)</h3>
-              </div>
-              <p className="text-[var(--muted-fg)] leading-relaxed">
-                Caso você tenha comprado um ingresso para outra pessoa ou digitado errado, você pode editar o titular:
-              </p>
-              <ul className="list-disc list-inside mt-3 space-y-2 text-[var(--muted-fg)]">
-                <li>Você poderá editar o Nome e o CPF do participante de um ingresso apenas <strong>uma única vez</strong>.</li>
-                <li>Essa opção ficará disponível na aba <Link href="/meus-ingressos" className="text-[var(--brand-500)] hover:underline font-medium">Meus Ingressos</Link> até <strong>24 horas antes</strong> do início do evento.</li>
-              </ul>
-            </div>
-
-          </div>
-        </section>
-
-      </div>
-
-      <Footer />
-    </main>
-  );
+export default function HelpPage() {
+  return <main className="mx-auto max-w-5xl px-4 py-10">
+    <p className="text-sm text-muted-fg">Ajuda para cada etapa</p><h1 className="mt-2 text-3xl font-bold">Como podemos ajudar?</h1><p className="mt-3 text-muted-fg">Escolha sua tarefa e confira os próximos passos.</p>
+    <nav aria-label="Tópicos de ajuda" className="my-7 flex flex-wrap gap-2">{topics.map(topic => <a href={"#" + topic.id} key={topic.id} className="nav-control border border-border">{topic.title}</a>)}</nav>
+    <div className="space-y-5">{topics.map(topic => <section key={topic.id} id={topic.id} className="rounded-2xl border border-border bg-card p-5 sm:p-7"><h2 className="text-xl font-semibold">{topic.title}</h2><ol className="mt-4 list-decimal space-y-3 pl-5 text-muted-fg">{topic.steps.map(step => <li key={step}>{step}</li>)}</ol></section>)}</div>
+    <p className="mt-7 text-sm text-muted-fg">Ainda precisa de ajuda? Procure a organização responsável pelo evento. <Link href="/eventos" className="underline">Ver programação</Link>.</p>
+  </main>;
 }

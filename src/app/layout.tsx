@@ -3,6 +3,8 @@ import { Inter } from "next/font/google";
 import { siteConfig } from "@/config/site";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
+import { AppNavigation } from "@/components/app-navigation";
+import { TooltipLayer } from "@/components/tooltip-layer";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -37,7 +39,9 @@ export default function RootLayout({
     <html lang="pt-BR" className={inter.variable} suppressHydrationWarning>
       <body>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-          {children}
+          <AppNavigation />
+          <TooltipLayer />
+          <div id="conteudo" tabIndex={-1}>{children}</div>
         </ThemeProvider>
       </body>
     </html>

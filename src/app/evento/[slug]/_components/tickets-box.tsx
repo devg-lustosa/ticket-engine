@@ -126,7 +126,7 @@ export function TicketsBox({ batches }: TicketsBoxProps) {
                       <button
                         onClick={() => change(batch.id, -1)}
                         disabled={qty === 0}
-                        className="w-8 h-8 rounded-full border border-[var(--border)] flex items-center justify-center text-[var(--foreground)] hover:bg-[var(--muted)] transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                        className="w-8 h-8 rounded-full border border-[var(--border)] flex items-center justify-center text-[var(--foreground)] hover:bg-[var(--muted)] transition-colors disabled:opacity-30 disabled:cursor-not-allowed" aria-label="Diminuir quantidade deste lote" data-tooltip="Diminuir quantidade deste lote"
                       >
                         <Minus size={14} />
                       </button>
@@ -136,7 +136,7 @@ export function TicketsBox({ batches }: TicketsBoxProps) {
                       <button
                         onClick={() => change(batch.id, +1)}
                         disabled={qty >= available}
-                        className="w-8 h-8 rounded-full border border-[var(--brand-500)] bg-[var(--brand-500)] flex items-center justify-center text-white hover:bg-[var(--brand-600)] transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                        className="w-8 h-8 rounded-full border border-[var(--brand-500)] bg-[var(--brand-500)] flex items-center justify-center text-white hover:bg-[var(--brand-600)] transition-colors disabled:opacity-30 disabled:cursor-not-allowed" aria-label="Aumentar quantidade deste lote" data-tooltip="Aumentar quantidade deste lote"
                       >
                         <Plus size={14} />
                       </button>
@@ -171,7 +171,7 @@ export function TicketsBox({ batches }: TicketsBoxProps) {
           <button
             onClick={handleBuy}
             disabled={totalItems === 0}
-            className="w-full flex items-center justify-center gap-2 rounded-xl bg-[var(--brand-500)] px-4 py-3 text-sm font-bold text-white transition hover:bg-[var(--brand-600)] active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed disabled:active:scale-100"
+            className="w-full flex items-center justify-center gap-2 rounded-xl bg-[var(--brand-500)] px-4 py-3 text-sm font-bold text-white transition hover:bg-[var(--brand-600)] active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed disabled:active:scale-100" aria-label="Continuar para o checkout" data-tooltip="Continuar para o checkout"
           >
             <ShoppingBag size={16} />
             {totalItems === 0 ? "Selecione um ingresso" : "Comprar"}
@@ -181,7 +181,7 @@ export function TicketsBox({ batches }: TicketsBoxProps) {
 
       {/* Security note */}
       <div className="bg-[var(--muted)] p-3 text-xs text-[var(--muted-fg)] text-center border-t border-[var(--border)]">
-        Compras processadas via <strong>Asaas</strong> com Pix. Segurança 100% garantida.
+        Compras processadas via <strong>Asaas</strong>. Confira as formas de pagamento no checkout.
       </div>
     </div>
   );

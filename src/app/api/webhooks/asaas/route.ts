@@ -1,125 +1,39 @@
-import { NextRequest, NextResponse } from "next/server";
+import { createHash, timingSafeEqual } from "node:crypto";
+import { NextResponse } from "next/server";
+import { ApiError, apiError, jsonBody } from "@/lib/api";
 import { prisma } from "@/lib/prisma";
-import { generateTicketHash } from "@/lib/ticket/hash";
-import type { AsaasWebhookPayload } from "@/lib/asaas/types";
-import { sendTicketEmail } from "@/services/email.service";
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
+import { toCents } from "@/lib/money";
+import { confirmPayment } from "@/services/payment.service";
+import { reconcileRefunds } from "@/services/refund.service";
+import { reconcileExpiredPix } from "@/services/pix-expiration.service";
+import { notifyPaidTickets } from "@/services/checkout.service";
+import { getCharge } from "@/lib/asaas/client";
+import type { AsaasPixCharge } from "@/lib/asaas/types";
 
-export async function POST(request: NextRequest) {
+export async function POST(request: Request) {
   try {
-    // ── 1. Valida o token secreto do webhook ─────────────────────
-    const token = request.headers.get("asaas-access-token");
-    if (token !== process.env.ASAAS_WEBHOOK_SECRET) {
-      console.warn("[webhook/asaas] Token inválido recebido.");
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const payload = (await request.json()) as AsaasWebhookPayload;
-    const { event, payment } = payload;
-
-    console.log(`[webhook/asaas] Evento recebido: ${event} | ID: ${payment.id}`);
-
-    // ── 2. Só processa eventos de pagamento confirmado ────────────
-    const isConfirmed =
-      event === "PAYMENT_CONFIRMED" || event === "PAYMENT_RECEIVED";
-
-    if (!isConfirmed) {
+    const expected = process.env.ASAAS_WEBHOOK_SECRET;
+    const received = request.headers.get("asaas-access-token");
+    if (!expected || !received || received.length > 512 || !timingSafeEqual(createHash("sha256").update(expected).digest(), createHash("sha256").update(received).digest())) throw new ApiError(401, "Não autorizado.");
+    const body = await jsonBody(request);
+    if (typeof body.event !== "string" || !body.payment || typeof body.payment !== "object") throw new ApiError(400, "Webhook inválido.");
+    const charge = body.payment as AsaasPixCharge;
+    if (typeof charge.id !== "string" || !/^[\w-]{1,128}$/.test(charge.id)) throw new ApiError(400, "Cobrança inválida.");
+    const reference = typeof charge.externalReference === "string" && /^ticket-engine:[\da-f-]{36}$/i.test(charge.externalReference) ? charge.externalReference.slice(14) : null;
+    const payment = await prisma.payment.findFirst({ where: { OR: [{ gatewayId: charge.id }, ...(reference ? [{ id: reference }] : [])] } });
+    if (!payment) {
+      if (reference) throw new ApiError(503, "Pedido ainda não localizado. Reenvie a notificação.");
       return NextResponse.json({ received: true });
     }
-
-    // ── 3. Idempotência — verifica se já foi processado ───────────
-    const existingPayment = await prisma.payment.findUnique({
-      where: { gatewayId: payment.id },
-      include: { 
-        tickets: { 
-          include: { 
-            batch: { include: { event: true } },
-            user: true
-          } 
-        } 
-      },
-    });
-
-    if (!existingPayment) {
-      console.warn(`[webhook/asaas] Pagamento ${payment.id} não encontrado.`);
-      return NextResponse.json({ received: true });
+    if (body.event === "PAYMENT_CONFIRMED" || body.event === "PAYMENT_RECEIVED") {
+      try { toCents(charge.value); } catch { throw new ApiError(400, "Valor do webhook inválido."); }
+      await notifyPaidTickets(await confirmPayment(payment.id, charge));
     }
-
-    if (existingPayment.status === "PAID") {
-      // Já processado — retorna 200 para o Asaas não re-tentar
-      console.log(`[webhook/asaas] Pagamento ${payment.id} já processado (idempotente).`);
-      return NextResponse.json({ received: true });
+    if (body.event === "PAYMENT_OVERDUE" || body.event === "PAYMENT_DELETED") await reconcileExpiredPix(payment.id, body.event);
+    if (["PAYMENT_REFUNDED", "PAYMENT_PARTIALLY_REFUNDED", "PAYMENT_REFUND_IN_PROGRESS"].includes(body.event)) {
+      const remote = await getCharge(charge.id);
+      await reconcileRefunds(payment.id, remote.refunds ?? []);
     }
-
-    // ── 4. Atualiza Payment e Ticket atomicamente ─────────────────
-    const processedTickets: any[] = [];
-
-    await prisma.$transaction(async (tx) => {
-      // Atualiza pagamento
-      await tx.payment.update({
-        where: { id: existingPayment.id },
-        data: {
-          status: "PAID",
-          paidAt: payment.paymentDate ? new Date(payment.paymentDate) : new Date(),
-        },
-      });
-
-      // Atualiza tickets e gera QR Hashes
-      for (const ticket of existingPayment.tickets) {
-        const eventId = ticket.batch.eventId;
-        const qrHash = generateTicketHash(ticket.id, eventId, ticket.userId);
-
-        await tx.ticket.update({
-          where: { id: ticket.id },
-          data: {
-            status: "ACTIVE",
-            qrHash,
-          },
-        });
-
-        processedTickets.push({ ...ticket, qrHash });
-      }
-
-      // Incrementa o uso do cupom se existir
-      if (existingPayment.couponId) {
-        await tx.coupon.update({
-          where: { id: existingPayment.couponId },
-          data: { usedCount: { increment: 1 } },
-        });
-      }
-    });
-
-    console.log(`[webhook/asaas] ✅ ${existingPayment.tickets.length} Ingressos ativados com sucesso (Pagamento: ${existingPayment.id}).`);
-
-    // ── 5. Dispara e-mails de ingresso ────────────────────────────
-    for (const ticket of processedTickets) {
-      try {
-        const formattedDate = format(
-          new Date(ticket.batch.event.date),
-          "dd 'de' MMMM 'de' yyyy 'às' HH:mm",
-          { locale: ptBR }
-        );
-
-        await sendTicketEmail(ticket.user.email, {
-          participantName: ticket.participantName || ticket.user.name,
-          eventName: ticket.batch.event.title,
-          eventDate: formattedDate,
-          venue: ticket.batch.event.venue,
-          qrHash: ticket.qrHash,
-        });
-      } catch (err) {
-        console.error(`[webhook/asaas] Falha ao enviar email para ${ticket.user.email}:`, err);
-      }
-    }
-
     return NextResponse.json({ received: true });
-  } catch (error) {
-    console.error("[webhook/asaas] Erro:", error);
-    // Retorna 500 para o Asaas re-tentar o webhook
-    return NextResponse.json(
-      { error: "Erro interno" },
-      { status: 500 }
-    );
-  }
+  } catch (error) { return apiError(error); }
 }

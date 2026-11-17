@@ -1,5 +1,5 @@
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap");
 @import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
 
 
 /* ─── White-label Design Tokens ─────────────────────────────── */
@@ -9,8 +9,8 @@
   --brand-100: #e0e9ff;
   --brand-200: #c7d7fe;
   --brand-400: #818cf8;
-  --brand-500: #6366f1;   /* primary */
-  --brand-600: #4f46e5;
+  --brand-500: #4f46e5;
+  --brand-600: #4338ca;
   --brand-700: #4338ca;
   --brand-900: #1e1b4b;
 
@@ -33,15 +33,16 @@
   --background:  #ffffff;
   --foreground:  #111827;
   --muted:       #f3f4f6;
-  --muted-fg:    #6b7280;
+  --muted-fg:    #5f6877;
   --border:      #e5e7eb;
   --card:        #ffffff;
   --card-border: #e5e7eb;
 
   /* Success / Error / Warning */
-  --success: #10b981;
-  --error:   #ef4444;
-  --warning: #f59e0b;
+  --success: #046c4e;
+  --error:   #b91c1c;
+  --warning: #92400e;
+  --app-nav-height: 112px;
 
   /* Radius */
   --radius-sm:  4px;
@@ -56,6 +57,9 @@
 }
 
 .dark {
+  --success: #34d399;
+  --error: #fca5a5;
+  --warning: #fcd34d;
   --background:  #0d0d14;
   --foreground:  #f1f5f9;
   --muted:       #1a1a2e;
@@ -63,6 +67,11 @@
   --border:      #1e1b4b;
   --card:        #12121f;
   --card-border: #1e1b4b;
+}
+
+.dark .text-brand,
+.dark .text-\[var\(--brand-500\)\] {
+  color: var(--brand-400);
 }
 
 /* ─── Tailwind v4 Theme Extension ────────────────────────────── */
@@ -93,16 +102,25 @@
 
 html {
   scroll-behavior: smooth;
+  scroll-padding-top: calc(var(--app-nav-height) + 24px);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
 body {
+  display: flex;
+  flex-direction: column;
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans);
   line-height: 1.6;
   min-height: 100dvh;
+}
+
+#conteudo {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
 }
 
 /* ─── Scrollbar Styling ───────────────────────────────────────── */
@@ -177,6 +195,35 @@ body {
 /* bottom copyright / legal text */
 .light footer .text-slate-500 {
   color: #a5b4fc;
+}
+
+.app-navigation { position: sticky; top: 12px; z-index: 40; width: calc(100% - 32px); max-width: 1152px; margin: 12px auto; border: 1px solid var(--border); border-radius: 18px; background: var(--card); box-shadow: 0 8px 24px #00000012; }
+.app-navigation-top { height: 64px; max-width: 1152px; margin-inline: auto; padding-inline: 16px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.app-navigation-links { min-height: 48px; max-width: 1152px; margin-inline: auto; padding: 2px 16px; display: flex; align-items: center; justify-content: center; gap: 4px; flex-wrap: wrap; border-top: 1px solid var(--border); }
+.nav-control { min-height: 44px; padding: 8px 12px; display: inline-flex; align-items: center; justify-content: center; gap: 7px; border-radius: 10px; font-size: 14px; cursor: pointer; }
+.nav-control:hover, .nav-control[aria-expanded="true"], .nav-control[aria-current="page"] { background: var(--muted); color: var(--foreground); }
+.nav-popover { position: absolute; z-index: 5; top: calc(100% + 6px); width: 288px; padding: 6px; border: 1px solid var(--border); border-radius: 14px; background: var(--card); color: var(--foreground); box-shadow: 0 16px 40px #00000022; }
+.nav-popover a, .nav-popover form button { display: block; padding: 12px; border-radius: 9px; min-height: 44px; font-size: 14px; }
+.nav-popover a:hover, .nav-popover form button:hover { background: var(--muted); }
+.nav-search-panel { position: absolute; top: calc(100% + 8px); right: max(16px, calc((100vw - 1120px) / 2)); width: min(480px, calc(100vw - 32px)); padding: 12px; border: 1px solid var(--border); border-radius: 16px; background: var(--card); box-shadow: 0 16px 40px #00000022; }
+.ui-input { width: 100%; min-height: 44px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 10px; background: var(--background); color: var(--foreground); }
+.ui-button { display: inline-flex; min-height: 44px; padding: 10px 16px; align-items: center; justify-content: center; gap: 8px; border-radius: 10px; background: var(--brand-500); color: white; font-weight: 600; }
+.ui-button:hover { background: var(--brand-600); }
+.ui-button:disabled { opacity: .5; cursor: not-allowed; }
+.skip-link { position: fixed; top: -80px; left: 16px; padding: 12px 20px; z-index: 100; border-radius: 8px; background: var(--foreground); color: var(--background); }
+.skip-link:focus { top: 12px; }
+@media (max-width: 639px) {
+  .app-navigation-top { padding-inline: 12px; gap: 8px; }
+  .app-navigation { top: 8px; width: calc(100% - 16px); margin-block: 8px; border-radius: 14px; }
+  .app-navigation-links { padding-inline: 8px; }
+  .nav-control { padding-inline: 9px; font-size: 13px; }
+  .app-navigation-top > a { font-size: 14px; }
+  .nav-popover { position: fixed; top: calc(var(--app-nav-height) + 4px); left: 16px; right: 16px; width: auto; max-height: calc(100dvh - var(--app-nav-height) - 24px); overflow: auto; }
+}
+.app-tooltip { position: fixed; z-index: 200; width: max-content; max-width: min(260px, calc(100vw - 32px)); padding: 8px 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--foreground); color: var(--background); box-shadow: 0 4px 16px #00000022; font-size: 12px; line-height: 1.5; text-align: center; }
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
 }
 
 

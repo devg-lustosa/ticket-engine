@@ -16,7 +16,8 @@ export function AddTeamMemberForm() {
     setError("");
     setSuccess("");
 
-    const formData = new FormData(e.currentTarget);
+    const form = e.currentTarget;
+    const formData = new FormData(form);
     const data = {
       email: formData.get("email"),
       role: formData.get("role"),
@@ -32,11 +33,11 @@ export function AddTeamMemberForm() {
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || "Erro ao adicionar membro");
 
+      form.reset();
       setSuccess("Membro adicionado com sucesso!");
-      e.currentTarget.reset();
       router.refresh();
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Erro ao adicionar membro");
     } finally {
       setLoading(false);
     }
@@ -45,22 +46,23 @@ export function AddTeamMemberForm() {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       {error && (
-        <div className="p-3 bg-red-500/10 border border-red-500/20 text-red-400 text-sm rounded-lg">
+        <div role="alert" className="p-3 bg-red-500/10 border border-red-500/20 text-error text-sm rounded-lg">
           {error}
         </div>
       )}
       
       {success && (
-        <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-sm rounded-lg">
+        <div role="status" className="p-3 bg-emerald-500/10 border border-emerald-500/20 text-success text-sm rounded-lg">
           {success}
         </div>
       )}
 
       <div>
-        <label className="block text-sm font-medium text-foreground mb-1">
+        <label htmlFor="team-email" className="block text-sm font-medium text-foreground mb-1">
           E-mail do usuário
         </label>
         <input
+          id="team-email"
           type="email"
           name="email"
           required
@@ -70,10 +72,11 @@ export function AddTeamMemberForm() {
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-foreground mb-1">
+        <label htmlFor="team-role" className="block text-sm font-medium text-foreground mb-1">
           Cargo
         </label>
         <select
+          id="team-role"
           name="role"
           className="w-full bg-muted border border-border rounded-lg px-4 py-2.5 text-foreground focus:border-brand focus:ring-1 focus:ring-brand outline-none"
         >
@@ -85,7 +88,7 @@ export function AddTeamMemberForm() {
       <button
         type="submit"
         disabled={loading}
-        className="w-full bg-brand text-white font-medium rounded-lg px-4 py-2.5 hover:bg-brand/90 transition-colors disabled:opacity-50 flex items-center justify-center gap-2 mt-2"
+        className="w-full bg-brand text-white font-medium rounded-lg px-4 py-2.5 hover:bg-brand/90 transition-colors disabled:opacity-50 flex items-center justify-center gap-2 mt-2" data-tooltip="Adicionar à Equipe"
       >
         {loading ? <Loader2 size={18} className="animate-spin" /> : <Plus size={18} />}
         Adicionar à Equipe

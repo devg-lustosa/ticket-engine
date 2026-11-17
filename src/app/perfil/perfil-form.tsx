@@ -1,10 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { Ticket, Lock, AlertCircle, CheckCircle2, EyeOff } from "lucide-react";
-import { siteConfig } from "@/config/site";
-import { ThemeToggle } from "@/components/theme-toggle";
 import { updatePrivacySettings } from "@/services/user.service";
 
 export default function PerfilForm({ initialHideFromAttendees }: { initialHideFromAttendees: boolean }) {
@@ -68,19 +65,6 @@ export default function PerfilForm({ initialHideFromAttendees }: { initialHideFr
 
   return (
     <main className="min-h-dvh bg-[var(--background)]">
-      <header className="bg-[var(--brand-600)] text-white relative">
-        <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]" />
-        <div className="relative z-20 mx-auto flex max-w-5xl items-center justify-between px-4 py-4">
-          <Link href="/" className="flex items-center gap-2 font-bold hover:opacity-90 transition-opacity">
-            <Ticket className="h-6 w-6" />
-            <span className="hidden sm:inline-block">{siteConfig.name}</span>
-          </Link>
-          <ThemeToggle />
-          <Link href="/meus-ingressos" className="text-sm font-medium hover:underline">
-            Voltar
-          </Link>
-        </div>
-      </header>
 
       <div className="mx-auto max-w-xl px-4 py-12 space-y-8">
         <h1 className="text-3xl font-extrabold text-foreground mb-4">Configurações da Conta</h1>
@@ -99,19 +83,20 @@ export default function PerfilForm({ initialHideFromAttendees }: { initialHideFr
             <div>
               <p className="font-medium text-foreground">Ocultar meu perfil</p>
               <p className="text-sm text-muted-fg mt-1">
-                Seu perfil não aparecerá na lista de participantes "Quem vai" dos eventos.
+                Seu perfil não aparecerá na lista de participantes &quot;Quem vai&quot; dos eventos.
               </p>
             </div>
             
             <label className="relative inline-flex items-center cursor-pointer">
               <input 
+                aria-label="Ocultar meu perfil da lista de participantes"
                 type="checkbox" 
                 className="sr-only peer" 
                 checked={hideProfile}
                 onChange={(e) => handleTogglePrivacy(e.target.checked)}
                 disabled={privacyStatus === "saving"}
               />
-              <div className="w-11 h-6 bg-muted peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-brand"></div>
+              <div className="w-11 h-6 bg-muted peer-focus-visible:ring-2 peer-focus-visible:ring-brand peer-focus-visible:ring-offset-2 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-brand"></div>
             </label>
           </div>
           {privacyStatus === "saving" && <p className="text-xs text-brand mt-3">Salvando...</p>}
